@@ -1,4 +1,3 @@
-import ProfileAndPresence from './components/ProfileAndPresence'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Session } from '@supabase/supabase-js'
@@ -408,30 +407,13 @@ console.log("AUTH SESSION:", data.session)
     return <main className="loading-screen">در حال بارگذاری برنامه...</main>
   }
 
-  if (!session) {
-    return (
-      <ProfileAndPresence
-        userId={session!.user.id}
-        displayName={profile?.display_name ?? ''}
-        avatarUrl={profile?.avatar_url ?? ''}
-        activeStatus="online"
-        activeSubject=""
-        activeMode="free"
-        onProfileUpdated={() => {
-          loadProfile(session!.user.id)
-        }}
-      />
-    )
-  }
-
-  if (!profile) {
+  if (!session || !profile) {
     return (
       <main className="loading-screen">
-        در حال ساخت پروفایل...
+        نشست ورود پیدا نشد. یک‌بار صفحه را Refresh کن.
       </main>
     )
   }
-
 
   if (activeState?.focus_lock_enabled) {
     return (
