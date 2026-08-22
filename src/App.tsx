@@ -192,7 +192,6 @@ function App() {
       }
 
       setSession(data.session)
-console.log("AUTH SESSION:", data.session)
 
       if (data.session?.user?.id) {
         try {

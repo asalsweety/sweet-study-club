@@ -14,84 +14,112 @@ export default function Auth() {
     setLoading(true)
     setMessage('')
 
-    if (isSignup) {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      })
+    try {
+      if (isSignup) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        })
 
-      if (error) {
-        setMessage(error.message)
+        if (error) {
+          setMessage(error.message)
+        } else {
+          setMessage('حساب ساخته شد. حالا وارد شوید.')
+          setIsSignup(false)
+        }
       } else {
-        setMessage('حساب ساخته شد. وارد شوید.')
-        setIsSignup(false)
-      }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
 
-      if (error) {
-        setMessage(error.message)
+        if (error) {
+          setMessage(error.message)
+        }
       }
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (
     <main className="loading-screen">
-      <form
-        onSubmit={submit}
+      <section
+        className="profile-card"
         style={{
           width: '90%',
-          maxWidth: 400,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 12,
+          maxWidth: 420,
+          textAlign: 'center',
+          padding: '32px 24px',
         }}
       >
-        <h1>
-          {isSignup ? 'ساخت حساب' : 'ورود به Sweet Study Club'}
+        <h1 style={{ marginBottom: 8 }}>
+          Sweet Study Club
         </h1>
 
-        <input
-          type="email"
-          placeholder="ایمیل"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-
-        <input
-          type="password"
-          placeholder="رمز عبور"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={6}
-        />
-
-        <button type="submit" disabled={loading}>
-          {loading
-            ? 'لطفاً صبر کنید...'
-            : isSignup
-            ? 'ثبت نام'
-            : 'ورود'}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setIsSignup(!isSignup)}
-        >
+        <p style={{ marginBottom: 24 }}>
           {isSignup
-            ? 'قبلاً حساب دارم'
-            : 'ساخت حساب جدید'}
-        </button>
+            ? 'حساب خودت را بساز و مسیر مطالعه را شروع کن.'
+            : 'به برنامه مطالعه خودت وارد شو.'}
+        </p>
 
-        {message && <p>{message}</p>}
-      </form>
+        <form
+          onSubmit={submit}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+          }}
+        >
+          <input
+            type="email"
+            placeholder="ایمیل"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="رمز عبور"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+          />
+
+          <button
+            className="primary-button"
+            type="submit"
+            disabled={loading}
+          >
+            {loading
+              ? 'در حال بررسی...'
+              : isSignup
+                ? 'ساخت حساب'
+                : 'ورود'}
+          </button>
+
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={() => {
+              setIsSignup(!isSignup)
+              setMessage('')
+            }}
+          >
+            {isSignup
+              ? 'ورود به حساب موجود'
+              : 'ساخت حساب جدید'}
+          </button>
+        </form>
+
+        {message && (
+          <p style={{ marginTop: 18 }}>
+            {message}
+          </p>
+        )}
+      </section>
     </main>
   )
 }
