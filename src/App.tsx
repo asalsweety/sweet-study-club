@@ -194,10 +194,10 @@ function App() {
       setSession(data.session)
 console.log("AUTH SESSION:", data.session)
 
-      if (data.session?.user.id) {
+      if (data.session?.user?.id) {
         try {
           await Promise.all([
-            loadProfile(data.session.user.id),
+            loadProfile(data.session?.user?.id),
             loadTodaySessions(),
             loadActiveState(),
           ])
