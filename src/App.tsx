@@ -1,4 +1,3 @@
-import ProfileAndPresence from './components/ProfileAndPresence'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Session } from '@supabase/supabase-js'
@@ -410,17 +409,9 @@ console.log("AUTH SESSION:", data.session)
 
   if (!session) {
     return (
-      <ProfileAndPresence
-        userId={session!.user.id}
-        displayName={profile?.display_name ?? ''}
-        avatarUrl={profile?.avatar_url ?? ''}
-        activeStatus="online"
-        activeSubject=""
-        activeMode="free"
-        onProfileUpdated={() => {
-          loadProfile(session!.user.id)
-        }}
-      />
+      <main className="loading-screen">
+        لطفاً وارد حساب شوید...
+      </main>
     )
   }
 
