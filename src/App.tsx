@@ -22,6 +22,7 @@ import ProgressPage from './components/ProgressPage'
 import RankingPage from './components/RankingPage'
 import GamificationCelebration from './components/GamificationCelebration'
 import './App.css'
+import Auth from './components/Auth'
 
 type Profile = {
   id: string
@@ -243,6 +244,21 @@ console.log("AUTH SESSION:", data.session)
   }, [activeState])
 
   useEffect(() => {
+    if (!activeState) {
+      setElapsedSeconds(0)
+      return
+    }
+
+    setElapsedSeconds(calculateElapsed(activeState))
+
+    const interval = window.setInterval(() => {
+      setElapsedSeconds(calculateElapsed(activeState))
+    }, 1000)
+
+    return () => window.clearInterval(interval)
+  }, [activeState])
+
+  useEffect(() => {
     if (!session) return
 
     const interval = window.setInterval(() => {
@@ -408,11 +424,7 @@ console.log("AUTH SESSION:", data.session)
   }
 
   if (!session) {
-    return (
-      <main className="loading-screen">
-        لطفاً وارد حساب شوید...
-      </main>
-    )
+    return <Auth />
   }
 
   if (!profile) {
