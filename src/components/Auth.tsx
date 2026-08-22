@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import './Auth.css'
 
 export default function Auth() {
   const [email, setEmail] = useState('')
@@ -41,57 +42,73 @@ export default function Auth() {
   }
 
   return (
-    <main className="loading-screen">
-      <form
-        onSubmit={submit}
-        style={{
-          width: '90%',
-          maxWidth: 400,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 12,
-        }}
-      >
-        <h1>
-          {isSignup ? 'ساخت حساب' : 'ورود به Sweet Study Club'}
+    <main className="auth-page">
+      <section className="auth-card">
+        <h1 className="auth-title">
+          Sweet Study Club
         </h1>
 
-        <input
-          type="email"
-          placeholder="ایمیل"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-
-        <input
-          type="password"
-          placeholder="رمز عبور"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={6}
-        />
-
-        <button type="submit" disabled={loading}>
-          {loading
-            ? 'لطفاً صبر کنید...'
-            : isSignup
-            ? 'ثبت نام'
-            : 'ورود'}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setIsSignup(!isSignup)}
-        >
+        <p className="auth-subtitle">
           {isSignup
-            ? 'قبلاً حساب دارم'
-            : 'ساخت حساب جدید'}
-        </button>
+            ? 'حساب خودت را بساز و مطالعه را شروع کن.'
+            : 'وارد مسیر مطالعه خودت شو.'}
+        </p>
 
-        {message && <p>{message}</p>}
-      </form>
+        <form
+          className="auth-form"
+          onSubmit={submit}
+        >
+          <input
+            className="auth-input"
+            type="email"
+            placeholder="ایمیل"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+
+          <input
+            className="auth-input"
+            type="password"
+            placeholder="رمز عبور"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+          />
+
+          <button
+            className="auth-primary-button"
+            type="submit"
+            disabled={loading}
+          >
+            {loading
+              ? 'لطفاً صبر کنید...'
+              : isSignup
+                ? 'ثبت نام'
+                : 'ورود'}
+          </button>
+
+          <button
+            className="auth-secondary-button"
+            type="button"
+            onClick={() => {
+              setIsSignup(!isSignup)
+              setMessage('')
+            }}
+          >
+            {isSignup
+              ? 'قبلاً حساب دارم'
+              : 'ساخت حساب جدید'}
+          </button>
+        </form>
+
+        {message && (
+          <p className="auth-message">
+            {message}
+          </p>
+        )}
+      </section>
     </main>
   )
 }
