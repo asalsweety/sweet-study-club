@@ -23,6 +23,8 @@ import RankingPage from './components/RankingPage'
 import GamificationCelebration from './components/GamificationCelebration'
 import './App.css'
 import Auth from './components/Auth'
+import Welcome from './components/onboarding/Welcome'
+import IntroSlider from './components/onboarding/IntroSlider'
 
 type Profile = {
   id: string
@@ -117,6 +119,16 @@ function todayInTehran() {
 }
 
 function App() {
+
+  useEffect(() => {
+    const seen = localStorage.getItem(
+      'sweet-study-onboarding'
+    )
+
+    if (!seen) {
+      setShowOnboarding(true)
+    }
+  }, [])
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [sessions, setSessions] = useState<StudySession[]>([])
@@ -132,6 +144,15 @@ function App() {
   const [working, setWorking] = useState(false)
   const [message, setMessage] = useState('')
   const [activeTab, setActiveTab] = useState<AppTab>('home')
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    const seen = localStorage.getItem(
+      'sweet-study-onboarding'
+    )
+
+    return !seen
+  })
+  const [onboardingStep, setOnboardingStep] =
+    useState<'welcome' | 'intro'>('welcome')
 
   const currentSubject =
     customSubject.trim() || selectedSubject.trim()
@@ -420,6 +441,28 @@ function App() {
 
   if (loading) {
     return <main className="loading-screen">در حال بارگذاری برنامه...</main>
+  }
+
+  if (showOnboarding) {
+    if (onboardingStep === 'welcome') {
+      return (
+        <Welcome
+          onStart={() => setOnboardingStep('intro')}
+        />
+      )
+    }
+
+    return (
+      <IntroSlider
+        onFinish={() => {
+          localStorage.setItem(
+            'sweet-study-onboarding',
+            'true'
+          )
+          setShowOnboarding(false)
+        }}
+      />
+    )
   }
 
   if (!session) {

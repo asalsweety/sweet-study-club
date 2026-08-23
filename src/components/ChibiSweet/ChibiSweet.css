@@ -1,0 +1,100 @@
+.chibi-wrapper {
+  position: relative;
+  width: 220px;
+  height: 260px;
+  margin: auto;
+}
+
+.chibi-character {
+  animation: float 3s ease-in-out infinite;
+}
+
+.chibi-head {
+  width: 120px;
+  height: 120px;
+  background: #ffe5d5;
+  border-radius: 50%;
+  margin: auto;
+  position: relative;
+}
+
+.chibi-hair {
+  position: absolute;
+  inset: 0;
+  background: #4b3028;
+  border-radius: 50% 50% 40% 40%;
+  transform: translateY(-12px);
+}
+
+.chibi-face {
+  position: absolute;
+  inset: 45px 20px 20px;
+}
+
+.eye {
+  width: 12px;
+  height: 18px;
+  background: #222;
+  border-radius: 50%;
+  position: absolute;
+  animation: blink 4s infinite;
+}
+
+.eye.left {
+  left: 15px;
+}
+
+.eye.right {
+  right: 15px;
+}
+
+.smile {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 25px;
+  height: 12px;
+  border-bottom: 3px solid #b86b72;
+  border-radius: 0 0 20px 20px;
+  transform: translateX(-50%);
+}
+
+.chibi-body {
+  width: 100px;
+  height: 90px;
+  background: #f4c7d9;
+  border-radius: 40px;
+  margin: 10px auto;
+}
+
+.book {
+  width: 55px;
+  height: 35px;
+  background: #fff;
+  margin: auto;
+  transform: translateY(30px);
+  border-radius: 5px;
+}
+
+.chibi-cat {
+  position: absolute;
+  right: 0;
+  bottom: 10px;
+  font-size: 45px;
+}
+
+@keyframes float {
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes blink {
+  0%,95%,100% {
+    height:18px;
+  }
+
+  97% {
+    height:2px;
+  }
+}

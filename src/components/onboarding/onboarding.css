@@ -1,0 +1,105 @@
+.welcome-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    linear-gradient(
+      180deg,
+      #fff5f5,
+      #fffaf0
+    );
+}
+
+.welcome-content {
+  text-align: center;
+  max-width: 420px;
+}
+
+.welcome-content h1 {
+  font-size: 32px;
+  margin-top: 20px;
+}
+
+.welcome-content p {
+  font-size: 18px;
+  line-height: 1.8;
+  opacity: .8;
+}
+
+.welcome-content button {
+  margin-top: 24px;
+  padding: 14px 32px;
+  border-radius: 30px;
+  border: none;
+  cursor: pointer;
+  background: #e9a7b8;
+  font-size: 18px;
+}
+
+.intro-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.intro-slide {
+  max-width: 420px;
+  animation: slide-in .35s ease;
+}
+
+.intro-icon {
+  font-size: 72px;
+  margin-bottom: 24px;
+}
+
+.intro-slide h1 {
+  font-size: 28px;
+}
+
+.intro-slide p {
+  font-size: 18px;
+  line-height: 2;
+  opacity: .8;
+}
+
+.intro-dots {
+  display: flex;
+  gap: 8px;
+  margin: 30px;
+}
+
+.intro-dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ddd;
+}
+
+.intro-dots span.active {
+  background: #e9a7b8;
+}
+
+.intro-button {
+  padding: 14px 35px;
+  border-radius: 30px;
+  border: none;
+  font-size: 18px;
+}
+
+@keyframes slide-in {
+  from {
+    opacity:0;
+    transform:translateY(20px);
+  }
+
+  to {
+    opacity:1;
+    transform:translateY(0);
+  }
+}
