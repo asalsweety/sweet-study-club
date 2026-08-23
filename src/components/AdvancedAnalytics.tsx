@@ -125,6 +125,24 @@ function safePercentage(value: number | string | null) {
   return Number(value) || 0
 }
 
+function comparisonChange(
+  percentage: number | string | null,
+  currentSeconds: number | string | null | undefined,
+  previousSeconds: number | string | null | undefined,
+) {
+  const current = Math.max(0, Number(currentSeconds) || 0)
+  const previous = Math.max(0, Number(previousSeconds) || 0)
+
+  if (
+    Math.floor(current / 60) === 0 &&
+    Math.floor(previous / 60) === 0
+  ) {
+    return 0
+  }
+
+  return safePercentage(percentage)
+}
+
 export default function AdvancedAnalytics() {
   const [dailyAnalytics, setDailyAnalytics] = useState<
     DailyAnalytics[]
@@ -250,12 +268,16 @@ export default function AdvancedAnalytics() {
     )
   }, [dailyAnalytics])
 
-  const weekChange = Number(
+  const weekChange = comparisonChange(
     summary?.week_change_percent ?? 0,
+    summary?.current_week_seconds,
+    summary?.previous_week_seconds,
   )
 
-  const monthChange = Number(
+  const monthChange = comparisonChange(
     summary?.month_change_percent ?? 0,
+    summary?.current_month_seconds,
+    summary?.previous_month_seconds,
   )
 
   if (loading) {

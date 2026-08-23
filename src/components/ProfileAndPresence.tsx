@@ -108,6 +108,21 @@ export default function ProfileAndPresence({
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [message, setMessage] = useState('')
   const channelRef = useRef<RealtimeChannel | null>(null)
+  const presencePayloadRef = useRef<PresencePayload>({
+    user_id: userId,
+    online_at: new Date().toISOString(),
+    status: activeStatus,
+    subject_name: activeSubject,
+    mode: activeMode,
+  })
+
+  presencePayloadRef.current = {
+    user_id: userId,
+    online_at: new Date().toISOString(),
+    status: activeStatus,
+    subject_name: activeSubject,
+    mode: activeMode,
+  }
 
   const loadMembers = useCallback(async () => {
     const { data, error } = await supabase
@@ -175,13 +190,7 @@ export default function ProfileAndPresence({
       .subscribe(async (status) => {
         if (status !== 'SUBSCRIBED') return
 
-        await channel.track({
-          user_id: userId,
-          online_at: new Date().toISOString(),
-          status: activeStatus,
-          subject_name: activeSubject,
-          mode: activeMode,
-        } satisfies PresencePayload)
+        await channel.track(presencePayloadRef.current)
       })
 
     return () => {
@@ -196,13 +205,7 @@ export default function ProfileAndPresence({
 
     if (!channel) return
 
-    void channel.track({
-      user_id: userId,
-      online_at: new Date().toISOString(),
-      status: activeStatus,
-      subject_name: activeSubject,
-      mode: activeMode,
-    } satisfies PresencePayload)
+    void channel.track(presencePayloadRef.current)
   }, [activeMode, activeStatus, activeSubject, userId])
 
   const visibleMembers = useMemo(() => {

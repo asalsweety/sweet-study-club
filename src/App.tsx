@@ -198,6 +198,18 @@ function App() {
     setFocusLock(nextState?.focus_lock_enabled ?? false)
   }, [])
 
+  const loadAccountData = useCallback(
+    async (userId: string) => {
+      await Promise.all([
+        loadProfile(userId),
+        loadTodaySessions(),
+        loadActiveState(),
+      ])
+      await supabase.rpc('touch_presence')
+    },
+    [loadActiveState, loadProfile, loadTodaySessions],
+  )
+
   useEffect(() => {
     let mounted = true
 
@@ -216,12 +228,7 @@ function App() {
 
       if (data.session?.user?.id) {
         try {
-          await Promise.all([
-            loadProfile(data.session?.user?.id),
-            loadTodaySessions(),
-            loadActiveState(),
-          ])
-          await supabase.rpc('touch_presence')
+          await loadAccountData(data.session.user.id)
         } catch (requestError) {
           setMessage(
             requestError instanceof Error
@@ -238,15 +245,43 @@ function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession)
+
+      if (event === 'INITIAL_SESSION') return
+
+      if (!nextSession?.user?.id) {
+        setProfile(null)
+        setSessions([])
+        setActiveState(null)
+        setLoading(false)
+        return
+      }
+
+      if (event !== 'SIGNED_IN') return
+
+      setLoading(true)
+
+      void (async () => {
+        try {
+          await loadAccountData(nextSession.user.id)
+        } catch (requestError) {
+          setMessage(
+            requestError instanceof Error
+              ? requestError.message
+              : 'اطلاعات برنامه بارگذاری نشد.',
+          )
+        } finally {
+          if (mounted) setLoading(false)
+        }
+      })()
     })
 
     return () => {
       mounted = false
       subscription.unsubscribe()
     }
-  }, [loadActiveState, loadProfile, loadTodaySessions])
+  }, [loadAccountData])
 
   useEffect(() => {
     if (!activeState) {
