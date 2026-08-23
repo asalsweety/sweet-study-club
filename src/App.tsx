@@ -448,6 +448,13 @@ function App() {
       return (
         <Welcome
           onStart={() => setOnboardingStep('intro')}
+          onLogin={() => {
+            localStorage.setItem(
+              'sweet-study-onboarding',
+              'true'
+            )
+            setShowOnboarding(false)
+          }}
         />
       )
     }
