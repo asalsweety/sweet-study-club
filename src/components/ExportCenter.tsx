@@ -5,8 +5,6 @@ import {
   useRef,
   useState,
 } from 'react'
-import html2canvas from 'html2canvas'
-import { jsPDF } from 'jspdf'
 import {
   BarChart3,
   CalendarDays,
@@ -22,6 +20,8 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { escapeCsvValue } from '../shared/lib/csv'
+import { collectPages } from '../shared/lib/pagination'
 
 type ReportPeriod = 'weekly' | 'monthly'
 
@@ -78,6 +78,7 @@ type UserProgress = {
 }
 
 type StudyLogExport = {
+  id: string
   started_at: string
   subject_name: string | null
   duration_seconds: number
@@ -86,6 +87,7 @@ type StudyLogExport = {
 }
 
 type ExportCenterProps = {
+  userId: string
   displayName: string
 }
 
@@ -147,11 +149,6 @@ function weekDayLabel(value: string) {
   }).format(new Date(`${value}T12:00:00+03:30`))
 }
 
-function escapeCsvValue(value: string | number | null) {
-  const text = value === null ? '' : String(value)
-  return `"${text.replaceAll('"', '""')}"`
-}
-
 function downloadBlob(blob: Blob, fileName: string) {
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
@@ -172,6 +169,7 @@ function currentFileDate() {
 }
 
 export default function ExportCenter({
+  userId,
   displayName,
 }: ExportCenterProps) {
   const reportRef = useRef<HTMLDivElement | null>(null)
@@ -334,6 +332,8 @@ export default function ExportCenter({
     element: HTMLElement,
     scale = 2,
   ) => {
+    const { default: html2canvas } = await import('html2canvas')
+
     await document.fonts.ready
 
     return html2canvas(element, {
@@ -356,10 +356,10 @@ export default function ExportCenter({
     setMessage('در حال ساخت گزارش PDF...')
 
     try {
-      const canvas = await createCanvas(
-        reportRef.current,
-        2,
-      )
+      const [{ jsPDF }, canvas] = await Promise.all([
+        import('jspdf'),
+        createCanvas(reportRef.current, 2),
+      ])
 
       const imageData = canvas.toDataURL(
         'image/jpeg',
@@ -562,22 +562,26 @@ export default function ExportCenter({
     setWorkingAction('csv')
     setMessage('در حال آماده‌سازی فایل CSV...')
 
-    const { data, error } = await supabase
-      .from('study_logs')
-      .select(
-        'started_at, subject_name, duration_seconds, status, session_id',
+    try {
+      const logs = await collectPages<StudyLogExport>(
+        async (from, to) => {
+          const { data, error } = await supabase
+            .from('study_logs')
+            .select(
+              'id, started_at, subject_name, duration_seconds, status, session_id',
+            )
+            .eq('user_id', userId)
+            .order('started_at', { ascending: false })
+            .order('id', { ascending: false })
+            .range(from, to)
+
+          if (error) throw error
+
+          return (data ?? []) as StudyLogExport[]
+        },
       )
-      .order('started_at', { ascending: false })
 
-    if (error) {
-      setMessage(error.message)
-      setWorkingAction(null)
-      return
-    }
-
-    const logs = (data ?? []) as StudyLogExport[]
-
-    const header = [
+      const header = [
       'تاریخ',
       'ساعت شروع',
       'نام درس',
@@ -586,7 +590,7 @@ export default function ExportCenter({
       'نوع مطالعه',
     ]
 
-    const rows = logs.map((log) => {
+      const rows = logs.map((log) => {
       const startedAt = new Date(log.started_at)
 
       const date = new Intl.DateTimeFormat('fa-IR', {
@@ -614,24 +618,32 @@ export default function ExportCenter({
       ]
     })
 
-    const csv = [
+      const csv = [
       header.map(escapeCsvValue).join(','),
       ...rows.map((row) =>
         row.map(escapeCsvValue).join(','),
       ),
     ].join('\n')
 
-    const blob = new Blob([`\uFEFF${csv}`], {
-      type: 'text/csv;charset=utf-8',
-    })
+      const blob = new Blob([`\uFEFF${csv}`], {
+        type: 'text/csv;charset=utf-8',
+      })
 
-    downloadBlob(
-      blob,
-      `sweet-study-data-${currentFileDate()}.csv`,
-    )
+      downloadBlob(
+        blob,
+        `sweet-study-data-${currentFileDate()}.csv`,
+      )
 
-    setMessage('فایل CSV ذخیره شد 📊')
-    setWorkingAction(null)
+      setMessage('فایل CSV ذخیره شد 📊')
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'ساخت فایل CSV ناموفق بود.',
+      )
+    } finally {
+      setWorkingAction(null)
+    }
   }
 
   if (loading) {

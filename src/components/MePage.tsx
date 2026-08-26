@@ -46,10 +46,6 @@ export default function MePage({
         userId={profile.id}
         displayName={profile.display_name}
         avatarUrl={profile.avatar_url}
-        activeStatus="online"
-        activeSubject={null}
-        activeMode={null}
-        showMembers={false}
         onProfileUpdated={(updatedProfile) => {
           onProfileUpdated({
             ...profile,

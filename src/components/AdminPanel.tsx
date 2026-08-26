@@ -228,6 +228,9 @@ export default function AdminPanel() {
 
     const reordered = [...templates]
     const [selectedTemplate] = reordered.splice(currentIndex, 1)
+
+    if (!selectedTemplate) return
+
     reordered.splice(destinationIndex, 0, selectedTemplate)
 
     setTemplates(reordered)

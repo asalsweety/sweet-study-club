@@ -61,6 +61,8 @@ export default function Auth() {
           <input
             className="auth-input"
             type="email"
+            aria-label="ایمیل"
+            autoComplete="email"
             placeholder="ایمیل"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -70,6 +72,8 @@ export default function Auth() {
           <input
             className="auth-input"
             type="password"
+            aria-label="رمز عبور"
+            autoComplete={isSignup ? 'new-password' : 'current-password'}
             placeholder="رمز عبور"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

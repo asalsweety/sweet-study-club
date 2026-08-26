@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import type { FormEvent } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import {
@@ -16,15 +23,24 @@ import { supabase } from './lib/supabase'
 import BottomNavigation, {
   type AppTab,
 } from './components/BottomNavigation'
-import LiveStudy from './components/LiveStudy'
-import MePage from './components/MePage'
-import ProgressPage from './components/ProgressPage'
-import RankingPage from './components/RankingPage'
-import GamificationCelebration from './components/GamificationCelebration'
 import './App.css'
 import Auth from './components/Auth'
 import Welcome from './components/onboarding/Welcome'
 import IntroSlider from './components/onboarding/IntroSlider'
+import {
+  calculateElapsed,
+  dateInTehran,
+  findActiveScheduledSession,
+  formatTimer,
+} from './shared/lib/time'
+
+const GamificationCelebration = lazy(
+  () => import('./components/GamificationCelebration'),
+)
+const LiveStudy = lazy(() => import('./components/LiveStudy'))
+const MePage = lazy(() => import('./components/MePage'))
+const ProgressPage = lazy(() => import('./components/ProgressPage'))
+const RankingPage = lazy(() => import('./components/RankingPage'))
 
 type Profile = {
   id: string
@@ -70,37 +86,6 @@ const subjects = [
   'مرور',
 ]
 
-function formatTimer(totalSeconds: number) {
-  const safeSeconds = Math.max(0, Math.floor(totalSeconds))
-  const hours = String(Math.floor(safeSeconds / 3600)).padStart(2, '0')
-  const minutes = String(Math.floor((safeSeconds % 3600) / 60)).padStart(2, '0')
-  const seconds = String(safeSeconds % 60).padStart(2, '0')
-
-  return `${hours}:${minutes}:${seconds}`
-}
-
-function calculateElapsed(state: ActiveStudyState | null) {
-  if (!state) return 0
-
-  if (
-    state.timer_status === 'running' &&
-    state.current_segment_started_at
-  ) {
-    const currentSegment = Math.max(
-      0,
-      Math.floor(
-        (Date.now() -
-          new Date(state.current_segment_started_at).getTime()) /
-          1000,
-      ),
-    )
-
-    return state.accumulated_seconds + currentSegment
-  }
-
-  return state.accumulated_seconds
-}
-
 function formatClock(value: string) {
   return new Intl.DateTimeFormat('fa-IR', {
     hour: '2-digit',
@@ -109,26 +94,7 @@ function formatClock(value: string) {
   }).format(new Date(value))
 }
 
-function todayInTehran() {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Tehran',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date())
-}
-
 function App() {
-
-  useEffect(() => {
-    const seen = localStorage.getItem(
-      'sweet-study-onboarding'
-    )
-
-    if (!seen) {
-      setShowOnboarding(true)
-    }
-  }, [])
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [sessions, setSessions] = useState<StudySession[]>([])
@@ -136,6 +102,7 @@ function App() {
     useState<ActiveStudyState | null>(null)
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const [scheduleClock, setScheduleClock] = useState(() => Date.now())
   const [selectedSubject, setSelectedSubject] = useState('زیست')
   const [customSubject, setCustomSubject] = useState('')
   const [focusLock, setFocusLock] = useState(false)
@@ -174,7 +141,7 @@ function App() {
       .select(
         'id, title, session_date, starts_at, ends_at, is_cancelled',
       )
-      .eq('session_date', todayInTehran())
+      .eq('session_date', dateInTehran())
       .eq('is_cancelled', false)
       .order('starts_at', { ascending: true })
 
@@ -298,20 +265,32 @@ function App() {
     return () => window.clearInterval(interval)
   }, [activeState])
 
-  useEffect(() => {
-    if (!activeState) {
-      setElapsedSeconds(0)
-      return
-    }
+  const currentScheduleDate = useMemo(
+    () => dateInTehran(scheduleClock),
+    [scheduleClock],
+  )
 
-    setElapsedSeconds(calculateElapsed(activeState))
+  useEffect(() => {
+    if (!session) return
 
     const interval = window.setInterval(() => {
-      setElapsedSeconds(calculateElapsed(activeState))
-    }, 1000)
+      setScheduleClock(Date.now())
+    }, 30_000)
 
     return () => window.clearInterval(interval)
-  }, [activeState])
+  }, [session])
+
+  useEffect(() => {
+    if (!session) return
+
+    void loadTodaySessions().catch((requestError) => {
+      setMessage(
+        requestError instanceof Error
+          ? requestError.message
+          : 'برنامه امروز بارگذاری نشد.',
+      )
+    })
+  }, [currentScheduleDate, loadTodaySessions, session])
 
   useEffect(() => {
     if (!session) return
@@ -334,15 +313,8 @@ function App() {
   }, [activeState?.focus_lock_enabled])
 
   const activeScheduledSession = useMemo(() => {
-    const now = Date.now()
-
-    return sessions.find((item) => {
-      return (
-        new Date(item.starts_at).getTime() <= now &&
-        new Date(item.ends_at).getTime() > now
-      )
-    })
-  }, [sessions])
+    return findActiveScheduledSession(sessions, scheduleClock)
+  }, [scheduleClock, sessions])
 
   const startFreeStudy = async (event: FormEvent) => {
     event.preventDefault()
@@ -599,8 +571,15 @@ function App() {
 
       {message && <div className="notice">{message}</div>}
 
-      {activeTab === 'home' && (
-        <div className="tab-page home-tab-page">
+      <Suspense
+        fallback={
+          <section className="loading-screen" aria-live="polite">
+            در حال بارگذاری بخش...
+          </section>
+        }
+      >
+        {activeTab === 'home' && (
+          <div className="tab-page home-tab-page">
           <section className="hero-grid">
         <article className="timer-card">
           <div className="timer-heading">
@@ -730,39 +709,40 @@ function App() {
       </section>
 
           <LiveStudy currentUserId={profile.id} />
-        </div>
-      )}
+          </div>
+        )}
 
-      {activeTab === 'me' && (
-        <div className="tab-page me-tab-page">
-          <MePage
-            profile={profile}
-            onProfileUpdated={(updatedProfile) =>
-              setProfile(updatedProfile)
-            }
-          />
-        </div>
-      )}
+        {activeTab === 'me' && (
+          <div className="tab-page me-tab-page">
+            <MePage
+              profile={profile}
+              onProfileUpdated={(updatedProfile) =>
+                setProfile(updatedProfile)
+              }
+            />
+          </div>
+        )}
 
-      {activeTab === 'progress' && (
-        <div className="tab-page progress-tab-page">
-          <ProgressPage
-            userId={profile.id}
-            displayName={profile.display_name}
-          />
-        </div>
-      )}
+        {activeTab === 'progress' && (
+          <div className="tab-page progress-tab-page">
+            <ProgressPage
+              userId={profile.id}
+              displayName={profile.display_name}
+            />
+          </div>
+        )}
 
-      {activeTab === 'ranking' && (
-        <div className="tab-page ranking-tab-page">
-          <RankingPage currentUserId={profile.id} />
-        </div>
-      )}
+        {activeTab === 'ranking' && (
+          <div className="tab-page ranking-tab-page">
+            <RankingPage currentUserId={profile.id} />
+          </div>
+        )}
 
-      <GamificationCelebration
-        userId={profile.id}
-        refreshKey={activeState ? 1 : 0}
-      />
+        <GamificationCelebration
+          userId={profile.id}
+          refreshKey={activeState ? 1 : 0}
+        />
+      </Suspense>
 
       <BottomNavigation
         activeTab={activeTab}

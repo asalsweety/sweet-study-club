@@ -1,0 +1,45 @@
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - hesam-dev
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  application:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Apply migrations to isolated local D1
+        run: npm run db:migrate:local
+
+      - name: Validate application
+        run: npm run validate
+
+      - name: Validate Cloudflare deployment bundle
+        run: npm run cf:dry-run
+
+      - name: Reject high-severity dependency advisories
+        run: npm audit --audit-level=high

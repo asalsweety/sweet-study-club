@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "sweet-study-club",
+  "main": "./worker/index.ts",
+  "compatibility_date": "2026-08-26",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "sweet-study-club",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "preview_database_id": "sweet-study-club-local",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "APP_ENVIRONMENT": "local"
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}

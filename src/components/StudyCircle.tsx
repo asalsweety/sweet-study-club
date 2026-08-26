@@ -20,6 +20,10 @@ import {
   X,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import {
+  createInviteLink,
+  extractInviteToken,
+} from '../shared/lib/invitations'
 
 type CircleIdentity = {
   invite_token: string
@@ -75,27 +79,6 @@ function firstLetter(name: string) {
   return name.trim().slice(0, 1).toUpperCase() || '?'
 }
 
-function extractInviteToken(value: string) {
-  const trimmedValue = value.trim()
-
-  if (!trimmedValue) return ''
-
-  try {
-    const url = new URL(trimmedValue)
-    return (
-      url.searchParams.get('circle') ??
-      url.pathname.split('/').filter(Boolean).pop() ??
-      ''
-    )
-  } catch {
-    return trimmedValue
-      .replace(/^.*[?&]circle=/i, '')
-      .split('&')[0]
-      .trim()
-      .toLowerCase()
-  }
-}
-
 function relationshipLabel(
   relationship: SearchResult['relationship_status'],
 ) {
@@ -145,9 +128,7 @@ export default function StudyCircle() {
   const inviteLink = useMemo(() => {
     if (!identity?.invite_token) return ''
 
-    return `${publicAppUrl}/?circle=${encodeURIComponent(
-      identity.invite_token,
-    )}`
+    return createInviteLink(publicAppUrl, identity.invite_token)
   }, [identity?.invite_token, publicAppUrl])
 
   const receivedRequests = useMemo(
@@ -210,13 +191,26 @@ export default function StudyCircle() {
   }, [loadCircle])
 
   useEffect(() => {
-    const tokenFromUrl = new URLSearchParams(
-      window.location.search,
-    ).get('circle')
+    const currentUrl = new URL(window.location.href)
+    const hashParameters = new URLSearchParams(currentUrl.hash.slice(1))
+    const tokenFromUrl =
+      currentUrl.searchParams.get('circle') ??
+      hashParameters.get('circle')
 
     if (tokenFromUrl) {
       setInviteInput(tokenFromUrl)
       setActiveTab('invite')
+
+      currentUrl.searchParams.delete('circle')
+      hashParameters.delete('circle')
+      currentUrl.hash = hashParameters.toString()
+        ? `#${hashParameters.toString()}`
+        : ''
+      window.history.replaceState(
+        window.history.state,
+        '',
+        `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`,
+      )
     }
   }, [])
 

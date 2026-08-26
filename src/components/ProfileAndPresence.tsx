@@ -1,11 +1,5 @@
 import type { ChangeEvent } from 'react'
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { useEffect, useState } from 'react'
 import {
   Camera,
   Check,
@@ -13,19 +7,9 @@ import {
   LoaderCircle,
   Pencil,
   Save,
-  UsersRound,
   X,
 } from 'lucide-react'
-import type { RealtimeChannel } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
-
-type PublicMember = {
-  user_id: string
-  display_name: string
-  avatar_url: string | null
-  visible_current_streak: number | null
-  show_study_time: boolean
-}
 
 type OwnProfile = {
   id: string
@@ -33,25 +17,11 @@ type OwnProfile = {
   avatar_url: string | null
 }
 
-type PresencePayload = {
-  user_id: string
-  online_at: string
-  status: 'online' | 'studying' | 'break'
-  subject_name: string | null
-  mode: 'free' | 'scheduled' | 'pomodoro' | null
-}
-
-type PresenceMap = Record<string, PresencePayload>
-
 type ProfileAndPresenceProps = {
   userId: string
   displayName: string
   avatarUrl: string | null
-  activeStatus: 'online' | 'studying' | 'break'
-  activeSubject: string | null
-  activeMode: 'free' | 'scheduled' | 'pomodoro' | null
   onProfileUpdated: (profile: OwnProfile) => void
-  showMembers?: boolean
 }
 
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024
@@ -66,172 +36,21 @@ function getExtension(file: File) {
   return 'jpg'
 }
 
-function flattenPresenceState(
-  rawState: Record<string, PresencePayload[]>,
-) {
-  const result: PresenceMap = {}
-
-  Object.values(rawState).forEach((entries) => {
-    entries.forEach((entry) => {
-      if (!entry.user_id) return
-
-      const existing = result[entry.user_id]
-
-      if (
-        !existing ||
-        new Date(entry.online_at).getTime() >
-          new Date(existing.online_at).getTime()
-      ) {
-        result[entry.user_id] = entry
-      }
-    })
-  })
-
-  return result
-}
-
 export default function ProfileAndPresence({
   userId,
   displayName,
   avatarUrl,
-  activeStatus,
-  activeSubject,
-  activeMode,
   onProfileUpdated,
-  showMembers = true,
 }: ProfileAndPresenceProps) {
-  const [members, setMembers] = useState<PublicMember[]>([])
-  const [presenceMap, setPresenceMap] = useState<PresenceMap>({})
   const [editingName, setEditingName] = useState(false)
   const [nextName, setNextName] = useState(displayName)
   const [savingName, setSavingName] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [message, setMessage] = useState('')
-  const channelRef = useRef<RealtimeChannel | null>(null)
-  const presencePayloadRef = useRef<PresencePayload>({
-    user_id: userId,
-    online_at: new Date().toISOString(),
-    status: activeStatus,
-    subject_name: activeSubject,
-    mode: activeMode,
-  })
-
-  presencePayloadRef.current = {
-    user_id: userId,
-    online_at: new Date().toISOString(),
-    status: activeStatus,
-    subject_name: activeSubject,
-    mode: activeMode,
-  }
-
-  const loadMembers = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('public_member_profiles')
-      .select(
-        'user_id, display_name, avatar_url, visible_current_streak, show_study_time',
-      )
-      .order('display_name', { ascending: true })
-
-    if (error) {
-      setMessage(error.message)
-      return
-    }
-
-    setMembers((data ?? []) as PublicMember[])
-  }, [])
 
   useEffect(() => {
     setNextName(displayName)
   }, [displayName])
-
-  useEffect(() => {
-    void loadMembers()
-  }, [loadMembers])
-
-  useEffect(() => {
-    const channel = supabase.channel('sweet-study-club-main', {
-      config: {
-        presence: {
-          key: userId,
-        },
-      },
-    })
-
-    channelRef.current = channel
-
-    channel
-      .on('presence', { event: 'sync' }, () => {
-        const state =
-          channel.presenceState<PresencePayload>() as Record<
-            string,
-            PresencePayload[]
-          >
-
-        setPresenceMap(flattenPresenceState(state))
-      })
-      .on('presence', { event: 'join' }, () => {
-        const state =
-          channel.presenceState<PresencePayload>() as Record<
-            string,
-            PresencePayload[]
-          >
-
-        setPresenceMap(flattenPresenceState(state))
-      })
-      .on('presence', { event: 'leave' }, () => {
-        const state =
-          channel.presenceState<PresencePayload>() as Record<
-            string,
-            PresencePayload[]
-          >
-
-        setPresenceMap(flattenPresenceState(state))
-      })
-      .subscribe(async (status) => {
-        if (status !== 'SUBSCRIBED') return
-
-        await channel.track(presencePayloadRef.current)
-      })
-
-    return () => {
-      void channel.untrack()
-      void supabase.removeChannel(channel)
-      channelRef.current = null
-    }
-  }, [userId])
-
-  useEffect(() => {
-    const channel = channelRef.current
-
-    if (!channel) return
-
-    void channel.track(presencePayloadRef.current)
-  }, [activeMode, activeStatus, activeSubject, userId])
-
-  const visibleMembers = useMemo(() => {
-    return members
-      .map((member) => ({
-        ...member,
-        presence: presenceMap[member.user_id] ?? null,
-      }))
-      .sort((first, second) => {
-        const firstOnline = first.presence ? 1 : 0
-        const secondOnline = second.presence ? 1 : 0
-
-        if (secondOnline !== firstOnline) {
-          return secondOnline - firstOnline
-        }
-
-        return first.display_name.localeCompare(
-          second.display_name,
-          'fa',
-        )
-      })
-  }, [members, presenceMap])
-
-  const onlineCount = visibleMembers.filter(
-    (member) => member.presence,
-  ).length
 
   const saveDisplayName = async () => {
     const trimmedName = nextName.trim()
@@ -263,7 +82,6 @@ export default function ProfileAndPresence({
       onProfileUpdated(updatedProfile)
       setEditingName(false)
       setMessage('نام پروفایل ذخیره شد 🎀')
-      await loadMembers()
     }
 
     setSavingName(false)
@@ -327,7 +145,6 @@ export default function ProfileAndPresence({
       const updatedProfile = data as OwnProfile
       onProfileUpdated(updatedProfile)
       setMessage('عکس پروفایل ذخیره شد 🌸')
-      await loadMembers()
     }
 
     setUploadingAvatar(false)
@@ -424,89 +241,6 @@ export default function ProfileAndPresence({
         </div>
       </article>
 
-      {showMembers && (
-      <article className="online-members-card">
-        <div className="online-title">
-          <div>
-            <p>حضور زنده در اتاق</p>
-            <h2>🎀 اعضای آنلاین</h2>
-          </div>
-
-          <span>
-            <UsersRound size={18} />
-            {onlineCount.toLocaleString('fa-IR')} نفر آنلاین
-          </span>
-        </div>
-
-        <div className="online-member-list">
-          {visibleMembers.map((member) => {
-            const presence = member.presence
-            const isOnline = Boolean(presence)
-
-            return (
-              <div
-                className={`online-member-row ${
-                  isOnline ? 'member-is-online' : ''
-                }`}
-                key={member.user_id}
-              >
-                <div className="member-avatar-wrapper">
-                  {member.avatar_url ? (
-                    <img
-                      src={member.avatar_url}
-                      alt={member.display_name}
-                    />
-                  ) : (
-                    <span>{firstLetter(member.display_name)}</span>
-                  )}
-
-                  <i
-                    className={
-                      isOnline ? 'online-dot' : 'offline-dot'
-                    }
-                  />
-                </div>
-
-                <div className="member-info">
-                  <strong>
-                    {member.display_name}
-                    {member.user_id === userId ? ' • شما' : ''}
-                  </strong>
-
-                  {!presence && <small>آفلاین</small>}
-
-                  {presence?.status === 'online' && (
-                    <small>آنلاین</small>
-                  )}
-
-                  {presence?.status === 'break' && (
-                    <small>در حال استراحت ☕</small>
-                  )}
-
-                  {presence?.status === 'studying' && (
-                    <small>
-                      در حال مطالعه{' '}
-                      {presence.subject_name
-                        ? `• ${presence.subject_name}`
-                        : ''}
-                    </small>
-                  )}
-                </div>
-
-                {member.visible_current_streak !== null && (
-                  <span className="member-streak">
-                    🔥{' '}
-                    {member.visible_current_streak.toLocaleString(
-                      'fa-IR',
-                    )}
-                  </span>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </article>
-      )}
     </section>
   )
 }

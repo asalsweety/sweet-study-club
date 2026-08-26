@@ -1,26 +1,43 @@
 {
   "name": "sweet-study-club",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.9.0",
   "type": "module",
+  "packageManager": "npm@10.9.3",
+  "engines": {
+    "node": ">=22.19.0 <23",
+    "npm": ">=10.9.0 <11"
+  },
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "oxlint src vite.config.ts",
-    "preview": "vite preview"
+    "dev": "node scripts/run-vite.mjs",
+    "build": "tsc -b && node scripts/run-vite.mjs build",
+    "typecheck": "tsc -b",
+    "lint": "oxlint src worker scripts vite.config.ts",
+    "test": "node scripts/run-vitest.mjs",
+    "test:run": "node scripts/run-vitest.mjs run",
+    "check:artifacts": "node scripts/check-build-artifacts.mjs",
+    "validate": "npm run lint && npm run typecheck && npm run test:run && npm run build && npm run check:artifacts",
+    "preview": "node scripts/run-vite.mjs preview",
+    "cf:dry-run": "node scripts/run-wrangler.mjs deploy --dry-run --config dist/sweet_study_club/wrangler.json",
+    "db:migrate:local": "node scripts/run-wrangler.mjs d1 migrations apply DB --local",
+    "db:migrations:list:local": "node scripts/run-wrangler.mjs d1 migrations list DB --local"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.7",
-    "date-fns": "^4.4.0",
+    "@tanstack/react-query": "^5.102.6",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.13.5",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.25.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-router": "^8.2.0",
-    "recharts": "^3.9.2"
+    "react-router-dom": "^7.18.2",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.54.0",
+    "@cloudflare/workers-types": "^5.20260826.1",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
@@ -28,6 +45,8 @@
     "oxlint": "^1.71.0",
     "typescript": "~6.0.2",
     "vite": "^8.1.1",
-    "vite-plugin-pwa": "^1.3.0"
+    "vite-plugin-pwa": "^1.3.0",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.126.0"
   }
 }

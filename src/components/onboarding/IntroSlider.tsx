@@ -1,6 +1,6 @@
-import { useState } from "react"
-import IntroSlide from "./IntroSlide"
-import "./onboarding.css"
+import { useState } from 'react'
+import IntroSlide from './IntroSlide'
+import './onboarding.css'
 
 type Props = {
   onFinish: () => void
@@ -8,46 +8,46 @@ type Props = {
 
 const slides = [
   {
-    title: "هر دقیقه مطالعه مهم است ⏱️",
-    text: "زمان مطالعه‌ات را ثبت کن، جلسه‌هایت را ببین و مسیر پیشرفتت را بساز.",
-    icon: "📚",
+    title: 'هر دقیقه مطالعه مهم است ⏱️',
+    text: 'زمان مطالعه‌ات را ثبت کن، جلسه‌هایت را ببین و مسیر پیشرفتت را بساز.',
+    icon: '📚',
   },
   {
-    title: "پیشرفتت را ببین 📊",
-    text: "گزارش‌ها، نمودارها و عادت‌های مطالعه‌ات را تحلیل کن.",
-    icon: "🌱",
+    title: 'پیشرفتت را ببین 📊',
+    text: 'گزارش‌ها، نمودارها و عادت‌های مطالعه‌ات را تحلیل کن.',
+    icon: '🌱',
   },
   {
-    title: "Study DNA خودت را بشناس 🧬",
-    text: "سبک یادگیری خودت را پیدا کن و بهتر برنامه‌ریزی کن.",
-    icon: "✨",
+    title: 'Study DNA خودت را بشناس 🧬',
+    text: 'سبک یادگیری خودت را پیدا کن و بهتر برنامه‌ریزی کن.',
+    icon: '✨',
   },
   {
-    title: "هر قدم کوچک یک موفقیت است 🏆",
-    text: "XP بگیر، Level بالا برو و Achievement باز کن.",
-    icon: "⭐",
+    title: 'هر قدم کوچک یک موفقیت است 🏆',
+    text: 'XP بگیر، Level بالا برو و Achievement باز کن.',
+    icon: '⭐',
   },
   {
-    title: "تنها درس نخوان 🤍",
-    text: "در Study Circle کنار دوستانت مسیر مطالعه را ادامه بده.",
-    icon: "👥",
+    title: 'تنها درس نخوان 🤍',
+    text: 'در Study Circle کنار دوستانت مسیر مطالعه را ادامه بده.',
+    icon: '👥',
   },
   {
-    title: "Study AI کنار توست 🤖",
-    text: "برنامه‌ریزی، فلش‌کارت، تحلیل عملکرد و کمک در یادگیری.",
-    icon: "🧠",
+    title: 'Study AI کنار توست 🤖',
+    text: 'برنامه‌ریزی، فلش‌کارت، تحلیل عملکرد و کمک در یادگیری.',
+    icon: '🧠',
   },
   {
-    title: "برنامه و مشاوره واقعی 📚",
-    text: "با تجربه کسی که کنکور ۱۴۰۰ را بدون سهمیه شرکت کرد، رتبه ۸۳۷ کشوری گرفت و امروز دانشجوی پزشکی است.",
-    icon: "🎓",
+    title: 'برنامه و مشاوره واقعی 📚',
+    text: 'با تجربه کسی که کنکور ۱۴۰۰ را بدون سهمیه شرکت کرد، رتبه ۸۳۷ کشوری گرفت و امروز دانشجوی پزشکی است.',
+    icon: '🎓',
   },
-]
+] as const
 
 export default function IntroSlider({ onFinish }: Props) {
   const [index, setIndex] = useState(0)
 
-  const slide = slides[index]
+  const slide = slides[index] ?? slides[0]
 
   const next = () => {
     if (index === slides.length - 1) {
@@ -71,7 +71,7 @@ export default function IntroSlider({ onFinish }: Props) {
         {slides.map((_, i) => (
           <span
             key={i}
-            className={i === index ? "active" : ""}
+            className={i === index ? 'active' : ''}
           />
         ))}
       </div>
@@ -81,8 +81,8 @@ export default function IntroSlider({ onFinish }: Props) {
         onClick={next}
       >
         {index === slides.length - 1
-          ? "شروع کنیم ✨"
-          : "بعدی"}
+          ? 'شروع کنیم ✨'
+          : 'بعدی'}
       </button>
 
     </main>

@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import {
   CalendarDays,
   Flame,
@@ -7,8 +14,9 @@ import {
   Trophy,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import AdvancedAnalytics from './AdvancedAnalytics'
-import ExportCenter from './ExportCenter'
+
+const AdvancedAnalytics = lazy(() => import('./AdvancedAnalytics'))
+const ExportCenter = lazy(() => import('./ExportCenter'))
 
 type StudySummary = {
   user_id: string
@@ -319,9 +327,16 @@ export default function ProgressPage({
         </article>
       </div>
 
-      <AdvancedAnalytics />
-
-      <ExportCenter displayName={displayName} />
+      <Suspense
+        fallback={
+          <section className="progress-page-loading" aria-live="polite">
+            در حال بارگذاری ابزارهای پیشرفت...
+          </section>
+        }
+      >
+        <AdvancedAnalytics />
+        <ExportCenter userId={userId} displayName={displayName} />
+      </Suspense>
     </section>
   )
 }
