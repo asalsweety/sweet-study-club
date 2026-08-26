@@ -87,6 +87,13 @@ Exit gate:
 
 Goal: replace the monolithic web UI with feature-owned routes and accessible primitives.
 
+Foundation delivered early to make Phase 2 safe:
+
+- Shared profile and study domain models use provider-neutral names.
+- Legacy Supabase profile/study adapters validate and translate old rows at one boundary.
+- Home, focus mode, and the start-study dialog are feature-owned components instead of inline `App.tsx` markup.
+- `App.tsx` has been reduced from 861 to 582 lines; authentication/session orchestration and route composition remain to extract.
+
 Target structure:
 
 ```text

@@ -1,12 +1,12 @@
 type TimerState = {
-  timer_status: 'running' | 'paused'
-  current_segment_started_at: string | null
-  accumulated_seconds: number
+  timerStatus: 'running' | 'paused'
+  currentSegmentStartedAt: string | null
+  accumulatedSeconds: number
 }
 
 type ScheduledWindow = {
-  starts_at: string
-  ends_at: string
+  startsAt: string
+  endsAt: string
 }
 
 function finiteSeconds(value: number) {
@@ -28,16 +28,16 @@ export function calculateElapsed(
 ) {
   if (!state) return 0
 
-  const accumulatedSeconds = finiteSeconds(state.accumulated_seconds)
+  const accumulatedSeconds = finiteSeconds(state.accumulatedSeconds)
 
   if (
-    state.timer_status !== 'running' ||
-    !state.current_segment_started_at
+    state.timerStatus !== 'running' ||
+    !state.currentSegmentStartedAt
   ) {
     return accumulatedSeconds
   }
 
-  const segmentStartedAt = Date.parse(state.current_segment_started_at)
+  const segmentStartedAt = Date.parse(state.currentSegmentStartedAt)
 
   if (!Number.isFinite(segmentStartedAt)) {
     return accumulatedSeconds
@@ -55,8 +55,8 @@ export function findActiveScheduledSession<T extends ScheduledWindow>(
   nowMilliseconds = Date.now(),
 ) {
   return sessions.find((session) => {
-    const startsAt = Date.parse(session.starts_at)
-    const endsAt = Date.parse(session.ends_at)
+    const startsAt = Date.parse(session.startsAt)
+    const endsAt = Date.parse(session.endsAt)
 
     return (
       Number.isFinite(startsAt) &&

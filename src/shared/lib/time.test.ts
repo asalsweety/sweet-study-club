@@ -21,9 +21,9 @@ describe('calculateElapsed', () => {
     expect(
       calculateElapsed(
         {
-          timer_status: 'running',
-          current_segment_started_at: '2026-08-26T12:00:00.000Z',
-          accumulated_seconds: 25,
+          timerStatus: 'running',
+          currentSegmentStartedAt: '2026-08-26T12:00:00.000Z',
+          accumulatedSeconds: 25,
         },
         now,
       ),
@@ -33,17 +33,17 @@ describe('calculateElapsed', () => {
   it('keeps paused and malformed timers stable', () => {
     expect(
       calculateElapsed({
-        timer_status: 'paused',
-        current_segment_started_at: '2026-08-26T12:00:00.000Z',
-        accumulated_seconds: 25,
+        timerStatus: 'paused',
+        currentSegmentStartedAt: '2026-08-26T12:00:00.000Z',
+        accumulatedSeconds: 25,
       }),
     ).toBe(25)
 
     expect(
       calculateElapsed({
-        timer_status: 'running',
-        current_segment_started_at: 'not-a-date',
-        accumulated_seconds: 25,
+        timerStatus: 'running',
+        currentSegmentStartedAt: 'not-a-date',
+        accumulatedSeconds: 25,
       }),
     ).toBe(25)
   })
@@ -53,13 +53,13 @@ describe('findActiveScheduledSession', () => {
   const sessions = [
     {
       id: 'first',
-      starts_at: '2026-08-26T12:00:00.000Z',
-      ends_at: '2026-08-26T13:00:00.000Z',
+      startsAt: '2026-08-26T12:00:00.000Z',
+      endsAt: '2026-08-26T13:00:00.000Z',
     },
     {
       id: 'invalid',
-      starts_at: 'invalid',
-      ends_at: 'invalid',
+      startsAt: 'invalid',
+      endsAt: 'invalid',
     },
   ]
 

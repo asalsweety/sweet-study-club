@@ -9,23 +9,23 @@ import {
 import type { FormEvent } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { Navigate, Route, Routes } from 'react-router-dom'
-import {
-  Clock3,
-  Focus,
-  LogOut,
-  Moon,
-  Pause,
-  Play,
-  RotateCcw,
-  Square,
-  Sun,
-} from 'lucide-react'
+import { LogOut, Moon, Sun } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import BottomNavigation from './components/BottomNavigation'
 import './App.css'
 import Auth from './components/Auth'
 import Welcome from './components/onboarding/Welcome'
 import IntroSlider from './components/onboarding/IntroSlider'
+import type { Profile } from './entities/profile/model'
+import type {
+  ActiveStudyState,
+  StudySession,
+} from './entities/study/model'
+import { legacySupabaseProfileApi } from './features/profile/api/legacySupabaseProfileApi'
+import { legacySupabaseStudyApi } from './features/study/api/legacySupabaseStudyApi'
+import FocusStudyScreen from './features/study/components/FocusStudyScreen'
+import StartStudyDialog from './features/study/components/StartStudyDialog'
+import StudyHomePage from './features/study/components/StudyHomePage'
 import {
   calculateElapsed,
   dateInTehran,
@@ -37,62 +37,9 @@ import { appRoutes } from './app/navigation/routes'
 const GamificationCelebration = lazy(
   () => import('./components/GamificationCelebration'),
 )
-const LiveStudy = lazy(() => import('./components/LiveStudy'))
 const MePage = lazy(() => import('./components/MePage'))
 const ProgressPage = lazy(() => import('./components/ProgressPage'))
 const RankingPage = lazy(() => import('./components/RankingPage'))
-
-type Profile = {
-  id: string
-  email: string
-  display_name: string
-  avatar_url: string | null
-  role: 'member' | 'admin'
-  theme: 'light' | 'dark' | 'system'
-}
-
-type StudySession = {
-  id: string
-  title: string
-  session_date: string
-  starts_at: string
-  ends_at: string
-  is_cancelled: boolean
-}
-
-type ActiveStudyState = {
-  user_id: string
-  log_id: string
-  mode: 'free' | 'scheduled' | 'pomodoro'
-  subject_name: string
-  session_id: string | null
-  timer_status: 'running' | 'paused'
-  started_at: string
-  current_segment_started_at: string | null
-  paused_at: string | null
-  accumulated_seconds: number
-  focus_lock_enabled: boolean
-}
-
-const subjects = [
-  'زیست',
-  'شیمی',
-  'فیزیک',
-  'ریاضی',
-  'ادبیات',
-  'دینی',
-  'زبان',
-  'تست جامع',
-  'مرور',
-]
-
-function formatClock(value: string) {
-  return new Intl.DateTimeFormat('fa-IR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Asia/Tehran',
-  }).format(new Date(value))
-}
 
 function App() {
   const [session, setSession] = useState<Session | null>(null)
@@ -124,44 +71,22 @@ function App() {
     customSubject.trim() || selectedSubject.trim()
 
   const loadProfile = useCallback(async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, email, display_name, avatar_url, role, theme')
-      .eq('id', userId)
-      .single()
-
-    if (error) throw error
-    setProfile(data as Profile)
+    setProfile(await legacySupabaseProfileApi.getProfile(userId))
   }, [])
 
   const loadTodaySessions = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('study_sessions')
-      .select(
-        'id, title, session_date, starts_at, ends_at, is_cancelled',
-      )
-      .eq('session_date', dateInTehran())
-      .eq('is_cancelled', false)
-      .order('starts_at', { ascending: true })
-
-    if (error) throw error
-    setSessions((data ?? []) as StudySession[])
+    setSessions(
+      await legacySupabaseStudyApi.listSessionsForDate(
+        dateInTehran(),
+      ),
+    )
   }, [])
 
   const loadActiveState = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('active_study_states')
-      .select(
-        'user_id, log_id, mode, subject_name, session_id, timer_status, started_at, current_segment_started_at, paused_at, accumulated_seconds, focus_lock_enabled',
-      )
-      .maybeSingle()
-
-    if (error) throw error
-
-    const nextState = (data ?? null) as ActiveStudyState | null
+    const nextState = await legacySupabaseStudyApi.getActiveState()
     setActiveState(nextState)
     setElapsedSeconds(calculateElapsed(nextState))
-    setFocusLock(nextState?.focus_lock_enabled ?? false)
+    setFocusLock(nextState?.focusLockEnabled ?? false)
   }, [])
 
   const loadAccountData = useCallback(
@@ -302,20 +227,20 @@ function App() {
   }, [session])
 
   useEffect(() => {
-    if (!activeState?.focus_lock_enabled) return
+    if (!activeState?.focusLockEnabled) return
 
     document.body.classList.add('focus-active')
 
     return () => {
       document.body.classList.remove('focus-active')
     }
-  }, [activeState?.focus_lock_enabled])
+  }, [activeState?.focusLockEnabled])
 
   const activeScheduledSession = useMemo(() => {
     return findActiveScheduledSession(sessions, scheduleClock)
   }, [scheduleClock, sessions])
 
-  const startFreeStudy = async (event: FormEvent) => {
+  const startFreeStudy = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     if (!currentSubject) {
@@ -326,22 +251,25 @@ function App() {
     setWorking(true)
     setMessage('')
 
-    const { error } = await supabase.rpc('start_study_timer', {
-      requested_mode: 'free',
-      requested_subject: currentSubject,
-      requested_session_id: null,
-      requested_focus_lock: focusLock,
-    })
-
-    if (error) {
-      setMessage(error.message)
-    } else {
+    try {
+      await legacySupabaseStudyApi.startTimer({
+        mode: 'free',
+        subject: currentSubject,
+        sessionId: null,
+        focusLockEnabled: focusLock,
+      })
       setShowStartPanel(false)
       setCustomSubject('')
       await loadActiveState()
+    } catch (requestError) {
+      setMessage(
+        requestError instanceof Error
+          ? requestError.message
+          : 'مطالعه شروع نشد.',
+      )
+    } finally {
+      setWorking(false)
     }
-
-    setWorking(false)
   }
 
   const startScheduledStudy = async () => {
@@ -358,68 +286,83 @@ function App() {
     setWorking(true)
     setMessage('')
 
-    const { error } = await supabase.rpc('start_study_timer', {
-      requested_mode: 'scheduled',
-      requested_subject: currentSubject,
-      requested_session_id: activeScheduledSession.id,
-      requested_focus_lock: focusLock,
-    })
-
-    if (error) {
-      setMessage(error.message)
-    } else {
+    try {
+      await legacySupabaseStudyApi.startTimer({
+        mode: 'scheduled',
+        subject: currentSubject,
+        sessionId: activeScheduledSession.id,
+        focusLockEnabled: focusLock,
+      })
       setShowStartPanel(false)
       setCustomSubject('')
       await loadActiveState()
+    } catch (requestError) {
+      setMessage(
+        requestError instanceof Error
+          ? requestError.message
+          : 'مطالعه زمان‌بندی‌شده شروع نشد.',
+      )
+    } finally {
+      setWorking(false)
     }
-
-    setWorking(false)
   }
 
   const pauseTimer = async () => {
     setWorking(true)
     setMessage('')
 
-    const { error } = await supabase.rpc('pause_study_timer')
-
-    if (error) setMessage(error.message)
-    else await loadActiveState()
-
-    setWorking(false)
+    try {
+      await legacySupabaseStudyApi.pauseTimer()
+      await loadActiveState()
+    } catch (requestError) {
+      setMessage(
+        requestError instanceof Error
+          ? requestError.message
+          : 'تایمر متوقف نشد.',
+      )
+    } finally {
+      setWorking(false)
+    }
   }
 
   const resumeTimer = async () => {
     setWorking(true)
     setMessage('')
 
-    const { error } = await supabase.rpc('resume_study_timer')
-
-    if (error) setMessage(error.message)
-    else await loadActiveState()
-
-    setWorking(false)
+    try {
+      await legacySupabaseStudyApi.resumeTimer()
+      await loadActiveState()
+    } catch (requestError) {
+      setMessage(
+        requestError instanceof Error
+          ? requestError.message
+          : 'تایمر ادامه پیدا نکرد.',
+      )
+    } finally {
+      setWorking(false)
+    }
   }
 
   const stopTimer = async () => {
     setWorking(true)
     setMessage('')
 
-    const { data, error } = await supabase.rpc('stop_study_timer')
-
-    if (error) {
-      setMessage(error.message)
-    } else {
-      const result = Array.isArray(data) ? data[0] : null
+    try {
       const savedSeconds =
-        result?.final_duration_seconds ?? elapsedSeconds
-
+        (await legacySupabaseStudyApi.stopTimer()) ?? elapsedSeconds
       setMessage(
         `آفرین! ${formatTimer(savedSeconds)} مطالعه ثبت شد 🎀`,
       )
       await loadActiveState()
+    } catch (requestError) {
+      setMessage(
+        requestError instanceof Error
+          ? requestError.message
+          : 'مطالعه ذخیره نشد.',
+      )
+    } finally {
+      setWorking(false)
     }
-
-    setWorking(false)
   }
 
   const toggleTheme = async () => {
@@ -427,13 +370,15 @@ function App() {
 
     const nextTheme = profile.theme === 'dark' ? 'light' : 'dark'
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({ theme: nextTheme })
-      .eq('id', profile.id)
-
-    if (!error) {
+    try {
+      await legacySupabaseProfileApi.updateTheme(profile.id, nextTheme)
       setProfile({ ...profile, theme: nextTheme })
+    } catch (requestError) {
+      setMessage(
+        requestError instanceof Error
+          ? requestError.message
+          : 'تم ذخیره نشد.',
+      )
     }
   }
 
@@ -491,56 +436,23 @@ function App() {
   }
 
 
-  if (activeState?.focus_lock_enabled) {
+  if (activeState?.focusLockEnabled) {
     return (
-      <main className={`focus-screen ${themeClass}`}>
-        <button
-          className="focus-exit"
-          onClick={() =>
-            setActiveState({
-              ...activeState,
-              focus_lock_enabled: false,
-            })
-          }
-        >
-          خروج از نمای فوکوس
-        </button>
-
-        <div className="focus-content">
-          <span>🌸 Sweet Focus</span>
-          <h1>{activeState.subject_name}</h1>
-          <strong>{formatTimer(elapsedSeconds)}</strong>
-
-          <p>
-            {activeState.timer_status === 'paused'
-              ? 'تایمر متوقف شده'
-              : 'در حال مطالعه'}
-          </p>
-
-          <div className="timer-buttons">
-            {activeState.timer_status === 'running' ? (
-              <button onClick={pauseTimer} disabled={working}>
-                <Pause size={18} />
-                توقف موقت
-              </button>
-            ) : (
-              <button onClick={resumeTimer} disabled={working}>
-                <Play size={18} />
-                ادامه
-              </button>
-            )}
-
-            <button
-              className="danger-button"
-              onClick={stopTimer}
-              disabled={working}
-            >
-              <Square size={18} />
-              پایان مطالعه
-            </button>
-          </div>
-        </div>
-      </main>
+      <FocusStudyScreen
+        activeState={activeState}
+        elapsedSeconds={elapsedSeconds}
+        themeClass={themeClass}
+        working={working}
+        onExit={() =>
+          setActiveState({
+            ...activeState,
+            focusLockEnabled: false,
+          })
+        }
+        onPause={() => void pauseTimer()}
+        onResume={() => void resumeTimer()}
+        onStop={() => void stopTimer()}
+      />
     )
   }
 
@@ -581,137 +493,18 @@ function App() {
           <Route
             path={appRoutes.home}
             element={
-              <div className="tab-page home-tab-page">
-          <section className="hero-grid">
-        <article className="timer-card">
-          <div className="timer-heading">
-            <div>
-              <span>تایمر مطالعه من</span>
-              <h2>
-                {activeState
-                  ? activeState.subject_name
-                  : 'هنوز مطالعه‌ای شروع نشده'}
-              </h2>
-            </div>
-
-            <Clock3 size={30} />
-          </div>
-
-          <strong className="main-timer">
-            {formatTimer(elapsedSeconds)}
-          </strong>
-
-          {activeState ? (
-            <div className="timer-buttons">
-              {activeState.timer_status === 'running' ? (
-                <button onClick={pauseTimer} disabled={working}>
-                  <Pause size={18} />
-                  Pause
-                </button>
-              ) : (
-                <button onClick={resumeTimer} disabled={working}>
-                  <Play size={18} />
-                  Resume
-                </button>
-              )}
-
-              <button
-                className="danger-button"
-                onClick={stopTimer}
-                disabled={working}
-              >
-                <Square size={18} />
-                Stop
-              </button>
-            </div>
-          ) : (
-            <button
-              className="primary-button"
-              onClick={() => setShowStartPanel(true)}
-            >
-              <Play size={18} />
-              شروع مطالعه
-            </button>
-          )}
-        </article>
-
-        <article className="profile-card">
-          <div className="avatar-circle">
-            {profile.display_name.slice(0, 1).toUpperCase()}
-          </div>
-
-          <div>
-            <span>
-              {profile.role === 'admin' ? 'مدیر اصلی' : 'عضو'}
-            </span>
-            <h2>{profile.display_name}</h2>
-            <p>
-              {profile.role === 'admin'
-                ? 'مدیر Sweet Study Club'
-                : 'عضو Sweet Study Club'}
-            </p>
-          </div>
-        </article>
-      </section>
-
-      <section className="content-grid">
-        <article className="panel">
-          <div className="panel-title">
-            <div>
-              <p>برنامه امروز</p>
-              <h2>پارت‌های درسی</h2>
-            </div>
-
-            <span>{sessions.length.toLocaleString('fa-IR')} پارت</span>
-          </div>
-
-          <div className="session-list">
-            {sessions.map((item) => {
-              const isActive = item.id === activeScheduledSession?.id
-
-              return (
-                <div
-                  className={`session-row ${
-                    isActive ? 'active-session' : ''
-                  }`}
-                  key={item.id}
-                >
-                  <div>
-                    <strong>{item.title}</strong>
-                    <span>
-                      {formatClock(item.starts_at)} تا{' '}
-                      {formatClock(item.ends_at)}
-                    </span>
-                  </div>
-
-                  {isActive && <b>در حال برگزاری</b>}
-                </div>
-              )
-            })}
-          </div>
-        </article>
-
-        <article className="panel free-study-panel">
-          <p>🌸 Sweet Free Study</p>
-          <h2>هر وقت خواستی شروع کن</h2>
-          <span>
-            بدون محدودیت زمانی، درس را انتخاب کن و تایمرت را روشن
-            کن.
-          </span>
-
-          <button
-            className="primary-button"
-            onClick={() => setShowStartPanel(true)}
-            disabled={Boolean(activeState)}
-          >
-            <Play size={18} />
-            شروع مطالعه آزاد
-          </button>
-        </article>
-      </section>
-
-          <LiveStudy currentUserId={profile.id} />
-              </div>
+              <StudyHomePage
+                profile={profile}
+                sessions={sessions}
+                activeState={activeState}
+                activeScheduledSession={activeScheduledSession}
+                elapsedSeconds={elapsedSeconds}
+                working={working}
+                onOpenStartDialog={() => setShowStartPanel(true)}
+                onPause={() => void pauseTimer()}
+                onResume={() => void resumeTimer()}
+                onStop={() => void stopTimer()}
+              />
             }
           />
 
@@ -735,7 +528,7 @@ function App() {
               <div className="tab-page progress-tab-page">
                 <ProgressPage
                   userId={profile.id}
-                  displayName={profile.display_name}
+                  displayName={profile.displayName}
                 />
               </div>
             }
@@ -765,94 +558,22 @@ function App() {
       <BottomNavigation />
 
       {showStartPanel && !activeState && (
-        <div className="modal">
-          <button
-            className="modal-backdrop"
-            aria-label="بستن"
-            onClick={() => setShowStartPanel(false)}
-          />
-
-          <form className="start-card" onSubmit={startFreeStudy}>
-            <button
-              type="button"
-              className="close-button"
-              onClick={() => setShowStartPanel(false)}
-            >
-              ×
-            </button>
-
-            <p>📚 امروز چی می‌خونی؟</p>
-            <h2>شروع یک مطالعه جدید</h2>
-
-            <div className="subject-grid">
-              {subjects.map((subject) => (
-                <button
-                  type="button"
-                  key={subject}
-                  className={
-                    selectedSubject === subject &&
-                    !customSubject.trim()
-                      ? 'selected'
-                      : ''
-                  }
-                  onClick={() => {
-                    setSelectedSubject(subject)
-                    setCustomSubject('')
-                  }}
-                >
-                  {subject}
-                </button>
-              ))}
-            </div>
-
-            <label>
-              یا اسم درس را بنویس
-              <input
-                value={customSubject}
-                onChange={(event) =>
-                  setCustomSubject(event.target.value)
-                }
-                placeholder="مثلاً آناتومی"
-              />
-            </label>
-
-            <label className="focus-option">
-              <input
-                type="checkbox"
-                checked={focusLock}
-                onChange={(event) =>
-                  setFocusLock(event.target.checked)
-                }
-              />
-
-              <span>
-                <Focus size={20} />
-                فعال‌کردن Focus Lock
-              </span>
-            </label>
-
-            <div className="start-actions">
-              <button
-                type="submit"
-                className="primary-button"
-                disabled={working}
-              >
-                <Play size={18} />
-                شروع مطالعه آزاد
-              </button>
-
-              <button
-                type="button"
-                className="secondary-button"
-                disabled={!activeScheduledSession || working}
-                onClick={startScheduledStudy}
-              >
-                <RotateCcw size={18} />
-                ورود به پارت فعال
-              </button>
-            </div>
-          </form>
-        </div>
+        <StartStudyDialog
+          selectedSubject={selectedSubject}
+          customSubject={customSubject}
+          focusLockEnabled={focusLock}
+          scheduledSessionAvailable={Boolean(activeScheduledSession)}
+          working={working}
+          onClose={() => setShowStartPanel(false)}
+          onSelectSubject={(subject) => {
+            setSelectedSubject(subject)
+            setCustomSubject('')
+          }}
+          onCustomSubjectChange={setCustomSubject}
+          onFocusLockChange={setFocusLock}
+          onStartFreeStudy={(event) => void startFreeStudy(event)}
+          onStartScheduledStudy={() => void startScheduledStudy()}
+        />
       )}
     </main>
   )

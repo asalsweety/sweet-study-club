@@ -12,15 +12,7 @@ import ProfileAndPresence from './ProfileAndPresence'
 import GamificationProfile from './GamificationProfile'
 import StudyDNA from './StudyDNA'
 import StudyCircle from './StudyCircle'
-
-type Profile = {
-  id: string
-  email: string
-  display_name: string
-  avatar_url: string | null
-  role: 'member' | 'admin'
-  theme: 'light' | 'dark' | 'system'
-}
+import type { Profile } from '../entities/profile/model'
 
 type MePageProps = {
   profile: Profile
@@ -44,13 +36,13 @@ export default function MePage({
 
       <ProfileAndPresence
         userId={profile.id}
-        displayName={profile.display_name}
-        avatarUrl={profile.avatar_url}
+        displayName={profile.displayName}
+        avatarUrl={profile.avatarUrl}
         onProfileUpdated={(updatedProfile) => {
           onProfileUpdated({
             ...profile,
-            display_name: updatedProfile.display_name,
-            avatar_url: updatedProfile.avatar_url,
+            displayName: updatedProfile.display_name,
+            avatarUrl: updatedProfile.avatar_url,
           })
         }}
       />

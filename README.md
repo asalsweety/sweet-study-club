@@ -69,6 +69,8 @@ Browser components must not access D1, R2, or Durable Objects directly. They cal
 
 Shared code is deliberately limited to API contracts, validation, domain calculations, design tokens, and the generated API client. DOM components and React Native components remain platform-owned because forced UI sharing usually creates unreadable platform conditionals.
 
+Until migration is complete, files named `legacySupabase*` are the explicit compatibility boundary. They validate old provider-shaped rows and translate snake_case fields into provider-neutral domain models. New UI code must not add direct Supabase storage calls; each migrated Worker endpoint removes a method from those adapters.
+
 ## PWA and Offline Boundaries
 
 The service worker precaches the application shell and versioned core assets. It does not cache `/api/*`, Supabase requests, private study records, or the heavy PDF export libraries.
