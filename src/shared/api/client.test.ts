@@ -1,0 +1,92 @@
+import { describe, expect, it, vi } from 'vitest'
+import { createApiClient } from './client'
+
+const validStatus = {
+  service: 'sweet-study-club-api',
+  status: 'ok',
+  environment: 'test',
+  timestamp: '2026-08-26T10:00:00.000Z',
+  requestId: 'request-123',
+} as const
+
+describe('API client', () => {
+  it('uses the configured origin and includes session cookies', async () => {
+    const fetcher = vi.fn(async () => Response.json(validStatus))
+    const client = createApiClient({
+      baseUrl: 'https://api.example.com/',
+      fetcher,
+    })
+
+    await expect(client.getHealth()).resolves.toEqual(validStatus)
+    expect(fetcher).toHaveBeenCalledWith(
+      'https://api.example.com/api/health',
+      expect.objectContaining({ credentials: 'include' }),
+    )
+  })
+
+  it('rejects a successful response that violates the contract', async () => {
+    const client = createApiClient({
+      fetcher: vi.fn(async () => Response.json({ status: 'ok' })),
+    })
+
+    await expect(client.getHealth()).rejects.toMatchObject({
+      code: 'INVALID_RESPONSE',
+      status: 200,
+    })
+  })
+
+  it('returns a valid unavailable readiness status', async () => {
+    const unavailableStatus = {
+      ...validStatus,
+      status: 'unavailable',
+    } as const
+    const client = createApiClient({
+      fetcher: vi.fn(async () =>
+        Response.json(unavailableStatus, { status: 503 }),
+      ),
+    })
+
+    await expect(client.getReadiness()).resolves.toEqual(
+      unavailableStatus,
+    )
+  })
+
+  it('preserves safe API error details and the request ID', async () => {
+    const client = createApiClient({
+      fetcher: vi.fn(async () =>
+        Response.json(
+          {
+            error: {
+              code: 'NOT_FOUND',
+              message: 'The route does not exist.',
+              requestId: 'request-456',
+            },
+          },
+          { status: 404 },
+        ),
+      ),
+    })
+
+    await expect(client.getHealth()).rejects.toEqual(
+      expect.objectContaining({
+        code: 'NOT_FOUND',
+        message: 'The route does not exist.',
+        requestId: 'request-456',
+        status: 404,
+      }),
+    )
+  })
+
+  it('turns transport failures into a stable application error', async () => {
+    const client = createApiClient({
+      fetcher: vi.fn(async () => {
+        throw new TypeError('private transport details')
+      }),
+    })
+
+    await expect(client.getHealth()).rejects.toMatchObject({
+      code: 'NETWORK_ERROR',
+      message: 'The API could not be reached.',
+    })
+  })
+})

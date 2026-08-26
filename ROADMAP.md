@@ -43,6 +43,9 @@ Delivered:
 - PWA manifest, app-shell service worker, API cache exclusion, and user-controlled update prompt.
 - Cloudflare `_headers` security policy and removal of Netlify configuration.
 - Worker/client artifact separation and successful deployment dry-run.
+- React Query and browser-router application providers.
+- Deep-linkable home, progress, ranking, and profile routes.
+- Runtime-validated API client with web/Expo base-URL support.
 
 Remaining:
 
@@ -50,7 +53,6 @@ Remaining:
 - Preview and production Wrangler environments with real D1/R2 bindings.
 - Clean auth provider integration, secure cookies, email verification/recovery, Turnstile, and rate limiting.
 - Core identity/profile schema with negative authorization tests.
-- React application providers, routes, and shared API client.
 
 Exit gate:
 

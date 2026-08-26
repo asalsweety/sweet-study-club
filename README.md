@@ -11,6 +11,7 @@ The accepted architecture is documented in `docs/adr/0001-cloudflare-pwa-expo.md
 - Cloudflare Workers Static Assets builds the web client and Worker API as one deployable unit.
 - D1 has a versioned local foundation migration and readiness check.
 - The PWA has a manifest, service worker, offline app-shell cache, and user-controlled update prompt.
+- Primary screens use real browser URLs and a shared runtime-validated API client is ready for migrated endpoints and Expo.
 - Netlify configuration has been removed.
 - Existing product screens still call Supabase temporarily. Supabase is a migration source, not the target architecture.
 - No Cloudflare resource or production deployment has been created from this repository yet. `wrangler.jsonc` intentionally contains a non-deployable placeholder database ID.

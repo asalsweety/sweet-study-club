@@ -4,65 +4,63 @@ import {
   Trophy,
   UserRound,
 } from 'lucide-react'
-
-export type AppTab = 'home' | 'progress' | 'ranking' | 'me'
-
-type BottomNavigationProps = {
-  activeTab: AppTab
-  onChange: (tab: AppTab) => void
-}
+import { NavLink } from 'react-router-dom'
+import { appRoutes } from '../app/navigation/routes'
 
 const navigationItems: Array<{
-  id: AppTab
+  path: (typeof appRoutes)[keyof typeof appRoutes]
   label: string
   icon: typeof House
 }> = [
   {
-    id: 'home',
+    path: appRoutes.home,
     label: 'Home',
     icon: House,
   },
   {
-    id: 'progress',
+    path: appRoutes.progress,
     label: 'Progress',
     icon: BarChart3,
   },
   {
-    id: 'ranking',
+    path: appRoutes.ranking,
     label: 'Ranking',
     icon: Trophy,
   },
   {
-    id: 'me',
+    path: appRoutes.profile,
     label: 'Me',
     icon: UserRound,
   },
 ]
 
-export default function BottomNavigation({
-  activeTab,
-  onChange,
-}: BottomNavigationProps) {
+export default function BottomNavigation() {
   return (
     <nav className="bottom-navigation" aria-label="صفحات اصلی">
       {navigationItems.map((item) => {
         const Icon = item.icon
-        const isActive = activeTab === item.id
-
         return (
-          <button
-            type="button"
-            key={item.id}
-            className={isActive ? 'active' : ''}
-            aria-current={isActive ? 'page' : undefined}
-            onClick={() => onChange(item.id)}
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.path === appRoutes.home}
+            className={({ isActive }) =>
+              isActive ? 'active' : undefined
+            }
           >
-            <span className="navigation-icon">
-              <Icon size={22} strokeWidth={isActive ? 2.6 : 2} />
-            </span>
+            {({ isActive }) => (
+              <>
+                <span className="navigation-icon">
+                  <Icon
+                    size={22}
+                    strokeWidth={isActive ? 2.6 : 2}
+                  />
+                </span>
 
-            <small>{item.label}</small>
-          </button>
+                <small>{item.label}</small>
+              </>
+            )}
+          </NavLink>
         )
       })}
     </nav>

@@ -8,6 +8,7 @@ import {
 } from 'react'
 import type { FormEvent } from 'react'
 import type { Session } from '@supabase/supabase-js'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import {
   Clock3,
   Focus,
@@ -20,9 +21,7 @@ import {
   Sun,
 } from 'lucide-react'
 import { supabase } from './lib/supabase'
-import BottomNavigation, {
-  type AppTab,
-} from './components/BottomNavigation'
+import BottomNavigation from './components/BottomNavigation'
 import './App.css'
 import Auth from './components/Auth'
 import Welcome from './components/onboarding/Welcome'
@@ -33,6 +32,7 @@ import {
   findActiveScheduledSession,
   formatTimer,
 } from './shared/lib/time'
+import { appRoutes } from './app/navigation/routes'
 
 const GamificationCelebration = lazy(
   () => import('./components/GamificationCelebration'),
@@ -110,7 +110,6 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [working, setWorking] = useState(false)
   const [message, setMessage] = useState('')
-  const [activeTab, setActiveTab] = useState<AppTab>('home')
   const [showOnboarding, setShowOnboarding] = useState(() => {
     const seen = localStorage.getItem(
       'sweet-study-onboarding'
@@ -578,8 +577,11 @@ function App() {
           </section>
         }
       >
-        {activeTab === 'home' && (
-          <div className="tab-page home-tab-page">
+        <Routes>
+          <Route
+            path={appRoutes.home}
+            element={
+              <div className="tab-page home-tab-page">
           <section className="hero-grid">
         <article className="timer-card">
           <div className="timer-heading">
@@ -709,34 +711,50 @@ function App() {
       </section>
 
           <LiveStudy currentUserId={profile.id} />
-          </div>
-        )}
+              </div>
+            }
+          />
 
-        {activeTab === 'me' && (
-          <div className="tab-page me-tab-page">
-            <MePage
-              profile={profile}
-              onProfileUpdated={(updatedProfile) =>
-                setProfile(updatedProfile)
-              }
-            />
-          </div>
-        )}
+          <Route
+            path={appRoutes.profile}
+            element={
+              <div className="tab-page me-tab-page">
+                <MePage
+                  profile={profile}
+                  onProfileUpdated={(updatedProfile) =>
+                    setProfile(updatedProfile)
+                  }
+                />
+              </div>
+            }
+          />
 
-        {activeTab === 'progress' && (
-          <div className="tab-page progress-tab-page">
-            <ProgressPage
-              userId={profile.id}
-              displayName={profile.display_name}
-            />
-          </div>
-        )}
+          <Route
+            path={appRoutes.progress}
+            element={
+              <div className="tab-page progress-tab-page">
+                <ProgressPage
+                  userId={profile.id}
+                  displayName={profile.display_name}
+                />
+              </div>
+            }
+          />
 
-        {activeTab === 'ranking' && (
-          <div className="tab-page ranking-tab-page">
-            <RankingPage currentUserId={profile.id} />
-          </div>
-        )}
+          <Route
+            path={appRoutes.ranking}
+            element={
+              <div className="tab-page ranking-tab-page">
+                <RankingPage currentUserId={profile.id} />
+              </div>
+            }
+          />
+
+          <Route
+            path="*"
+            element={<Navigate to={appRoutes.home} replace />}
+          />
+        </Routes>
 
         <GamificationCelebration
           userId={profile.id}
@@ -744,16 +762,7 @@ function App() {
         />
       </Suspense>
 
-      <BottomNavigation
-        activeTab={activeTab}
-        onChange={(nextTab) => {
-          setActiveTab(nextTab)
-          window.scrollTo({
-            top: 0,
-            behavior: 'smooth',
-          })
-        }}
-      />
+      <BottomNavigation />
 
       {showStartPanel && !activeState && (
         <div className="modal">
