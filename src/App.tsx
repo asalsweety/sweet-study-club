@@ -14,8 +14,6 @@ import {
   Flower2,
   LoaderCircle,
   LogOut,
-  Moon,
-  Sun,
 } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import BottomNavigation from './components/BottomNavigation'
@@ -44,11 +42,14 @@ import { demoReviewEnabled } from './shared/config/demo-review'
 import { Alert, AlertDescription } from './components/ui/alert'
 import { Badge } from './components/ui/badge'
 import { Button } from './components/ui/button'
-import ThemePicker from './features/theme/components/ThemePicker'
+import ThemeToolbar from './features/theme/components/ThemeToolbar'
 import {
+  applyThemeToDocument,
+  readStoredColorMode,
   readStoredThemePreset,
+  storeColorMode,
   storeThemePreset,
-  themePresetClasses,
+  type ColorMode,
   type ThemePreset,
 } from './features/theme/model'
 
@@ -88,6 +89,7 @@ function App() {
   const [working, setWorking] = useState(false)
   const [message, setMessage] = useState('')
   const [themePreset, setThemePreset] = useState(readStoredThemePreset)
+  const [colorMode, setColorMode] = useState(readStoredColorMode)
   const [showOnboarding, setShowOnboarding] = useState(() => {
     const onboardingPreviewRequested =
       window.location.pathname === '/onboarding' ||
@@ -271,21 +273,8 @@ function App() {
   }, [activeState?.focusLockEnabled])
 
   useEffect(() => {
-    const root = document.documentElement
-    root.classList.remove(...themePresetClasses)
-    root.classList.add('theme-preset', `theme-${themePreset}`)
-
-    return () => {
-      root.classList.remove('theme-preset', `theme-${themePreset}`)
-    }
-  }, [themePreset])
-
-  useEffect(() => {
-    document.documentElement.classList.toggle(
-      'theme-dark',
-      profile?.theme === 'dark',
-    )
-  }, [profile?.theme])
+    applyThemeToDocument(themePreset, colorMode)
+  }, [colorMode, themePreset])
 
   const activeScheduledSession = useMemo(() => {
     return findActiveScheduledSession(sessions, scheduleClock)
@@ -502,24 +491,29 @@ function App() {
     }
   }
 
-  const toggleTheme = async () => {
+  const updateColorMode = async (nextMode: ColorMode) => {
+    const previousMode = colorMode
+    const previousProfile = profile
+
+    setColorMode(nextMode)
+    storeColorMode(nextMode)
+
     if (!profile) return
 
-    const nextTheme = profile.theme === 'dark' ? 'light' : 'dark'
+    setProfile({ ...profile, theme: nextMode })
 
-    if (demoMode) {
-      setProfile({ ...profile, theme: nextTheme })
-      return
-    }
+    if (demoMode) return
 
     try {
-      await legacySupabaseProfileApi.updateTheme(profile.id, nextTheme)
-      setProfile({ ...profile, theme: nextTheme })
+      await legacySupabaseProfileApi.updateTheme(profile.id, nextMode)
     } catch (requestError) {
+      setColorMode(previousMode)
+      storeColorMode(previousMode)
+      setProfile(previousProfile)
       setMessage(
         requestError instanceof Error
           ? requestError.message
-          : 'تم ذخیره نشد.',
+          : 'حالت نمایش ذخیره نشد.',
       )
     }
   }
@@ -540,7 +534,7 @@ function App() {
   }
 
   const themeClass =
-    profile?.theme === 'dark' ? 'theme-dark' : 'theme-light'
+    colorMode === 'dark' ? 'theme-dark' : 'theme-light'
 
   const finishOnboarding = () => {
     localStorage.setItem('sweet-study-onboarding', 'true')
@@ -561,6 +555,16 @@ function App() {
     storeThemePreset(nextTheme)
   }
 
+  const publicThemeToolbar = (
+    <ThemeToolbar
+      floating
+      preset={themePreset}
+      mode={colorMode}
+      onPresetChange={updateThemePreset}
+      onModeChange={(nextMode) => void updateColorMode(nextMode)}
+    />
+  )
+
   if (loading) {
     return (
       <main className="grid min-h-dvh place-items-center bg-background text-foreground">
@@ -575,27 +579,36 @@ function App() {
   if (showOnboarding) {
     if (onboardingStep === 'welcome') {
       return (
-        <Welcome
-          onStart={() => setOnboardingStep('intro')}
-          onLogin={finishOnboarding}
-        />
+        <>
+          {publicThemeToolbar}
+          <Welcome
+            onStart={() => setOnboardingStep('intro')}
+            onLogin={finishOnboarding}
+          />
+        </>
       )
     }
 
     return (
-      <IntroSlider onFinish={finishOnboarding} />
+      <>
+        {publicThemeToolbar}
+        <IntroSlider onFinish={finishOnboarding} />
+      </>
     )
   }
 
   if (!session) {
     return (
-      <Auth
-        onDemoLogin={enterDemoReview}
-        onPreviewOnboarding={() => {
-          setOnboardingStep('welcome')
-          setShowOnboarding(true)
-        }}
-      />
+      <>
+        {publicThemeToolbar}
+        <Auth
+          onDemoLogin={enterDemoReview}
+          onPreviewOnboarding={() => {
+            setOnboardingStep('welcome')
+            setShowOnboarding(true)
+          }}
+        />
+      </>
     )
   }
 
@@ -663,19 +676,12 @@ function App() {
           >
             <CircleHelp />
           </Button>
-          <ThemePicker value={themePreset} onChange={updateThemePreset} />
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={toggleTheme}
-            aria-label={profile.theme === 'dark' ? 'فعال‌کردن تم روشن' : 'فعال‌کردن تم تیره'}
-          >
-            {profile.theme === 'dark' ? (
-              <Sun size={19} />
-            ) : (
-              <Moon size={19} />
-            )}
-          </Button>
+          <ThemeToolbar
+            preset={themePreset}
+            mode={colorMode}
+            onPresetChange={updateThemePreset}
+            onModeChange={(nextMode) => void updateColorMode(nextMode)}
+          />
 
           <Button variant="ghost" onClick={logout}>
             <LogOut size={19} />

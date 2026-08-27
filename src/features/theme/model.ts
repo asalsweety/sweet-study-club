@@ -62,22 +62,62 @@ export const themePresetOptions = [
 ] as const
 
 export type ThemePreset = (typeof themePresetOptions)[number]['value']
+export type ColorMode = 'light' | 'dark'
 
-const storageKey = 'sweet-study-theme-preset'
+const themeStorageKey = 'sweet-study-theme-preset'
+const modeStorageKey = 'sweet-study-color-mode'
 
 export function isThemePreset(value: string | null): value is ThemePreset {
   return themePresetOptions.some((option) => option.value === value)
 }
 
 export function readStoredThemePreset(): ThemePreset {
-  const storedTheme = localStorage.getItem(storageKey)
+  const storedTheme = localStorage.getItem(themeStorageKey)
   return isThemePreset(storedTheme) ? storedTheme : 'sweet'
 }
 
 export function storeThemePreset(theme: ThemePreset) {
-  localStorage.setItem(storageKey, theme)
+  localStorage.setItem(themeStorageKey, theme)
+}
+
+export function readStoredColorMode(): ColorMode {
+  const storedMode = localStorage.getItem(modeStorageKey)
+
+  if (storedMode === 'light' || storedMode === 'dark') {
+    return storedMode
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light'
+}
+
+export function storeColorMode(mode: ColorMode) {
+  localStorage.setItem(modeStorageKey, mode)
 }
 
 export const themePresetClasses = themePresetOptions.map(
   (option) => `theme-${option.value}`,
 )
+
+export function applyThemeToDocument(
+  preset: ThemePreset,
+  mode: ColorMode,
+) {
+  const root = document.documentElement
+  root.classList.remove(...themePresetClasses)
+  root.classList.add('theme-preset', `theme-${preset}`)
+  root.classList.toggle('theme-dark', mode === 'dark')
+  root.style.colorScheme = mode
+
+  const themeColor = getComputedStyle(root)
+    .getPropertyValue('--background')
+    .trim()
+  const themeColorMeta = document.querySelector<HTMLMetaElement>(
+    'meta[name="theme-color"]',
+  )
+
+  if (themeColor && themeColorMeta) {
+    themeColorMeta.content = themeColor
+  }
+}
