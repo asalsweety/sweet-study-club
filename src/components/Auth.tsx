@@ -152,12 +152,12 @@ export default function Auth({ onDemoLogin }: AuthProps) {
                     id="auth-password"
                     type={showPassword ? 'text' : 'password'}
                     autoComplete={isSignup ? 'new-password' : 'current-password'}
-                    placeholder="حداقل ۱۰ نویسه"
+                    placeholder={isSignup ? 'حداقل ۱۰ نویسه' : 'رمز عبور'}
                     dir="ltr"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     required
-                    minLength={10}
+                    minLength={isSignup ? 10 : undefined}
                     className="pl-11"
                   />
                   <Button
