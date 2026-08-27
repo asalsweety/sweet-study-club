@@ -1,7 +1,10 @@
 import { cloudflare } from '@cloudflare/vite-plugin'
+import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { rmSync } from 'node:fs'
+import { resolve } from 'node:path'
 
 export default defineConfig(({ mode }) => {
   const pwaPlugins = VitePWA({
@@ -48,9 +51,29 @@ export default defineConfig(({ mode }) => {
   const productionPlugins =
     mode === 'test'
       ? []
-      : [...pwaPlugins, cloudflare()]
+      : [
+          ...pwaPlugins,
+          cloudflare(),
+          {
+            name: 'exclude-local-worker-secrets',
+            apply: 'build' as const,
+            closeBundle() {
+              // Cloudflare's generated deploy directory can inherit local
+              // development secrets. Deployment artifacts must never keep them.
+              rmSync(
+                resolve('dist/sweet_study_club/.dev.vars'),
+                { force: true },
+              )
+            },
+          },
+        ]
 
   return {
-    plugins: [react(), ...productionPlugins],
+    plugins: [react(), tailwindcss(), ...productionPlugins],
+    resolve: {
+      alias: {
+        '@': resolve(import.meta.dirname, './src'),
+      },
+    },
   }
 })
