@@ -9,7 +9,7 @@ import {
 import type { FormEvent } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { LogOut, Moon, Sun } from 'lucide-react'
+import { Flower2, LoaderCircle, LogOut, Moon, Sun } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import BottomNavigation from './components/BottomNavigation'
 import './App.css'
@@ -34,6 +34,9 @@ import {
 } from './shared/lib/time'
 import { appRoutes } from './app/navigation/routes'
 import { demoReviewEnabled } from './shared/config/demo-review'
+import { Alert, AlertDescription } from './components/ui/alert'
+import { Badge } from './components/ui/badge'
+import { Button } from './components/ui/button'
 
 type AppSession = Session | { user: { id: string } }
 
@@ -505,7 +508,14 @@ function App() {
     profile?.theme === 'dark' ? 'theme-dark' : 'theme-light'
 
   if (loading) {
-    return <main className="loading-screen">در حال بارگذاری برنامه...</main>
+    return (
+      <main className="grid min-h-dvh place-items-center bg-background text-foreground">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <LoaderCircle className="animate-spin" size={20} />
+          در حال بارگذاری برنامه...
+        </div>
+      </main>
+    )
   }
 
   if (showOnboarding) {
@@ -543,8 +553,11 @@ function App() {
 
   if (!profile) {
     return (
-      <main className="loading-screen">
-        در حال ساخت پروفایل...
+      <main className="grid min-h-dvh place-items-center bg-background text-foreground">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <LoaderCircle className="animate-spin" size={20} />
+          در حال آماده‌کردن پروفایل...
+        </div>
       </main>
     )
   }
@@ -571,34 +584,59 @@ function App() {
   }
 
   return (
-    <main className={`app-shell ${themeClass}`}>
-      <header className="topbar">
-        <div>
-          <p>🎀 اتاق مطالعه گروهی</p>
-          <h1>Sweet Study Club</h1>
+    <main
+      className={`${themeClass} min-h-dvh bg-background px-4 py-5 text-foreground sm:px-6`}
+      dir="rtl"
+    >
+      <header className="mx-auto mb-6 flex w-full max-w-6xl items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
+            <Flower2 size={23} />
+          </span>
+          <div className="min-w-0">
+            <Badge variant="secondary" className="mb-1 hidden sm:inline-flex">
+              اتاق مطالعه گروهی
+            </Badge>
+            <h1 className="truncate text-lg font-black tracking-tight sm:text-2xl">
+              Sweet Study Club
+            </h1>
+          </div>
         </div>
 
-        <div className="header-actions">
-          <button onClick={toggleTheme} aria-label="تغییر تم">
+        <div className="flex items-center gap-1.5">
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={toggleTheme}
+            aria-label={profile.theme === 'dark' ? 'فعال‌کردن تم روشن' : 'فعال‌کردن تم تیره'}
+          >
             {profile.theme === 'dark' ? (
               <Sun size={19} />
             ) : (
               <Moon size={19} />
             )}
-          </button>
+          </Button>
 
-          <button onClick={logout}>
+          <Button variant="ghost" onClick={logout}>
             <LogOut size={19} />
-            خروج
-          </button>
+            <span className="hidden sm:inline">خروج</span>
+          </Button>
         </div>
       </header>
 
-      {message && <div className="notice">{message}</div>}
+      {message && (
+        <Alert className="mx-auto mb-5 max-w-6xl">
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
+      )}
 
       <Suspense
         fallback={
-          <section className="loading-screen" aria-live="polite">
+          <section
+            className="mx-auto flex min-h-64 max-w-6xl items-center justify-center gap-3 text-sm text-muted-foreground"
+            aria-live="polite"
+          >
+            <LoaderCircle className="animate-spin" size={20} />
             در حال بارگذاری بخش...
           </section>
         }
@@ -609,6 +647,7 @@ function App() {
             element={
               <StudyHomePage
                 profile={profile}
+                demoMode={demoMode}
                 sessions={sessions}
                 activeState={activeState}
                 activeScheduledSession={activeScheduledSession}
@@ -625,9 +664,10 @@ function App() {
           <Route
             path={appRoutes.profile}
             element={
-              <div className="tab-page me-tab-page">
+              <div className="mx-auto w-full max-w-6xl pb-28">
                 <MePage
                   profile={profile}
+                  demoMode={demoMode}
                   onProfileUpdated={(updatedProfile) =>
                     setProfile(updatedProfile)
                   }
@@ -639,10 +679,11 @@ function App() {
           <Route
             path={appRoutes.progress}
             element={
-              <div className="tab-page progress-tab-page">
+              <div className="mx-auto w-full max-w-6xl pb-28">
                 <ProgressPage
                   userId={profile.id}
                   displayName={profile.displayName}
+                  demoMode={demoMode}
                 />
               </div>
             }
@@ -651,8 +692,11 @@ function App() {
           <Route
             path={appRoutes.ranking}
             element={
-              <div className="tab-page ranking-tab-page">
-                <RankingPage currentUserId={profile.id} />
+              <div className="mx-auto w-full max-w-6xl pb-28">
+                <RankingPage
+                  currentUserId={profile.id}
+                  demoMode={demoMode}
+                />
               </div>
             }
           />
@@ -663,10 +707,12 @@ function App() {
           />
         </Routes>
 
-        <GamificationCelebration
-          userId={profile.id}
-          refreshKey={activeState ? 1 : 0}
-        />
+        {!demoMode && (
+          <GamificationCelebration
+            userId={profile.id}
+            refreshKey={activeState ? 1 : 0}
+          />
+        )}
       </Suspense>
 
       <BottomNavigation />
