@@ -41,6 +41,70 @@
   --success-foreground: oklch(0.985 0.01 155);
   --warning: oklch(0.76 0.15 75);
   --warning-foreground: oklch(0.28 0.055 55);
+  /* Shared visual roles keep legacy feature screens, exported reports, and
+     overlays aligned with every TweakCN palette in both color modes. */
+  --primary-gradient: linear-gradient(
+    135deg,
+    var(--primary),
+    var(--ring)
+  );
+  --primary-gradient-horizontal: linear-gradient(
+    90deg,
+    var(--primary),
+    var(--ring)
+  );
+  --primary-gradient-vertical: linear-gradient(
+    180deg,
+    var(--ring),
+    var(--primary)
+  );
+  --overlay: color-mix(in oklab, black 52%, transparent);
+  --success-soft: color-mix(
+    in oklab,
+    var(--success) 18%,
+    var(--card)
+  );
+  --success-text: color-mix(
+    in oklab,
+    var(--success) 72%,
+    var(--foreground)
+  );
+  --warning-soft: color-mix(
+    in oklab,
+    var(--warning) 20%,
+    var(--card)
+  );
+  --warning-text: color-mix(
+    in oklab,
+    var(--warning) 66%,
+    var(--foreground)
+  );
+  --destructive-soft: color-mix(
+    in oklab,
+    var(--destructive) 16%,
+    var(--card)
+  );
+  --destructive-text: color-mix(
+    in oklab,
+    var(--destructive) 72%,
+    var(--foreground)
+  );
+  --status-offline: color-mix(
+    in oklab,
+    var(--muted-foreground) 58%,
+    var(--card)
+  );
+  --brand-wash: color-mix(
+    in oklab,
+    var(--primary) 12%,
+    var(--background)
+  );
+  --brand-wash-strong: color-mix(
+    in oklab,
+    var(--chart-4) 22%,
+    var(--background)
+  );
+  --inset-highlight: color-mix(in oklab, white 42%, transparent);
   /* Transitional aliases keep older feature panels themeable while they move
      onto the shadcn primitives. They intentionally derive from semantic tokens. */
   --surface: color-mix(in oklab, var(--card) 88%, transparent);
@@ -269,7 +333,7 @@ select {
   border: 1px solid var(--border);
   border-radius: 24px;
   background: var(--card);
-  box-shadow: 0 18px 50px rgb(86 47 68 / 10%);
+  box-shadow: 0 18px 50px var(--shadow);
 }
 
 .startup-status p,
@@ -307,7 +371,7 @@ select {
   border-radius: 18px;
   color: var(--foreground);
   background: var(--card);
-  box-shadow: 0 18px 50px rgb(86 47 68 / 18%);
+  box-shadow: 0 18px 50px var(--shadow);
 }
 
 .pwa-notice p {

@@ -336,9 +336,11 @@ export default function ExportCenter({
 
     await document.fonts.ready
 
+    const backgroundColor = getComputedStyle(element).backgroundColor
+
     return html2canvas(element, {
       scale,
-      backgroundColor: '#fff8fb',
+      backgroundColor,
       useCORS: true,
       logging: false,
       imageTimeout: 15000,
