@@ -10,6 +10,10 @@ import {
   type UpdateProfileInput,
   type UserProfile,
 } from './profile'
+import {
+  studyTimerStateResponseSchema,
+  type StudyTimerState,
+} from './study-timer'
 
 type Fetcher = (
   input: string,
@@ -174,6 +178,13 @@ export function createApiClient(options: ApiClientOptions = {}) {
         },
       )
       return response.profile
+    },
+    getActiveStudyTimer: async (): Promise<StudyTimerState | null> => {
+      const response = await request(
+        '/api/study/timer',
+        studyTimerStateResponseSchema,
+      )
+      return response.timer
     },
   }
 }

@@ -18,6 +18,20 @@ const validProfile = {
   theme: 'system',
 } as const
 
+const validStudyTimer = {
+  logId: 'log-123',
+  mode: 'free',
+  subjectName: 'Physics',
+  sessionId: null,
+  timerStatus: 'running',
+  startedAt: '2026-08-26T18:10:00.000Z',
+  currentSegmentStartedAt: '2026-08-26T18:11:00.000Z',
+  pausedAt: null,
+  accumulatedSeconds: 120,
+  focusLockEnabled: true,
+  version: 3,
+} as const
+
 describe('API client', () => {
   it('uses the configured origin and includes session cookies', async () => {
     const fetcher = vi.fn(async () => Response.json(validStatus))
@@ -142,5 +156,20 @@ describe('API client', () => {
       Error,
     )
     expect(fetcher).not.toHaveBeenCalled()
+  })
+
+  it('reads the active timer through the shared contract', async () => {
+    const fetcher = vi.fn(async () =>
+      Response.json({ timer: validStudyTimer }),
+    )
+    const client = createApiClient({ fetcher })
+
+    await expect(client.getActiveStudyTimer()).resolves.toEqual(
+      validStudyTimer,
+    )
+    expect(fetcher).toHaveBeenCalledWith(
+      '/api/study/timer',
+      expect.objectContaining({ method: 'GET' }),
+    )
   })
 })

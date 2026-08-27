@@ -87,10 +87,11 @@ The current SVG icon is sufficient for the foundation build, but production inst
 - `GET /api/health` proves the Worker runtime can answer without touching storage.
 - `GET /api/ready` proves D1 is reachable and the expected foundation migration exists.
 - Readiness failures return a generic `503` response and a request ID; internal database details are not sent to the browser.
-- `migrations/0001_foundation.sql` creates schema metadata; `0002_auth_foundation.sql` adds Better Auth 1.7 users, sessions, accounts, verification records, foreign keys, and indexes.
+- `migrations/0001_foundation.sql` creates schema metadata; `0002_auth_foundation.sql` adds Better Auth storage; `0003_study_timer_foundation.sql` adds constrained study logs, active timers, and idempotent command receipts.
 - `/api/auth/*` is the project-owned authentication boundary. Email/password is enabled only in the local environment until outbound email verification, recovery, Turnstile, and rate-limit gates are implemented.
 - `GET /api/profile` returns the authenticated user's provider-neutral profile; `PATCH /api/profile` accepts only display-name and theme changes.
 - Profile routes derive the user ID from the verified session. Query parameters and request bodies cannot select another user or grant a role.
+- `GET /api/study/timer` returns only the authenticated user's active timer. The mutation endpoints are intentionally not exposed until their retry and concurrency rules pass as one reviewed slice.
 
 Wrangler copies `.dev.vars` into build output only for local preview and does not deploy that file. Local Worker secrets must use ignored `.dev.vars`; production secrets must use Cloudflare encrypted secrets, never `vars` or Vite variables.
 

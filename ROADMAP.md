@@ -70,6 +70,12 @@ Exit gate:
 
 Goal: move the useful study product behind the Worker API and make the server authoritative.
 
+Foundation delivered early:
+
+- Versioned D1 tables for study logs, one active timer per user, optimistic command versions, and idempotency receipts.
+- Database checks enforce valid running/paused timestamps, scheduled-session shape, completed-log shape, non-negative duration, and account-owned cascade cleanup.
+- Authenticated `GET /api/study/timer` contract and repository read path, scoped by the verified session user ID.
+
 Deliverables:
 
 - Inventory existing Supabase tables/RPC behavior and export any user data that must be preserved.

@@ -12,6 +12,7 @@ import {
   findProfileByUserId,
   updateProfileByUserId,
 } from './profile/repository'
+import { findActiveTimerByUserId } from './study-timer/repository'
 import type { WorkerEnvironment } from './types'
 
 const serviceName = 'sweet-study-club-api' as const
@@ -63,7 +64,7 @@ export function createWorkerApp(options: WorkerAppOptions = {}) {
         .bind('schema_version')
         .first<{ value: string }>()
 
-      if (metadata?.value !== '2') {
+      if (metadata?.value !== '3') {
         throw new Error('The expected database migration is missing.')
       }
 
@@ -150,6 +151,15 @@ export function createWorkerApp(options: WorkerAppOptions = {}) {
     }
 
     return context.json({ profile })
+  })
+
+  app.get('/api/study/timer', requireSession, async (context) => {
+    const timer = await findActiveTimerByUserId(
+      context.env.DB,
+      context.get('authenticatedUserId'),
+    )
+
+    return context.json({ timer })
   })
 
   app.notFound((context) => {

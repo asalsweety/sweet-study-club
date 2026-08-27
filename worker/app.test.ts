@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { serviceStatusSchema } from '../src/shared/api/system'
 import { profileResponseSchema } from '../src/shared/api/profile'
+import { studyTimerStateResponseSchema } from '../src/shared/api/study-timer'
 import { createWorkerApp } from './app'
 import type { WorkerBindings } from './types'
 
@@ -39,7 +40,7 @@ describe('system routes', () => {
     const response = await createWorkerApp().request(
       '/api/ready',
       undefined,
-      createBindings('2'),
+      createBindings('3'),
     )
     const payload = serviceStatusSchema.parse(await response.json())
 
@@ -51,7 +52,7 @@ describe('system routes', () => {
     const response = await createWorkerApp().request(
       '/api/auth/get-session',
       undefined,
-      createBindings('2'),
+      createBindings('3'),
     )
     const payload = await response.json()
 
@@ -77,7 +78,7 @@ describe('profile routes', () => {
   it('rejects requests without a valid session', async () => {
     const response = await createWorkerApp({
       resolveSession: async () => null,
-    }).request('/api/profile', undefined, createBindings('2'))
+    }).request('/api/profile', undefined, createBindings('3'))
     const payload = await response.json()
 
     expect(response.status).toBe(401)
@@ -101,7 +102,7 @@ describe('profile routes', () => {
     }))
     const bind = vi.fn(() => ({ first }))
     const bindings = {
-      ...createBindings('2'),
+      ...createBindings('3'),
       DB: {
         prepare: vi.fn(() => ({ bind })),
       } as unknown as D1Database,
@@ -123,7 +124,7 @@ describe('profile routes', () => {
   })
 
   it('rejects invalid profile changes before querying D1', async () => {
-    const bindings = createBindings('2')
+    const bindings = createBindings('3')
     const response = await createWorkerApp({
       resolveSession: async () => ({
         user: { id: 'session-user' },
@@ -148,5 +149,42 @@ describe('profile routes', () => {
       },
     })
     expect(bindings.DB.prepare).not.toHaveBeenCalled()
+  })
+})
+
+describe('study timer routes', () => {
+  it('loads only the authenticated user timer', async () => {
+    const first = vi.fn(async () => ({
+      logId: 'log-123',
+      mode: 'free',
+      subjectName: 'Physics',
+      sessionId: null,
+      timerStatus: 'paused',
+      startedAt: 1_787_743_800_000,
+      currentSegmentStartedAt: null,
+      pausedAt: 1_787_743_920_000,
+      accumulatedSeconds: 120,
+      focusLockEnabled: 0,
+      version: 2,
+    }))
+    const bind = vi.fn(() => ({ first }))
+    const bindings = {
+      ...createBindings('3'),
+      DB: {
+        prepare: vi.fn(() => ({ bind })),
+      } as unknown as D1Database,
+    }
+    const response = await createWorkerApp({
+      resolveSession: async () => ({
+        user: { id: 'session-user' },
+      }),
+    }).request('/api/study/timer', undefined, bindings)
+    const payload = studyTimerStateResponseSchema.parse(
+      await response.json(),
+    )
+
+    expect(response.status).toBe(200)
+    expect(payload.timer?.timerStatus).toBe('paused')
+    expect(bind).toHaveBeenCalledWith('session-user')
   })
 })
