@@ -48,6 +48,8 @@ Delivered:
 - Runtime-validated API client with web/Expo base-URL support.
 - Better Auth 1.7 mounted on Hono with direct D1 storage, secure-cookie policy, trusted origin, UUID identities, and server-owned roles.
 - Versioned Better Auth user/session/account/verification schema and successful local runtime smoke test.
+- Provider-neutral profile contracts plus authenticated `GET` and `PATCH /api/profile` endpoints scoped exclusively by the verified session identity.
+- Negative route tests for missing sessions, forged user identifiers, forbidden role updates, and invalid profile payloads.
 - Vulnerable optional Drizzle tooling path removed; the final dependency graph audits clean.
 
 Remaining:
@@ -55,7 +57,7 @@ Remaining:
 - Final install icons and automated PWA installability/accessibility checks.
 - Preview and production Wrangler environments with real D1/R2 bindings.
 - Transactional email provider, mandatory verification/recovery, Turnstile, and distributed rate limiting before remote signup is enabled.
-- Web auth-client migration, profile endpoints, account deletion cleanup, and negative authorization tests.
+- Web auth-client migration, account deletion cleanup, and broader cross-user/admin authorization tests.
 
 Exit gate:
 
@@ -201,9 +203,8 @@ Exit gate:
 
 ## Immediate Work Order
 
-1. Complete Phase 1 email verification/recovery, abuse controls, web auth migration, profile endpoints, and negative authorization tests.
-2. Add web routing/providers and a typed same-origin API client.
-3. Migrate the timer/session vertical slice and characterize current behavior before deleting its Supabase calls.
-4. Migrate analytics, profile, exports, storage, admin, and social one slice at a time.
-5. Finish production PWA checks and deploy preview.
-6. Begin Expo only after the API contract and core product gates pass.
+1. Complete Phase 1 email verification/recovery, abuse controls, web auth migration, account deletion, and remaining authorization tests.
+2. Migrate the timer/session vertical slice and characterize current behavior before deleting its Supabase calls.
+3. Migrate analytics, exports, storage, admin, and social one slice at a time.
+4. Finish production PWA checks and deploy preview.
+5. Begin Expo only after the API contract and core product gates pass.

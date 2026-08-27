@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { serviceStatusSchema } from '../src/shared/api/system'
+import { profileResponseSchema } from '../src/shared/api/profile'
 import { createWorkerApp } from './app'
 import type { WorkerBindings } from './types'
 
@@ -69,5 +70,83 @@ describe('system routes', () => {
     expect(response.status).toBe(503)
     expect(payload.status).toBe('unavailable')
     expect(JSON.stringify(payload)).not.toContain('migration')
+  })
+})
+
+describe('profile routes', () => {
+  it('rejects requests without a valid session', async () => {
+    const response = await createWorkerApp({
+      resolveSession: async () => null,
+    }).request('/api/profile', undefined, createBindings('2'))
+    const payload = await response.json()
+
+    expect(response.status).toBe(401)
+    expect(payload).toEqual({
+      error: {
+        code: 'UNAUTHORIZED',
+        message: 'Authentication is required.',
+        requestId: expect.any(String),
+      },
+    })
+  })
+
+  it('uses the session user ID instead of request input', async () => {
+    const first = vi.fn(async () => ({
+      id: 'session-user',
+      email: 'learner@example.com',
+      displayName: 'Ada Learner',
+      avatarUrl: null,
+      role: 'member',
+      theme: 'system',
+    }))
+    const bind = vi.fn(() => ({ first }))
+    const bindings = {
+      ...createBindings('2'),
+      DB: {
+        prepare: vi.fn(() => ({ bind })),
+      } as unknown as D1Database,
+    }
+    const response = await createWorkerApp({
+      resolveSession: async () => ({
+        user: { id: 'session-user' },
+      }),
+    }).request(
+      '/api/profile?userId=somebody-else',
+      undefined,
+      bindings,
+    )
+    const payload = profileResponseSchema.parse(await response.json())
+
+    expect(response.status).toBe(200)
+    expect(payload.profile.id).toBe('session-user')
+    expect(bind).toHaveBeenCalledWith('session-user')
+  })
+
+  it('rejects invalid profile changes before querying D1', async () => {
+    const bindings = createBindings('2')
+    const response = await createWorkerApp({
+      resolveSession: async () => ({
+        user: { id: 'session-user' },
+      }),
+    }).request(
+      '/api/profile',
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'admin', theme: 'dark' }),
+      },
+      bindings,
+    )
+    const payload = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(payload).toEqual({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'The profile changes are invalid.',
+        requestId: expect.any(String),
+      },
+    })
+    expect(bindings.DB.prepare).not.toHaveBeenCalled()
   })
 })

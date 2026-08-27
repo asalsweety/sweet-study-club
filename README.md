@@ -11,6 +11,7 @@ The accepted architecture is documented in `docs/adr/0001-cloudflare-pwa-expo.md
 - Cloudflare Workers Static Assets builds the web client and Worker API as one deployable unit.
 - D1 has a versioned local foundation migration and readiness check.
 - Better Auth is mounted on the Worker with direct D1 storage and server-owned role fields.
+- Authenticated profile reads and updates use a shared web/Expo contract and a session-scoped Worker API.
 - The PWA has a manifest, service worker, offline app-shell cache, and user-controlled update prompt.
 - Primary screens use real browser URLs and a shared runtime-validated API client is ready for migrated endpoints and Expo.
 - Netlify configuration has been removed.
@@ -88,6 +89,8 @@ The current SVG icon is sufficient for the foundation build, but production inst
 - Readiness failures return a generic `503` response and a request ID; internal database details are not sent to the browser.
 - `migrations/0001_foundation.sql` creates schema metadata; `0002_auth_foundation.sql` adds Better Auth 1.7 users, sessions, accounts, verification records, foreign keys, and indexes.
 - `/api/auth/*` is the project-owned authentication boundary. Email/password is enabled only in the local environment until outbound email verification, recovery, Turnstile, and rate-limit gates are implemented.
+- `GET /api/profile` returns the authenticated user's provider-neutral profile; `PATCH /api/profile` accepts only display-name and theme changes.
+- Profile routes derive the user ID from the verified session. Query parameters and request bodies cannot select another user or grant a role.
 
 Wrangler copies `.dev.vars` into build output only for local preview and does not deploy that file. Local Worker secrets must use ignored `.dev.vars`; production secrets must use Cloudflare encrypted secrets, never `vars` or Vite variables.
 

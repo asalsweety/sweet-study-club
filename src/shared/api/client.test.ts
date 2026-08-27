@@ -9,6 +9,15 @@ const validStatus = {
   requestId: 'request-123',
 } as const
 
+const validProfile = {
+  id: 'user-123',
+  email: 'learner@example.com',
+  displayName: 'Ada Learner',
+  avatarUrl: null,
+  role: 'member',
+  theme: 'system',
+} as const
+
 describe('API client', () => {
   it('uses the configured origin and includes session cookies', async () => {
     const fetcher = vi.fn(async () => Response.json(validStatus))
@@ -88,5 +97,50 @@ describe('API client', () => {
       code: 'NETWORK_ERROR',
       message: 'The API could not be reached.',
     })
+  })
+
+  it('reads a profile through the shared response contract', async () => {
+    const fetcher = vi.fn(async () =>
+      Response.json({ profile: validProfile }),
+    )
+    const client = createApiClient({ fetcher })
+
+    await expect(client.getProfile()).resolves.toEqual(validProfile)
+    expect(fetcher).toHaveBeenCalledWith(
+      '/api/profile',
+      expect.objectContaining({ method: 'GET' }),
+    )
+  })
+
+  it('validates and normalizes profile changes before sending them', async () => {
+    const fetcher = vi.fn(async () =>
+      Response.json({
+        profile: { ...validProfile, displayName: 'Ada Updated' },
+      }),
+    )
+    const client = createApiClient({ fetcher })
+
+    await client.updateProfile({ displayName: '  Ada Updated  ' })
+
+    expect(fetcher).toHaveBeenCalledWith(
+      '/api/profile',
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ displayName: 'Ada Updated' }),
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+        }),
+      }),
+    )
+  })
+
+  it('does not send an empty profile update', async () => {
+    const fetcher = vi.fn()
+    const client = createApiClient({ fetcher })
+
+    await expect(client.updateProfile({})).rejects.toBeInstanceOf(
+      Error,
+    )
+    expect(fetcher).not.toHaveBeenCalled()
   })
 })

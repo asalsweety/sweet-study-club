@@ -8,4 +8,7 @@ export type WorkerBindings = {
 
 export type WorkerEnvironment = {
   Bindings: WorkerBindings
+  Variables: {
+    authenticatedUserId: string
+  }
 }

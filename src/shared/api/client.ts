@@ -4,18 +4,32 @@ import {
   serviceStatusSchema,
   type ServiceStatus,
 } from './system'
+import {
+  profileResponseSchema,
+  updateProfileInputSchema,
+  type UpdateProfileInput,
+  type UserProfile,
+} from './profile'
 
 type Fetcher = (
   input: string,
   init: {
     credentials: 'include'
     headers: Record<string, string>
+    method: 'GET' | 'PATCH'
+    body?: string
   },
 ) => Promise<Response>
 
 type ApiClientOptions = {
   baseUrl?: string
   fetcher?: Fetcher
+}
+
+type RequestOptions = {
+  method?: 'GET' | 'PATCH'
+  body?: unknown
+  acceptedStatuses?: readonly number[]
 }
 
 type ApiClientErrorOptions = {
@@ -65,16 +79,28 @@ export function createApiClient(options: ApiClientOptions = {}) {
   async function request<T>(
     path: string,
     schema: ZodType<T>,
-    acceptedStatuses: readonly number[] = [],
+    options: RequestOptions = {},
   ) {
     let response: Response
 
     try {
+      const headers: Record<string, string> = {
+        Accept: 'application/json',
+      }
+      const body =
+        options.body === undefined
+          ? undefined
+          : JSON.stringify(options.body)
+
+      if (body !== undefined) {
+        headers['Content-Type'] = 'application/json'
+      }
+
       response = await fetcher(`${baseUrl}${path}`, {
+        method: options.method ?? 'GET',
         credentials: 'include',
-        headers: {
-          Accept: 'application/json',
-        },
+        headers,
+        ...(body === undefined ? {} : { body }),
       })
     } catch (cause) {
       throw new ApiClientError('The API could not be reached.', {
@@ -85,7 +111,10 @@ export function createApiClient(options: ApiClientOptions = {}) {
 
     const payload = await readJson(response)
 
-    if (!response.ok && !acceptedStatuses.includes(response.status)) {
+    if (
+      !response.ok &&
+      !options.acceptedStatuses?.includes(response.status)
+    ) {
       const parsedError = apiErrorEnvelopeSchema.safeParse(payload)
 
       throw new ApiClientError(
@@ -122,7 +151,30 @@ export function createApiClient(options: ApiClientOptions = {}) {
     getHealth: (): Promise<ServiceStatus> =>
       request('/api/health', serviceStatusSchema),
     getReadiness: (): Promise<ServiceStatus> =>
-      request('/api/ready', serviceStatusSchema, [503]),
+      request('/api/ready', serviceStatusSchema, {
+        acceptedStatuses: [503],
+      }),
+    getProfile: async (): Promise<UserProfile> => {
+      const response = await request(
+        '/api/profile',
+        profileResponseSchema,
+      )
+      return response.profile
+    },
+    updateProfile: async (
+      input: UpdateProfileInput,
+    ): Promise<UserProfile> => {
+      const validatedInput = updateProfileInputSchema.parse(input)
+      const response = await request(
+        '/api/profile',
+        profileResponseSchema,
+        {
+          method: 'PATCH',
+          body: validatedInput,
+        },
+      )
+      return response.profile
+    },
   }
 }
 

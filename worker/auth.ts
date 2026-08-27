@@ -95,3 +95,10 @@ export function createAuth(bindings: WorkerBindings) {
     },
   })
 }
+
+export async function getAuthSession(
+  bindings: WorkerBindings,
+  headers: Headers,
+) {
+  return createAuth(bindings).api.getSession({ headers })
+}
