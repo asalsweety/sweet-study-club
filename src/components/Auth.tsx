@@ -1,8 +1,16 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import {
+  demoReviewCredentials,
+  demoReviewEnabled,
+} from '../shared/config/demo-review'
 import './Auth.css'
 
-export default function Auth() {
+type AuthProps = {
+  onDemoLogin?: () => void
+}
+
+export default function Auth({ onDemoLogin }: AuthProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignup, setIsSignup] = useState(false)
@@ -14,6 +22,16 @@ export default function Auth() {
 
     setLoading(true)
     setMessage('')
+
+    if (
+      demoReviewEnabled &&
+      email === demoReviewCredentials.email &&
+      password === demoReviewCredentials.password
+    ) {
+      onDemoLogin?.()
+      setLoading(false)
+      return
+    }
 
     if (isSignup) {
       const { error } = await supabase.auth.signUp({
@@ -105,7 +123,24 @@ export default function Auth() {
               ? 'قبلاً حساب دارم'
               : 'ساخت حساب جدید'}
           </button>
+
+          {demoReviewEnabled && onDemoLogin && !isSignup && (
+            <button
+              className="auth-secondary-button"
+              type="button"
+              onClick={onDemoLogin}
+            >
+              ورود سریع به نسخه نمایشی
+            </button>
+          )}
         </form>
+
+        {demoReviewEnabled && !isSignup && (
+          <p className="auth-message">
+            حساب نمایشی: {demoReviewCredentials.email} /{' '}
+            {demoReviewCredentials.password}
+          </p>
+        )}
 
         {message && (
           <p className="auth-message">

@@ -33,6 +33,18 @@ import {
   formatTimer,
 } from './shared/lib/time'
 import { appRoutes } from './app/navigation/routes'
+import { demoReviewEnabled } from './shared/config/demo-review'
+
+type AppSession = Session | { user: { id: string } }
+
+const demoProfile: Profile = {
+  id: 'demo-user',
+  email: 'demo@sweet.local',
+  displayName: 'کاربر نمایشی',
+  avatarUrl: null,
+  role: 'admin',
+  theme: 'light',
+}
 
 const GamificationCelebration = lazy(
   () => import('./components/GamificationCelebration'),
@@ -42,7 +54,8 @@ const ProgressPage = lazy(() => import('./components/ProgressPage'))
 const RankingPage = lazy(() => import('./components/RankingPage'))
 
 function App() {
-  const [session, setSession] = useState<Session | null>(null)
+  const [session, setSession] = useState<AppSession | null>(null)
+  const [demoMode, setDemoMode] = useState(false)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [sessions, setSessions] = useState<StudySession[]>([])
   const [activeState, setActiveState] =
@@ -195,17 +208,17 @@ function App() {
   )
 
   useEffect(() => {
-    if (!session) return
+    if (!session || demoMode) return
 
     const interval = window.setInterval(() => {
       setScheduleClock(Date.now())
     }, 30_000)
 
     return () => window.clearInterval(interval)
-  }, [session])
+  }, [demoMode, session])
 
   useEffect(() => {
-    if (!session) return
+    if (!session || demoMode) return
 
     void loadTodaySessions().catch((requestError) => {
       setMessage(
@@ -214,17 +227,17 @@ function App() {
           : 'برنامه امروز بارگذاری نشد.',
       )
     })
-  }, [currentScheduleDate, loadTodaySessions, session])
+  }, [currentScheduleDate, demoMode, loadTodaySessions, session])
 
   useEffect(() => {
-    if (!session) return
+    if (!session || demoMode) return
 
     const interval = window.setInterval(() => {
       void supabase.rpc('touch_presence')
     }, 30_000)
 
     return () => window.clearInterval(interval)
-  }, [session])
+  }, [demoMode, session])
 
   useEffect(() => {
     if (!activeState?.focusLockEnabled) return
@@ -240,6 +253,51 @@ function App() {
     return findActiveScheduledSession(sessions, scheduleClock)
   }, [scheduleClock, sessions])
 
+  const enterDemoReview = () => {
+    if (!demoReviewEnabled) return
+
+    const now = Date.now()
+
+    setDemoMode(true)
+    setSession({ user: { id: demoProfile.id } })
+    setProfile(demoProfile)
+    setSessions([
+      {
+        id: 'demo-session',
+        title: 'پارت نمایشی امروز',
+        sessionDate: dateInTehran(now),
+        startsAt: new Date(now - 15 * 60_000).toISOString(),
+        endsAt: new Date(now + 45 * 60_000).toISOString(),
+        isCancelled: false,
+      },
+    ])
+    setActiveState(null)
+    setMessage('نسخه نمایشی محلی فعال است؛ داده‌ها ذخیره نمی‌شوند.')
+  }
+
+  const startDemoTimer = (
+    mode: 'free' | 'scheduled',
+    sessionId: string | null,
+  ) => {
+    const startedAt = new Date().toISOString()
+
+    setActiveState({
+      userId: demoProfile.id,
+      logId: 'demo-log',
+      mode,
+      subjectName: currentSubject,
+      sessionId,
+      timerStatus: 'running',
+      startedAt,
+      currentSegmentStartedAt: startedAt,
+      pausedAt: null,
+      accumulatedSeconds: 0,
+      focusLockEnabled: focusLock,
+    })
+    setShowStartPanel(false)
+    setCustomSubject('')
+  }
+
   const startFreeStudy = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
@@ -252,6 +310,11 @@ function App() {
     setMessage('')
 
     try {
+      if (demoMode) {
+        startDemoTimer('free', null)
+        return
+      }
+
       await legacySupabaseStudyApi.startTimer({
         mode: 'free',
         subject: currentSubject,
@@ -287,6 +350,11 @@ function App() {
     setMessage('')
 
     try {
+      if (demoMode) {
+        startDemoTimer('scheduled', activeScheduledSession.id)
+        return
+      }
+
       await legacySupabaseStudyApi.startTimer({
         mode: 'scheduled',
         subject: currentSubject,
@@ -308,6 +376,19 @@ function App() {
   }
 
   const pauseTimer = async () => {
+    if (demoMode && activeState) {
+      const pausedAt = new Date().toISOString()
+
+      setActiveState({
+        ...activeState,
+        timerStatus: 'paused',
+        currentSegmentStartedAt: null,
+        pausedAt,
+        accumulatedSeconds: calculateElapsed(activeState),
+      })
+      return
+    }
+
     setWorking(true)
     setMessage('')
 
@@ -326,6 +407,16 @@ function App() {
   }
 
   const resumeTimer = async () => {
+    if (demoMode && activeState) {
+      setActiveState({
+        ...activeState,
+        timerStatus: 'running',
+        currentSegmentStartedAt: new Date().toISOString(),
+        pausedAt: null,
+      })
+      return
+    }
+
     setWorking(true)
     setMessage('')
 
@@ -344,6 +435,14 @@ function App() {
   }
 
   const stopTimer = async () => {
+    if (demoMode) {
+      setMessage(
+        `آفرین! ${formatTimer(elapsedSeconds)} مطالعه نمایشی تمام شد.`,
+      )
+      setActiveState(null)
+      return
+    }
+
     setWorking(true)
     setMessage('')
 
@@ -370,6 +469,11 @@ function App() {
 
     const nextTheme = profile.theme === 'dark' ? 'light' : 'dark'
 
+    if (demoMode) {
+      setProfile({ ...profile, theme: nextTheme })
+      return
+    }
+
     try {
       await legacySupabaseProfileApi.updateTheme(profile.id, nextTheme)
       setProfile({ ...profile, theme: nextTheme })
@@ -383,6 +487,16 @@ function App() {
   }
 
   const logout = async () => {
+    if (demoMode) {
+      setDemoMode(false)
+      setSession(null)
+      setProfile(null)
+      setSessions([])
+      setActiveState(null)
+      setMessage('')
+      return
+    }
+
     await supabase.auth.signOut()
     window.location.reload()
   }
@@ -424,7 +538,7 @@ function App() {
   }
 
   if (!session) {
-    return <Auth />
+    return <Auth onDemoLogin={enterDemoReview} />
   }
 
   if (!profile) {

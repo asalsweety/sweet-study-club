@@ -35,6 +35,8 @@ Use `.nvmrc` when Node Version Manager is available. npm enforces the supported 
 4. Run `npm run db:migrate:local`. This applies versioned SQL to Wrangler's local D1 emulator. The command is safe for local development because it includes `--local`; adding `--remote` would mutate a Cloudflare database.
 5. Run `npm run dev`. This starts Vite with the Cloudflare Worker runtime, static assets, API routes, and local bindings. It does not deploy anything.
 
+For local visual review without a legacy Supabase account, set `VITE_ENABLE_DEMO_LOGIN=true` in ignored `.env.local`. The login screen then offers `demo@sweet.local` / `sweetdemo` and an equivalent quick-login button. This mode uses disposable in-memory profile, schedule, theme, and timer state. It is guarded by Vite's development flag and cannot be enabled in a production build; it is not an authentication test.
+
 If the local database state becomes disposable, remove only the project-specific `.wrangler/state` directory and reapply migrations. Never point tests or local migrations at production data.
 
 ## Project Commands
