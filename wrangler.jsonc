@@ -19,7 +19,8 @@
     }
   ],
   "vars": {
-    "APP_ENVIRONMENT": "local"
+    "APP_ENVIRONMENT": "local",
+    "APP_ORIGIN": "http://localhost:5173"
   },
   "observability": {
     "enabled": true,

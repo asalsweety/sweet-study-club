@@ -10,6 +10,7 @@ The accepted architecture is documented in `docs/adr/0001-cloudflare-pwa-expo.md
 - React, TypeScript, and Vite remain the web stack.
 - Cloudflare Workers Static Assets builds the web client and Worker API as one deployable unit.
 - D1 has a versioned local foundation migration and readiness check.
+- Better Auth is mounted on the Worker with direct D1 storage and server-owned role fields.
 - The PWA has a manifest, service worker, offline app-shell cache, and user-controlled update prompt.
 - Primary screens use real browser URLs and a shared runtime-validated API client is ready for migrated endpoints and Expo.
 - Netlify configuration has been removed.
@@ -28,9 +29,10 @@ Use `.nvmrc` when Node Version Manager is available. npm enforces the supported 
 ## Local Setup
 
 1. Copy `.env.example` to `.env.local` and fill only browser-safe `VITE_*` values. These values are embedded in browser code; a secret or Supabase service-role key must never be placed there.
-2. Run `npm ci`. This installs the reviewed lockfile exactly. Use `npm install` only when intentionally changing dependencies, because it may rewrite the lockfile.
-3. Run `npm run db:migrate:local`. This applies versioned SQL to Wrangler's local D1 emulator. The command is safe for local development because it includes `--local`; adding `--remote` would mutate a Cloudflare database.
-4. Run `npm run dev`. This starts Vite with the Cloudflare Worker runtime, static assets, API routes, and local bindings. It does not deploy anything.
+2. Copy `.dev.vars.example` to `.dev.vars` and replace the example Better Auth secret with a unique local value of at least 32 characters. `.dev.vars` is ignored and belongs only to the Worker; never put this secret in a `VITE_*` variable.
+3. Run `npm ci`. This installs the reviewed lockfile exactly. Use `npm install` only when intentionally changing dependencies, because it may rewrite the lockfile.
+4. Run `npm run db:migrate:local`. This applies versioned SQL to Wrangler's local D1 emulator. The command is safe for local development because it includes `--local`; adding `--remote` would mutate a Cloudflare database.
+5. Run `npm run dev`. This starts Vite with the Cloudflare Worker runtime, static assets, API routes, and local bindings. It does not deploy anything.
 
 If the local database state becomes disposable, remove only the project-specific `.wrangler/state` directory and reapply migrations. Never point tests or local migrations at production data.
 
@@ -84,7 +86,8 @@ The current SVG icon is sufficient for the foundation build, but production inst
 - `GET /api/health` proves the Worker runtime can answer without touching storage.
 - `GET /api/ready` proves D1 is reachable and the expected foundation migration exists.
 - Readiness failures return a generic `503` response and a request ID; internal database details are not sent to the browser.
-- `migrations/0001_foundation.sql` creates only schema metadata. Product and authentication tables belong to their own reviewed vertical slices.
+- `migrations/0001_foundation.sql` creates schema metadata; `0002_auth_foundation.sql` adds Better Auth 1.7 users, sessions, accounts, verification records, foreign keys, and indexes.
+- `/api/auth/*` is the project-owned authentication boundary. Email/password is enabled only in the local environment until outbound email verification, recovery, Turnstile, and rate-limit gates are implemented.
 
 Wrangler copies `.dev.vars` into build output only for local preview and does not deploy that file. Local Worker secrets must use ignored `.dev.vars`; production secrets must use Cloudflare encrypted secrets, never `vars` or Vite variables.
 
@@ -94,7 +97,7 @@ Remote deployment is intentionally blocked until a Cloudflare account and enviro
 
 1. Create separate preview and production D1 databases and replace the placeholder IDs in environment-specific Wrangler configuration.
 2. Apply migrations to preview first and run API integration and browser smoke tests.
-3. Configure required secrets through Cloudflare encrypted secrets.
+3. Configure a unique `BETTER_AUTH_SECRET` per environment through Cloudflare encrypted secrets. Never copy the local or preview secret into production.
 4. Run `npm ci` and `npm run validate` from a clean checkout.
 5. Run `wrangler deploy --dry-run --config dist/sweet_study_club/wrangler.json` to inspect the exact Worker, assets, and bindings without uploading.
 6. Deploy preview, validate login/timer/privacy/export flows, and only then promote production.

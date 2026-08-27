@@ -25,7 +25,7 @@ Build a modular monolith deployed as one Cloudflare Worker with Static Assets:
 - Expo Router is used for later Android/iOS applications.
 - Netlify, Capacitor, Vercel, and a Next.js rewrite are not part of the target architecture.
 
-Authentication will be integrated behind a project-owned interface. Better Auth remains the preferred implementation candidate, but it is not accepted into the lockfile until its optional peer dependency path passes the repository's vulnerability gate.
+Authentication uses Better Auth 1.7 directly against D1 behind the Worker-owned `/api/auth/*` boundary. The unused Drizzle ORM was removed so npm no longer installs Better Auth's optional Drizzle Kit peer; the resulting lockfile contains neither Drizzle Kit nor the vulnerable legacy esbuild loader path and passes the repository audit gate. Remote email/password signup remains deliberately disabled until verified transactional email, recovery, Turnstile, and distributed rate limiting are configured.
 
 ## Why PWA Comes First
 

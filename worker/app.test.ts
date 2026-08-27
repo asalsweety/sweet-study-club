@@ -12,6 +12,7 @@ function createBindings(schemaVersion: string | null): WorkerBindings {
 
   return {
     APP_ENVIRONMENT: 'test',
+    APP_ORIGIN: 'https://example.com',
     ASSETS: {
       fetch: vi.fn(async () => new Response('asset')),
     } as unknown as Fetcher,
@@ -37,12 +38,24 @@ describe('system routes', () => {
     const response = await createWorkerApp().request(
       '/api/ready',
       undefined,
-      createBindings('1'),
+      createBindings('2'),
     )
     const payload = serviceStatusSchema.parse(await response.json())
 
     expect(response.status).toBe(200)
     expect(payload.status).toBe('ok')
+  })
+
+  it('fails closed when authentication secrets are missing', async () => {
+    const response = await createWorkerApp().request(
+      '/api/auth/get-session',
+      undefined,
+      createBindings('2'),
+    )
+    const payload = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(JSON.stringify(payload)).not.toContain('BETTER_AUTH_SECRET')
   })
 
   it('does not expose database errors when the schema is unavailable', async () => {

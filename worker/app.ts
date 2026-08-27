@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { requestId } from 'hono/request-id'
 import { secureHeaders } from 'hono/secure-headers'
 import type { ServiceStatus } from '../src/shared/api/system'
+import { createAuth } from './auth'
 import type { WorkerEnvironment } from './types'
 
 const serviceName = 'sweet-study-club-api' as const
@@ -26,6 +27,10 @@ export function createWorkerApp() {
   app.use('/api/*', requestId())
   app.use('/api/*', secureHeaders())
 
+  app.all('/api/auth/*', (context) => {
+    return createAuth(context.env).handler(context.req.raw)
+  })
+
   app.get('/api/health', (context) => {
     return context.json(
       createStatus(
@@ -44,7 +49,7 @@ export function createWorkerApp() {
         .bind('schema_version')
         .first<{ value: string }>()
 
-      if (metadata?.value !== '1') {
+      if (metadata?.value !== '2') {
         throw new Error('The expected database migration is missing.')
       }
 

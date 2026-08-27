@@ -1,6 +1,8 @@
 export type WorkerBindings = {
   APP_ENVIRONMENT?: string
+  APP_ORIGIN?: string
   ASSETS: Fetcher
+  BETTER_AUTH_SECRET?: string
   DB: D1Database
 }
 
