@@ -13,7 +13,7 @@ const navigationItems = [
 export default function BottomNavigation() {
   return (
     <nav
-      className="fixed inset-x-3 bottom-3 z-40 mx-auto flex max-w-md items-center gap-1 rounded-2xl border border-sidebar-border bg-sidebar/95 p-1.5 text-sidebar-foreground shadow-xl shadow-foreground/10 backdrop-blur-xl md:inset-x-auto md:right-6 md:bottom-6"
+      className="soft-enter fixed inset-x-3 bottom-3 z-40 mx-auto flex max-w-md items-center gap-1 rounded-2xl border border-sidebar-border bg-sidebar/95 p-1.5 text-sidebar-foreground shadow-xl shadow-foreground/10 backdrop-blur-xl md:inset-x-auto md:right-6 md:bottom-6"
       aria-label="صفحات اصلی"
     >
       {navigationItems.map((item) => {

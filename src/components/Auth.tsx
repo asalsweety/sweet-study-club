@@ -5,6 +5,7 @@ import {
   Eye,
   EyeOff,
   LogIn,
+  PlayCircle,
   Sparkles,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -27,9 +28,13 @@ import { Label } from '@/components/ui/label'
 
 type AuthProps = {
   onDemoLogin?: () => void
+  onPreviewOnboarding?: () => void
 }
 
-export default function Auth({ onDemoLogin }: AuthProps) {
+export default function Auth({
+  onDemoLogin,
+  onPreviewOnboarding,
+}: AuthProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignup, setIsSignup] = useState(false)
@@ -89,7 +94,7 @@ export default function Auth({ onDemoLogin }: AuthProps) {
   }
 
   return (
-    <main className="grid min-h-svh bg-background lg:grid-cols-[1fr_1.05fr]" dir="rtl">
+    <main className="soft-enter grid min-h-svh bg-background lg:grid-cols-[1fr_1.05fr]" dir="rtl">
       <section className="flex items-center justify-center p-4 sm:p-8 lg:p-12">
         <Card className="w-full max-w-md border-border/70 shadow-xl">
           <CardHeader className="space-y-4 text-center">
@@ -194,6 +199,16 @@ export default function Auth({ onDemoLogin }: AuthProps) {
               {isSignup ? 'برگشت به ورود' : 'حساب ندارم'}
               <ArrowLeft />
             </Button>
+
+            {onPreviewOnboarding && !isSignup && (
+              <Button
+                className="w-full"
+                variant="ghost"
+                onClick={onPreviewOnboarding}
+              >
+                <PlayCircle /> مشاهده دوباره معرفی برنامه
+              </Button>
+            )}
 
             {demoReviewEnabled && onDemoLogin && !isSignup && (
               <div className="rounded-xl border border-dashed bg-muted/40 p-4 text-center">

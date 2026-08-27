@@ -14,7 +14,7 @@ export default function IntroSlide({
   eyebrow,
 }: Props) {
   return (
-    <section className="space-y-5">
+    <section className="soft-enter space-y-5">
       <div className="grid size-12 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
         <Icon className="size-6" />
       </div>

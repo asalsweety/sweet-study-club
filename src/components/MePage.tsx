@@ -36,7 +36,7 @@ export default function MePage({
   const [publicStudyTime, setPublicStudyTime] = useState(true)
 
   return (
-    <section className="grid gap-5">
+    <section className="soft-enter grid gap-5">
       <header className="flex items-center justify-between gap-4">
         <div>
           <Badge variant="secondary">حساب شخصی من</Badge>

@@ -64,7 +64,7 @@ export default function StudyHomePage({
   onStop,
 }: StudyHomePageProps) {
   return (
-    <div className="mx-auto grid w-full max-w-6xl gap-5 pb-28">
+    <div className="soft-enter mx-auto grid w-full max-w-6xl gap-5 pb-28">
       <section className="grid gap-5 lg:grid-cols-[1.55fr_0.65fr]">
         <Card className="overflow-hidden border-primary/20 bg-card shadow-lg shadow-primary/5">
           <CardHeader className="flex-row items-start justify-between gap-4">

@@ -26,7 +26,7 @@ export default function Welcome({
 }: Props) {
   return (
     <main
-      className="min-h-svh bg-background p-3 sm:p-6 lg:p-8"
+      className="soft-enter min-h-svh bg-background p-3 sm:p-6 lg:p-8"
       dir="rtl"
     >
       <Card className="mx-auto min-h-[calc(100svh-1.5rem)] max-w-7xl overflow-hidden border-border/70 py-0 shadow-xl sm:min-h-[calc(100svh-3rem)] lg:min-h-[calc(100svh-4rem)]">

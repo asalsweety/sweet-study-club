@@ -41,7 +41,7 @@ export default function FocusStudyScreen({
         <ArrowRight /> خروج از نمای تمرکز
       </Button>
 
-      <Card className="w-full max-w-2xl border-primary/20 shadow-2xl shadow-primary/10">
+      <Card className="soft-enter w-full max-w-2xl border-primary/20 shadow-2xl shadow-primary/10">
         <CardContent className="flex flex-col items-center px-6 py-14 text-center sm:py-20">
           <Badge variant={paused ? 'secondary' : 'default'}>
             {paused ? 'تایمر متوقف است' : 'در حال مطالعه'}

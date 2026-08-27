@@ -9,7 +9,14 @@ import {
 import type { FormEvent } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { Flower2, LoaderCircle, LogOut, Moon, Sun } from 'lucide-react'
+import {
+  CircleHelp,
+  Flower2,
+  LoaderCircle,
+  LogOut,
+  Moon,
+  Sun,
+} from 'lucide-react'
 import { supabase } from './lib/supabase'
 import BottomNavigation from './components/BottomNavigation'
 import './App.css'
@@ -37,6 +44,13 @@ import { demoReviewEnabled } from './shared/config/demo-review'
 import { Alert, AlertDescription } from './components/ui/alert'
 import { Badge } from './components/ui/badge'
 import { Button } from './components/ui/button'
+import ThemePicker from './features/theme/components/ThemePicker'
+import {
+  readStoredThemePreset,
+  storeThemePreset,
+  themePresetClasses,
+  type ThemePreset,
+} from './features/theme/model'
 
 type AppSession = Session | { user: { id: string } }
 
@@ -73,12 +87,16 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [working, setWorking] = useState(false)
   const [message, setMessage] = useState('')
+  const [themePreset, setThemePreset] = useState(readStoredThemePreset)
   const [showOnboarding, setShowOnboarding] = useState(() => {
+    const onboardingPreviewRequested =
+      window.location.pathname === '/onboarding' ||
+      new URLSearchParams(window.location.search).has('onboarding')
     const seen = localStorage.getItem(
       'sweet-study-onboarding'
     )
 
-    return !seen
+    return onboardingPreviewRequested || !seen
   })
   const [onboardingStep, setOnboardingStep] =
     useState<'welcome' | 'intro'>('welcome')
@@ -251,6 +269,23 @@ function App() {
       document.body.classList.remove('focus-active')
     }
   }, [activeState?.focusLockEnabled])
+
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.remove(...themePresetClasses)
+    root.classList.add('theme-preset', `theme-${themePreset}`)
+
+    return () => {
+      root.classList.remove('theme-preset', `theme-${themePreset}`)
+    }
+  }, [themePreset])
+
+  useEffect(() => {
+    document.documentElement.classList.toggle(
+      'theme-dark',
+      profile?.theme === 'dark',
+    )
+  }, [profile?.theme])
 
   const activeScheduledSession = useMemo(() => {
     return findActiveScheduledSession(sessions, scheduleClock)
@@ -507,6 +542,25 @@ function App() {
   const themeClass =
     profile?.theme === 'dark' ? 'theme-dark' : 'theme-light'
 
+  const finishOnboarding = () => {
+    localStorage.setItem('sweet-study-onboarding', 'true')
+
+    if (window.location.pathname === '/onboarding') {
+      window.history.replaceState({}, '', appRoutes.home)
+    } else if (
+      new URLSearchParams(window.location.search).has('onboarding')
+    ) {
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+
+    setShowOnboarding(false)
+  }
+
+  const updateThemePreset = (nextTheme: ThemePreset) => {
+    setThemePreset(nextTheme)
+    storeThemePreset(nextTheme)
+  }
+
   if (loading) {
     return (
       <main className="grid min-h-dvh place-items-center bg-background text-foreground">
@@ -523,32 +577,26 @@ function App() {
       return (
         <Welcome
           onStart={() => setOnboardingStep('intro')}
-          onLogin={() => {
-            localStorage.setItem(
-              'sweet-study-onboarding',
-              'true'
-            )
-            setShowOnboarding(false)
-          }}
+          onLogin={finishOnboarding}
         />
       )
     }
 
     return (
-      <IntroSlider
-        onFinish={() => {
-          localStorage.setItem(
-            'sweet-study-onboarding',
-            'true'
-          )
-          setShowOnboarding(false)
-        }}
-      />
+      <IntroSlider onFinish={finishOnboarding} />
     )
   }
 
   if (!session) {
-    return <Auth onDemoLogin={enterDemoReview} />
+    return (
+      <Auth
+        onDemoLogin={enterDemoReview}
+        onPreviewOnboarding={() => {
+          setOnboardingStep('welcome')
+          setShowOnboarding(true)
+        }}
+      />
+    )
   }
 
   if (!profile) {
@@ -604,6 +652,18 @@ function App() {
         </div>
 
         <div className="flex items-center gap-1.5">
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label="مشاهده معرفی برنامه"
+            onClick={() => {
+              setOnboardingStep('welcome')
+              setShowOnboarding(true)
+            }}
+          >
+            <CircleHelp />
+          </Button>
+          <ThemePicker value={themePreset} onChange={updateThemePreset} />
           <Button
             size="icon"
             variant="outline"

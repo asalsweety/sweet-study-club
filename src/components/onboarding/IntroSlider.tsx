@@ -71,7 +71,7 @@ export default function IntroSlider({ onFinish }: Props) {
   const progress = ((index + 1) / slides.length) * 100
 
   return (
-    <main className="min-h-svh bg-background p-3 sm:p-6 lg:p-8" dir="rtl">
+    <main className="soft-enter min-h-svh bg-background p-3 sm:p-6 lg:p-8" dir="rtl">
       <Card className="mx-auto min-h-[calc(100svh-1.5rem)] max-w-7xl overflow-hidden py-0 shadow-xl sm:min-h-[calc(100svh-3rem)] lg:min-h-[calc(100svh-4rem)]">
         <CardContent className="grid flex-1 p-0 lg:grid-cols-[1fr_1.08fr]">
           <section className="flex flex-col justify-between gap-10 px-6 py-8 sm:px-10 lg:px-14 lg:py-12">
@@ -92,6 +92,7 @@ export default function IntroSlider({ onFinish }: Props) {
             </header>
 
             <IntroSlide
+              key={slide.eyebrow}
               title={slide.title}
               text={slide.text}
               icon={slide.icon}
