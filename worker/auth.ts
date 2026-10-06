@@ -93,6 +93,26 @@ export function createAuth(bindings: WorkerBindings) {
         generateId: 'uuid',
       },
     },
+    databaseHooks: {
+      user: {
+        create: {
+          // Roles are decided only here, server-side: configured admin emails,
+          // plus the very first account on a local database for easy setup.
+          before: async (user) => {
+            const adminEmails = (bindings.ADMIN_EMAILS ?? '')
+              .split(',')
+              .map((email) => email.trim().toLowerCase())
+              .filter(Boolean)
+            let role: 'member' | 'admin' = adminEmails.includes(user.email.toLowerCase()) ? 'admin' : 'member'
+            if (role === 'member' && isLocal) {
+              const existing = await bindings.DB.prepare('SELECT COUNT(*) AS total FROM user').first<{ total: number }>()
+              if ((existing?.total ?? 0) === 0) role = 'admin'
+            }
+            return { data: { ...user, role } }
+          },
+        },
+      },
+    },
   })
 }
 

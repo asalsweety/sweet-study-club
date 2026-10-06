@@ -1,4 +1,5 @@
 export type WorkerBindings = {
+  ADMIN_EMAILS?: string
   APP_ENVIRONMENT?: string
   APP_ORIGIN?: string
   ASSETS: Fetcher
