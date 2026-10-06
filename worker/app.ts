@@ -12,7 +12,12 @@ import {
   findProfileByUserId,
   updateProfileByUserId,
 } from './profile/repository'
-import { findActiveTimerByUserId } from './study-timer/repository'
+import { ApiError } from './http/errors'
+import { adminRoutes } from './routes/admin'
+import { progressRoutes } from './routes/progress'
+import { shopRoutes } from './routes/shop'
+import { socialRoutes } from './routes/social'
+import { studyRoutes } from './routes/study'
 import type { WorkerEnvironment } from './types'
 
 const serviceName = 'sweet-study-club-api' as const
@@ -64,7 +69,7 @@ export function createWorkerApp(options: WorkerAppOptions = {}) {
         .bind('schema_version')
         .first<{ value: string }>()
 
-      if (metadata?.value !== '3') {
+      if (metadata?.value !== '6') {
         throw new Error('The expected database migration is missing.')
       }
 
@@ -153,14 +158,11 @@ export function createWorkerApp(options: WorkerAppOptions = {}) {
     return context.json({ profile })
   })
 
-  app.get('/api/study/timer', requireSession, async (context) => {
-    const timer = await findActiveTimerByUserId(
-      context.env.DB,
-      context.get('authenticatedUserId'),
-    )
-
-    return context.json({ timer })
-  })
+  app.route('/api', studyRoutes(requireSession))
+  app.route('/api', progressRoutes(requireSession))
+  app.route('/api', socialRoutes(requireSession))
+  app.route('/api', shopRoutes(requireSession))
+  app.route('/api', adminRoutes(requireSession))
 
   app.notFound((context) => {
     if (context.req.path.startsWith('/api/')) {
@@ -181,6 +183,19 @@ export function createWorkerApp(options: WorkerAppOptions = {}) {
 
   app.onError((error, context) => {
     const requestIdentifier = context.get('requestId')
+
+    if (error instanceof ApiError) {
+      return context.json(
+        {
+          error: {
+            code: error.code,
+            message: error.message,
+            requestId: requestIdentifier,
+          },
+        },
+        error.status,
+      )
+    }
 
     console.error('Unhandled API request failure.', {
       errorName: error.name,
