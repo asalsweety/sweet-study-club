@@ -209,6 +209,8 @@ Exit gate:
 
 ## Immediate Work Order
 
+Status (October 2026): Phases 2–5 product scope is implemented on the Worker + D1 and the web PWA, and Supabase is removed. Every feature in the product notes is in place: timer modes, test results, focus room with Chibi scenes, planner, progress, badges, Study DNA, exports, friends, Live Study, league, shop, Plan by Asal, and the admin Studio. What remains is mostly external setup: Cloudflare environments, transactional email (verification and recovery), Turnstile and rate limits, a real payment gateway, an AI provider, final art assets, and Expo.
+
 1. Complete Phase 1 email verification/recovery, abuse controls, web auth migration, account deletion, and remaining authorization tests.
 2. Migrate the timer/session vertical slice and characterize current behavior before deleting its Supabase calls.
 3. Migrate analytics, exports, storage, admin, and social one slice at a time.

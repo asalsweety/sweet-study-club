@@ -7,15 +7,10 @@ The accepted architecture is documented in `docs/adr/0001-cloudflare-pwa-expo.md
 ## Current Status
 
 - The active branch is `hesam-dev`; `main` remains release-only.
-- React, TypeScript, and Vite remain the web stack.
-- Cloudflare Workers Static Assets builds the web client and Worker API as one deployable unit.
-- D1 has a versioned local foundation migration and readiness check.
-- Better Auth is mounted on the Worker with direct D1 storage and server-owned role fields.
-- Authenticated profile reads and updates use a shared web/Expo contract and a session-scoped Worker API.
-- The PWA has a manifest, service worker, offline app-shell cache, and user-controlled update prompt.
-- Primary screens use real browser URLs and a shared runtime-validated API client is ready for migrated endpoints and Expo.
-- Netlify configuration has been removed.
-- Existing product screens still call Supabase temporarily. Supabase is a migration source, not the target architecture.
+- The whole product runs on one Cloudflare Worker (Hono API + static PWA) with D1. Supabase has been removed completely.
+- Features: email/password accounts (Better Auth), study timer with scheduled parts / free / Pomodoro modes, konkur-style test results (درصد with negative marking), focus rating and notes, a full-screen focus room with a digital or animated Chibi Asal scene and generated ambient sounds, daily/monthly planner with reminders, progress (day/week/month vs previous, best/longest day, favourite subject, heatmap), XP/levels/badges, Study DNA, CSV/PNG/print exports, friends (codes, invite links, requests, blocking), opt-in Live Study and leaderboard league, cheers, shop with Sweet Plus and Plan by Asal requests, and the admin Studio (overview, users/roles, daily parts, holidays, plan replies, broadcasts, prices).
+- The PWA installs with maskable icons, shortcuts and an offline app shell; API responses are never cached.
+- Payments use a local-only stand-in (`/api/shop/orders/:id/dev-pay` refuses outside `APP_ENVIRONMENT=local`) until a real gateway is configured.
 - No Cloudflare resource or production deployment has been created from this repository yet. `wrangler.jsonc` intentionally contains a non-deployable placeholder database ID.
 
 ## Requirements
@@ -29,13 +24,13 @@ Use `.nvmrc` when Node Version Manager is available. npm enforces the supported 
 
 ## Local Setup
 
-1. Copy `.env.example` to `.env.local` and fill only browser-safe `VITE_*` values. These values are embedded in browser code; a secret or Supabase service-role key must never be placed there.
-2. Copy `.dev.vars.example` to `.dev.vars` and replace the example Better Auth secret with a unique local value of at least 32 characters. `.dev.vars` is ignored and belongs only to the Worker; never put this secret in a `VITE_*` variable.
+1. Copy `.env.example` to `.env.local` if you need browser-safe `VITE_*` overrides; the defaults work for local development.
+2. Copy `.dev.vars.example` to `.dev.vars`, replace the example Better Auth secret with a unique local value of at least 32 characters, and set `APP_ORIGIN=http://localhost:5173` (it must match the URL you open, or sign-in is refused as an invalid origin). Optionally set `ADMIN_EMAILS=a@x.com,b@y.com`. `.dev.vars` is ignored and belongs only to the Worker.
 3. Run `npm ci`. This installs the reviewed lockfile exactly. Use `npm install` only when intentionally changing dependencies, because it may rewrite the lockfile.
 4. Run `npm run db:migrate:local`. This applies versioned SQL to Wrangler's local D1 emulator. The command is safe for local development because it includes `--local`; adding `--remote` would mutate a Cloudflare database.
-5. Run `npm run dev`. This starts Vite with the Cloudflare Worker runtime, static assets, API routes, and local bindings. It does not deploy anything.
+5. Run `npm run dev` and open `http://localhost:5173`. This starts Vite with the Cloudflare Worker runtime, static assets, API routes, and local bindings. It does not deploy anything.
 
-For local visual review without a legacy Supabase account, set `VITE_ENABLE_DEMO_LOGIN=true` in ignored `.env.local`. The login screen then offers `demo@sweet.local` / `sweetdemo` and an equivalent quick-login button. This mode uses disposable in-memory profile, schedule, theme, and timer state. It is guarded by Vite's development flag and cannot be enabled in a production build; it is not an authentication test.
+The first account created on a fresh local database becomes an admin automatically (local environment only), so the Sweet Studio admin pages are reachable right away. In other environments only `ADMIN_EMAILS` grants admin at signup.
 
 If the local database state becomes disposable, remove only the project-specific `.wrangler/state` directory and reapply migrations. Never point tests or local migrations at production data.
 
