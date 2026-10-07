@@ -10,5 +10,6 @@
     "exactOptionalPropertyTypes": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["worker", "src/shared/api"]
+  "include": ["worker", "src/shared/api"],
+  "exclude": ["src/shared/api/http.ts"]
 }

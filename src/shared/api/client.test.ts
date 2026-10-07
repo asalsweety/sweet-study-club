@@ -29,6 +29,8 @@ const validStudyTimer = {
   pausedAt: null,
   accumulatedSeconds: 120,
   focusLockEnabled: true,
+  testCount: 0,
+  pomodoro: null,
   version: 3,
 } as const
 
