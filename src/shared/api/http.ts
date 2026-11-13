@@ -1,5 +1,5 @@
 import type { ZodType } from 'zod'
-import { ApiClientError } from './client'
+import { ApiClientError } from './api-client-error'
 import { apiErrorEnvelopeSchema } from './error'
 
 type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
@@ -38,8 +38,10 @@ export async function http<T>(method: Method, path: string, schema: ZodType<T> |
 
   if (!response.ok) {
     const parsed = apiErrorEnvelopeSchema.safeParse(payload)
+    // Better Auth returns { code, message }, while our API uses { error }.
+    const authCode = path.startsWith('/api/auth/') && typeof payload === 'object' && payload !== null && 'code' in payload && typeof payload.code === 'string' ? payload.code : undefined
     throw new ApiClientError(parsed.success ? parsed.data.error.message : 'درخواست انجام نشد.', {
-      code: parsed.success ? parsed.data.error.code : 'REQUEST_FAILED',
+      code: parsed.success ? parsed.data.error.code : authCode ?? (response.status === 429 ? 'TOO_MANY_REQUESTS' : 'REQUEST_FAILED'),
       status: response.status,
       ...(parsed.success && parsed.data.error.requestId !== undefined ? { requestId: parsed.data.error.requestId } : {}),
     })

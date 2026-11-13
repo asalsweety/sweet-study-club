@@ -48,15 +48,15 @@ export default function AddFriendPanel() {
   const myCode = settings.data?.friendCode
 
   return (
-    <section className="glass rise flex flex-col gap-4 rounded-[2rem] p-5 sm:p-6">
-      <h2 className="flex items-center gap-2 text-lg font-black">
+    <section className="glass rise flex flex-col gap-4 rounded-2xl p-5 sm:p-6">
+      <h2 className="flex items-center gap-2 text-lg font-bold">
         <UserPlus size={19} className="text-primary" /> افزودن دوست
       </h2>
 
-      <div className="flex items-center justify-between gap-3 rounded-2xl bg-[image:var(--primary-gradient)] p-4 text-primary-foreground shadow-lg shadow-primary/25">
+      <div className="flex items-center justify-between gap-3 rounded-2xl bg-primary p-4 text-primary-foreground ">
         <div>
           <p className="text-xs opacity-80">کد دوستی تو</p>
-          <p className="font-mono text-2xl font-black tracking-[0.2em]" dir="ltr">{myCode ?? '••••••••'}</p>
+          <p className="font-mono text-2xl font-bold tracking-[0.2em]" dir="ltr">{myCode ?? '••••••••'}</p>
         </div>
         <Button
           size="icon"

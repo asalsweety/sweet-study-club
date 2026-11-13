@@ -1,18 +1,24 @@
-import { lazy, Suspense, useState } from 'react'
-import { LoaderCircle } from 'lucide-react'
+import { lazy, Suspense } from 'react'
+import { Flower2, RefreshCw } from 'lucide-react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { appRoutes } from './app/navigation/routes'
-import { useProfile, useSession, useSignOut } from './app/session'
-import AppShell from './components/AppShell'
-import IntroSlider from './components/onboarding/IntroSlider'
-import Welcome from './components/onboarding/Welcome'
-import AuthScreen from './features/auth/AuthScreen'
-import BackgroundServices from './features/presence/BackgroundServices'
+import { useProfile, useSession } from './app/session'
+import { ApiClientError } from './shared/api/api-client-error'
+import { Button } from './components/ui/button'
+import Toaster from './components/Toaster'
+
+const AppShell = lazy(() => import('./components/AppShell'))
+const AuthScreen = lazy(() => import('./features/auth/AuthScreen'))
+const BackgroundServices = lazy(() => import('./features/presence/BackgroundServices'))
+const SessionCelebration = lazy(() => import('./features/study/SessionCelebration'))
+// Confirmations are only requested after sign-in; keep the dialog code out of the entry bundle.
+const ConfirmHost = lazy(() => import('./components/ConfirmHost'))
 
 const HomePage = lazy(() => import('./pages/HomePage'))
 const FocusPage = lazy(() => import('./pages/FocusPage'))
 const PlannerPage = lazy(() => import('./pages/PlannerPage'))
 const ProgressPage = lazy(() => import('./pages/ProgressPage'))
+const LearningPage = lazy(() => import('./pages/LearningPage'))
 const FriendsPage = lazy(() => import('./pages/FriendsPage'))
 const RankingPage = lazy(() => import('./pages/RankingPage'))
 const ShopPage = lazy(() => import('./pages/ShopPage'))
@@ -20,14 +26,15 @@ const MePage = lazy(() => import('./pages/MePage'))
 const AdminPage = lazy(() => import('./pages/AdminPage'))
 const InvitePage = lazy(() => import('./pages/InvitePage'))
 
-const ONBOARDING_KEY = 'sweet-study-onboarding'
-
 function FullScreenLoader({ label }: { label: string }) {
   return (
-    <main className="grid min-h-dvh place-items-center bg-background text-foreground" aria-live="polite">
-      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-        <LoaderCircle className="animate-spin text-primary" size={20} />
-        {label}
+    <main className="grid min-h-dvh place-items-center text-foreground" aria-live="polite">
+      <div className="flex flex-col items-center gap-5 [animation:fade-in_500ms_ease-out_backwards]">
+        <span className="relative grid size-16 place-items-center rounded-[1.4rem] bg-primary text-primary-foreground shadow-[var(--glow-primary)]">
+          <span aria-hidden className="absolute inset-0 animate-ping rounded-[1.4rem] bg-primary/30 motion-reduce:animate-none" />
+          <Flower2 size={30} className="relative [animation:spin-slow_6s_linear_infinite] motion-reduce:animate-none" />
+        </span>
+        <p className="text-sm text-muted-foreground">{label}</p>
       </div>
     </main>
   )
@@ -45,25 +52,30 @@ function PageFallback() {
   )
 }
 
+function ConnectionProblem({ profile = false, retry, pending }: { profile?: boolean; retry: () => void; pending: boolean }) {
+  return <main dir="rtl" className="grid min-h-dvh place-items-center p-6">
+    <section className="surface max-w-md p-8 text-center [animation:rise-in_520ms_var(--ease-spring)_backwards]">
+      <RefreshCw className="mx-auto mb-5 text-primary" size={28} />
+      <h1 className="text-xl font-bold">{profile ? 'اطلاعات حسابت بارگذاری نشد' : 'اتصال برقرار نشد'}</h1>
+      <p className="my-4 text-sm leading-7 text-muted-foreground">اتصال اینترنت را بررسی کن و دوباره تلاش کن. نیازی به ساخت حساب جدید نیست.</p>
+      <Button disabled={pending} onClick={retry}>{pending ? 'در حال بررسی…' : 'تلاش دوباره'}</Button>
+    </section>
+  </main>
+}
+
 export default function App() {
+  return <><AppContent /><Toaster /></>
+}
+
+function AppContent() {
   const session = useSession()
   const signedIn = Boolean(session.data)
   const profile = useProfile(signedIn)
-  const signOut = useSignOut()
-  const [onboarding, setOnboarding] = useState<'welcome' | 'intro' | null>(() =>
-    window.location.pathname === appRoutes.onboarding || !localStorage.getItem(ONBOARDING_KEY) ? 'welcome' : null,
-  )
-
-  const finishOnboarding = () => {
-    localStorage.setItem(ONBOARDING_KEY, 'true')
-    if (window.location.pathname === appRoutes.onboarding) window.history.replaceState({}, '', appRoutes.home)
-    setOnboarding(null)
-  }
-
-  if (onboarding === 'welcome') return <Welcome onStart={() => setOnboarding('intro')} onLogin={finishOnboarding} />
-  if (onboarding === 'intro') return <IntroSlider onFinish={finishOnboarding} />
   if (session.isPending) return <FullScreenLoader label="در حال آماده‌سازی اتاق مطالعه..." />
-  if (!signedIn) return <AuthScreen onShowIntro={() => setOnboarding('welcome')} />
+  if (session.isError && !signedIn) return <ConnectionProblem retry={() => void session.refetch()} pending={session.isFetching} />
+  const expired = profile.error instanceof ApiClientError && profile.error.status === 401
+  if (!signedIn || expired) return <AuthScreen />
+  if (profile.isError && !profile.data) return <ConnectionProblem profile retry={() => void profile.refetch()} pending={profile.isFetching} />
   if (!profile.data) return <FullScreenLoader label="در حال آماده‌کردن پروفایل..." />
 
   return (
@@ -73,12 +85,13 @@ export default function App() {
         <Route
           path="*"
           element={
-            <AppShell profile={profile.data} onSignOut={() => signOut.mutate()}>
+            <AppShell profile={profile.data}>
               <Suspense fallback={<PageFallback />}>
                 <Routes>
                   <Route path={appRoutes.home} element={<HomePage profile={profile.data} />} />
                   <Route path={appRoutes.planner} element={<PlannerPage />} />
                   <Route path={appRoutes.progress} element={<ProgressPage profile={profile.data} />} />
+                  <Route path={appRoutes.learning} element={<LearningPage />} />
                   <Route path={appRoutes.friends} element={<FriendsPage />} />
                   <Route path={appRoutes.ranking} element={<RankingPage />} />
                   <Route path={appRoutes.shop} element={<ShopPage />} />
@@ -92,7 +105,7 @@ export default function App() {
           }
         />
       </Routes>
-      <BackgroundServices />
+      <Suspense fallback={null}><BackgroundServices /><SessionCelebration /><ConfirmHost /></Suspense>
     </Suspense>
   )
 }

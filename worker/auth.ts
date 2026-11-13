@@ -62,13 +62,23 @@ export function createAuth(bindings: WorkerBindings) {
       enabled: false,
     },
     emailAndPassword: {
-      // Remote signup stays closed until verified email delivery and abuse
-      // controls are configured; an unusable recovery flow is not shippable.
-      enabled: isLocal,
+      // Remote deployments must opt in explicitly. Unverified signup never
+      // grants an admin role; password recovery needs a mail provider.
+      enabled: isLocal || bindings.EMAIL_PASSWORD_AUTH_ENABLED === 'true',
       requireEmailVerification: false,
       autoSignIn: false,
       minPasswordLength: 10,
       maxPasswordLength: 128,
+    },
+    rateLimit: {
+      enabled: !isLocal,
+      storage: 'database',
+      window: 60,
+      max: 100,
+      customRules: {
+        '/sign-in/email': { window: 60, max: 10 },
+        '/sign-up/email': { window: 300, max: 5 },
+      },
     },
     user: {
       additionalFields: {
@@ -87,6 +97,7 @@ export function createAuth(bindings: WorkerBindings) {
       },
     },
     advanced: {
+      ipAddress: { ipAddressHeaders: ['cf-connecting-ip'] },
       cookiePrefix: 'sweet-study',
       useSecureCookies: !isLocal,
       database: {
@@ -103,7 +114,7 @@ export function createAuth(bindings: WorkerBindings) {
               .split(',')
               .map((email) => email.trim().toLowerCase())
               .filter(Boolean)
-            let role: 'member' | 'admin' = adminEmails.includes(user.email.toLowerCase()) ? 'admin' : 'member'
+            let role: 'member' | 'admin' = (isLocal || user.emailVerified) && adminEmails.includes(user.email.toLowerCase()) ? 'admin' : 'member'
             if (role === 'member' && isLocal) {
               const existing = await bindings.DB.prepare('SELECT COUNT(*) AS total FROM user').first<{ total: number }>()
               if ((existing?.total ?? 0) === 0) role = 'admin'

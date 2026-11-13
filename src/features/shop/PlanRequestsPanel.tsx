@@ -31,8 +31,8 @@ export default function PlanRequestsPanel() {
   if (!canRequest && (requests.data?.length ?? 0) === 0) return null
 
   return (
-    <section className="glass rise flex flex-col gap-4 rounded-[2rem] p-5 sm:p-6">
-      <h2 className="flex items-center gap-2 text-lg font-black"><Mail size={19} className="text-primary" /> برنامه‌ی شخصی من</h2>
+    <section className="glass rise flex flex-col gap-4 rounded-2xl p-5 sm:p-6">
+      <h2 className="flex items-center gap-2 text-lg font-bold"><Mail size={19} className="text-primary" /> برنامه‌ی شخصی من</h2>
       {canRequest && (
         <form
           className="flex flex-col gap-3"
@@ -49,7 +49,7 @@ export default function PlanRequestsPanel() {
             onChange={(e) => setDetails(e.target.value)}
             placeholder="پایه، رشته، ساعت‌های آزاد، درس‌های قوی و ضعیف، منابع، تراز آزمون‌ها..."
           />
-          <Button type="submit" disabled={!goal.trim() || send.isPending} className="rounded-2xl bg-[image:var(--primary-gradient)] font-black">
+          <Button type="submit" disabled={!goal.trim() || send.isPending} className="rounded-2xl bg-primary font-bold">
             <Send /> ارسال برای Asal
           </Button>
           {send.isError && <p className="text-sm text-destructive">{errorMessage(send.error)}</p>}

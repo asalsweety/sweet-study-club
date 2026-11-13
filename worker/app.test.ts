@@ -40,7 +40,7 @@ describe('system routes', () => {
     const response = await createWorkerApp().request(
       '/api/ready',
       undefined,
-      createBindings('7'),
+      createBindings('11'),
     )
     const payload = serviceStatusSchema.parse(await response.json())
 
@@ -52,7 +52,7 @@ describe('system routes', () => {
     const response = await createWorkerApp().request(
       '/api/auth/get-session',
       undefined,
-      createBindings('7'),
+      createBindings('11'),
     )
     const payload = await response.json()
 
@@ -78,7 +78,7 @@ describe('profile routes', () => {
   it('rejects requests without a valid session', async () => {
     const response = await createWorkerApp({
       resolveSession: async () => null,
-    }).request('/api/profile', undefined, createBindings('7'))
+    }).request('/api/profile', undefined, createBindings('11'))
     const payload = await response.json()
 
     expect(response.status).toBe(401)
@@ -102,7 +102,7 @@ describe('profile routes', () => {
     }))
     const bind = vi.fn(() => ({ first }))
     const bindings = {
-      ...createBindings('7'),
+      ...createBindings('11'),
       DB: {
         prepare: vi.fn(() => ({ bind })),
       } as unknown as D1Database,
@@ -124,7 +124,7 @@ describe('profile routes', () => {
   })
 
   it('rejects invalid profile changes before querying D1', async () => {
-    const bindings = createBindings('7')
+    const bindings = createBindings('11')
     const response = await createWorkerApp({
       resolveSession: async () => ({
         user: { id: 'session-user' },
@@ -177,7 +177,7 @@ describe('study timer routes', () => {
     }))
     const bind = vi.fn(() => ({ first }))
     const bindings = {
-      ...createBindings('7'),
+      ...createBindings('11'),
       DB: {
         prepare: vi.fn(() => ({ bind })),
       } as unknown as D1Database,

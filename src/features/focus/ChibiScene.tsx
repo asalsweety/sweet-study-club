@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { ChibiScene as SceneId } from './scenes'
 import { sceneThemes } from './scenes'
 
@@ -9,7 +10,7 @@ type ChibiSceneProps = {
 }
 
 // Pure SVG + CSS so it scales crisply, themes cheaply and needs no assets.
-export default function ChibiScene({ scene, isNight, state, className }: ChibiSceneProps) {
+function ChibiScene({ scene, isNight, state, className }: ChibiSceneProps) {
   const theme = sceneThemes[scene]
   const sky = isNight ? theme.nightSky : theme.daySky
   const drops = Array.from({ length: 26 }, (_, index) => index)
@@ -131,3 +132,5 @@ export default function ChibiScene({ scene, isNight, state, className }: ChibiSc
     </svg>
   )
 }
+
+export default memo(ChibiScene)

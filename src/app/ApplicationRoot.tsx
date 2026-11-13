@@ -1,9 +1,11 @@
 import { lazy, Suspense } from 'react'
 import ErrorBoundary from './ErrorBoundary'
 import ApplicationProviders from './ApplicationProviders'
-import PwaUpdatePrompt from './pwa/PwaUpdatePrompt'
 
 const App = lazy(() => import('../App'))
+const PwaUpdatePrompt = import.meta.env.PROD
+  ? lazy(() => import('./pwa/PwaUpdatePrompt'))
+  : null
 
 export default function ApplicationRoot() {
   return (
@@ -11,14 +13,17 @@ export default function ApplicationRoot() {
       <ApplicationProviders>
         <Suspense
           fallback={
-            <main className="grid min-h-dvh place-items-center bg-background text-sm text-muted-foreground" aria-live="polite">
-              در حال بارگذاری برنامه...
+            <main className="grid min-h-dvh place-items-center text-sm text-muted-foreground" aria-live="polite">
+              <div className="flex flex-col items-center gap-5">
+                <span aria-hidden className="size-14 animate-pulse rounded-[1.3rem] bg-primary shadow-[var(--glow-primary)] motion-reduce:animate-none" />
+                در حال بارگذاری برنامه...
+              </div>
             </main>
           }
         >
           <App />
         </Suspense>
-        <PwaUpdatePrompt />
+        {PwaUpdatePrompt && <Suspense fallback={null}><PwaUpdatePrompt /></Suspense>}
       </ApplicationProviders>
     </ErrorBoundary>
   )

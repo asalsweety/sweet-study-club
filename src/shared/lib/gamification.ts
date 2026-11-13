@@ -33,7 +33,7 @@ export type BadgeDefinition = {
   tier: 'bronze' | 'silver' | 'gold' | 'special'
 }
 
-type BadgeFacts = {
+export type BadgeFacts = {
   totalHours: number
   sessions: number
   longestMinutes: number
@@ -76,11 +76,15 @@ export function earnedBadgeIds(logs: readonly AnalyticsLog[], today: string, isF
   const facts: BadgeFacts = {
     totalHours: logs.reduce((sum, log) => sum + log.durationSeconds, 0) / 3600,
     sessions: logs.length,
-    longestMinutes: Math.max(0, ...logs.map((log) => log.durationSeconds / 60)),
+    longestMinutes: logs.reduce((longest, log) => Math.max(longest, log.durationSeconds / 60), 0),
     bestStreak: streaks(logs, today).best,
     tests: logs.reduce((sum, log) => sum + log.testCount, 0),
     isFounder,
   }
+  return earnedBadgeIdsFromFacts(facts)
+}
+
+export function earnedBadgeIdsFromFacts(facts: BadgeFacts) {
   return rules.filter((rule) => rule.earned(facts)).map((rule) => rule.id)
 }
 
@@ -104,8 +108,11 @@ export function studyDna(logs: readonly AnalyticsLog[]): StudyDna {
     const hour = Math.floor(minute / 60)
     hourly[hour] = (hourly[hour] ?? 0) + log.durationSeconds / 60
   }
-  const sessions = logs.length
-  const average = sessions === 0 ? 0 : logs.reduce((sum, log) => sum + log.durationSeconds, 0) / 60 / sessions
+  return studyDnaFromHours(hourly, logs.length, logs.reduce((sum, log) => sum + log.durationSeconds, 0))
+}
+
+export function studyDnaFromHours(hourly: number[], sessions: number, totalSeconds: number): StudyDna {
+  const average = sessions === 0 ? 0 : totalSeconds / 60 / sessions
   const peak = hourly.indexOf(Math.max(...hourly))
   const sum = (from: number, to: number) => hourly.slice(from, to).reduce((total, value) => total + value, 0)
   const windows: [StudyDnaType, number][] = [

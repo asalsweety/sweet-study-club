@@ -1,0 +1,13 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "sweet-study-club-forwarder",
+  "main": "./domain-forwarder.mjs",
+  "compatibility_date": "2026-08-26",
+  "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "test.zendegidarkhavarmiane.lol/*",
+      "zone_name": "zendegidarkhavarmiane.lol"
+    }
+  ]
+}

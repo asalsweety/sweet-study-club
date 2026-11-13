@@ -3,6 +3,7 @@ export const appRoutes = {
   focus: '/focus',
   planner: '/planner',
   progress: '/progress',
+  learning: '/learn',
   friends: '/friends',
   ranking: '/ranking',
   shop: '/shop',

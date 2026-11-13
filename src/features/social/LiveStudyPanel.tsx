@@ -5,6 +5,8 @@ import { api } from '../../app/api'
 import { queryKeys } from '../../app/session'
 import { errorMessage } from '../../shared/api/http'
 import { fa } from '../../shared/lib/format'
+import { haptic } from '../../shared/lib/confetti'
+import { toast } from '../../shared/lib/toast'
 import { cn } from '../../shared/lib/utils'
 import PersonRow from './PersonRow'
 
@@ -17,7 +19,12 @@ export default function LiveStudyPanel() {
   const live = useQuery({ queryKey: queryKeys.live(scope), queryFn: () => api.social.live(scope), refetchInterval: 30_000 })
   const cheer = useMutation({
     mutationFn: (userId: string) => api.social.cheer(userId, '💖'),
-    onSuccess: (_, userId) => setSent(userId),
+    onSuccess: (_, userId) => {
+      setSent(userId)
+      haptic([10, 40, 10])
+      const name = live.data?.people.find((person) => person.userId === userId)?.displayName
+      toast(`تشویقت برای ${name ?? 'دوستت'} فرستاده شد`, { icon: '💖', duration: 3200 })
+    },
   })
 
   const people = (live.data?.people ?? []).filter((person) =>
@@ -26,14 +33,14 @@ export default function LiveStudyPanel() {
   const counts = live.data?.counts
 
   return (
-    <section className="glass rise flex flex-col gap-4 rounded-[2rem] p-5 sm:p-6">
+    <section className="glass rise flex flex-col gap-4 rounded-2xl p-5 sm:p-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-lg font-black">
+        <h2 className="flex items-center gap-2 text-lg font-bold">
           <Radio size={19} className="text-[var(--success)] motion-safe:animate-pulse" /> مطالعه‌ی زنده
         </h2>
         <div className="flex rounded-xl bg-muted/70 p-1 text-xs font-bold">
           {(['friends', 'everyone'] as const).map((value) => (
-            <button key={value} type="button" onClick={() => setScope(value)} className={cn('rounded-lg px-3 py-1.5', scope === value ? 'bg-card shadow-sm' : 'text-muted-foreground')}>
+            <button key={value} type="button" aria-pressed={scope === value} onClick={() => setScope(value)} className={cn('rounded-lg px-3 py-1.5', scope === value ? 'bg-card shadow-sm' : 'text-muted-foreground')}>
               {value === 'friends' ? 'دوستان' : 'همه'}
             </button>
           ))}
@@ -50,6 +57,7 @@ export default function LiveStudyPanel() {
           <button
             key={value}
             type="button"
+            aria-pressed={filter === value}
             onClick={() => setFilter(value)}
             className={cn('rounded-full border px-3 py-1 text-xs font-bold transition', filter === value ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground')}
           >
@@ -58,7 +66,7 @@ export default function LiveStudyPanel() {
         ))}
       </div>
 
-      {cheer.isError && <p className="text-sm text-destructive">{errorMessage(cheer.error)}</p>}
+      {cheer.isError && <p role="alert" className="text-sm text-destructive">{errorMessage(cheer.error)}</p>}
 
       <ul className="flex flex-col gap-2">
         {live.isPending && <li className="skeleton h-16 rounded-2xl" />}
@@ -83,9 +91,9 @@ export default function LiveStudyPanel() {
                   disabled={cheer.isPending || sent === person.userId}
                   onClick={() => cheer.mutate(person.userId)}
                   aria-label={`تشویق ${person.displayName}`}
-                  className="grid size-10 place-items-center rounded-xl bg-primary/10 text-lg transition hover:scale-110 disabled:opacity-50"
+                  className="grid size-10 place-items-center rounded-xl bg-primary/10 text-lg transition hover:scale-110 active:scale-90 disabled:opacity-60"
                 >
-                  {sent === person.userId ? '✓' : '💖'}
+                  {sent === person.userId ? <span className="[animation:pop-in_420ms_var(--ease-spring)_backwards]">✓</span> : '💖'}
                 </button>
               ) : null
             }

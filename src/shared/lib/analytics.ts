@@ -134,7 +134,11 @@ export function periodRanges(kind: PeriodKind, today: string) {
 
 /** Consecutive days with at least `minimumSeconds` of study. */
 export function streaks(logs: readonly AnalyticsLog[], today: string, minimumSeconds = 600) {
-  const days = dailyTotals(logs)
+  return streaksFromDays(dailyTotals(logs), today, minimumSeconds)
+}
+
+/** Also accepts database day aggregates, without materializing every session. */
+export function streaksFromDays(days: ReadonlyMap<string, DayTotal>, today: string, minimumSeconds = 600) {
   const qualifies = (date: string) => (days.get(date)?.seconds ?? 0) >= minimumSeconds
   let current = 0
   // Today still counts as "in progress": a streak survives until today ends.

@@ -1,7 +1,9 @@
+import QueryError from '../../components/QueryError'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { BookOpen, Check, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { api } from '../../app/api'
+import { confirmAction } from '../../shared/lib/confirm'
 import { queryKeys, useSubjects } from '../../app/session'
 import { errorMessage } from '../../shared/api/http'
 import type { Subject } from '../../shared/api/settings'
@@ -34,22 +36,25 @@ export default function SubjectsPanel() {
   const error = create.error ?? recolor.error ?? remove.error
 
   return (
-    <section className="glass rise flex flex-col gap-4 rounded-[2rem] p-5 sm:p-6">
-      <h2 className="flex items-center gap-2 text-lg font-black"><BookOpen size={19} className="text-primary" /> درس‌های من</h2>
+    <section className="glass rise flex flex-col gap-4 rounded-2xl p-5 sm:p-6">
+      <h2 className="flex items-center gap-2 text-lg font-bold"><BookOpen size={19} className="text-primary" /> درس‌های من</h2>
 
+      {subjects.isError && <QueryError error={subjects.error} retry={() => void subjects.refetch()} />}
+      {subjects.isPending && <div className="skeleton h-14 rounded-xl" />}
+      {subjects.data?.length === 0 && <p className="text-sm text-muted-foreground">اولین درس را اضافه کن تا هنگام شروع مطالعه سریع‌تر پیدایش کنی.</p>}
       <ul className="flex flex-wrap gap-2">
         {(subjects.data ?? []).map((subject) => (
-          <li key={subject.id} className="group flex items-center gap-1.5 rounded-full py-1 pr-1 pl-3 text-sm font-bold text-white shadow-sm" style={{ background: subject.color }}>
+          <li key={subject.id} className="group flex items-center gap-1.5 rounded-full py-1 pr-1 pl-3 text-sm font-bold text-foreground bg-card border border-border" style={{ borderInlineStart: `4px solid ${subject.color}` }}>
             <button
               type="button"
               aria-label={`تغییر رنگ ${subject.name}`}
               onClick={() => recolor.mutate({ ...subject, color: palette[(palette.indexOf(subject.color) + 1) % palette.length]! })}
-              className="grid size-7 place-items-center rounded-full bg-white/25"
+              className="grid size-11 place-items-center rounded-full bg-muted"
             >
               {subject.emoji}
             </button>
             {subject.name}
-            <button type="button" aria-label={`حذف ${subject.name}`} onClick={() => remove.mutate(subject.id)} className="opacity-70 transition hover:opacity-100">
+            <button type="button" aria-label={`حذف ${subject.name}`} disabled={remove.isPending} onClick={async () => { if (await confirmAction({ title: 'حذف درس', description: `درس «${subject.name}» حذف شود؟ جلسه‌های قبلی‌ات حفظ می‌شوند.` })) remove.mutate(subject.id) }} className="grid size-11 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-destructive">
               <Trash2 size={14} />
             </button>
           </li>
@@ -69,20 +74,20 @@ export default function SubjectsPanel() {
         </div>
         <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="رنگ">
           {palette.map((value) => (
-            <button key={value} type="button" role="radio" aria-checked={color === value} aria-label={value} onClick={() => setColor(value)} className="grid size-7 place-items-center rounded-full ring-offset-2 ring-offset-card transition" style={{ background: value, boxShadow: color === value ? `0 0 0 2px ${value}` : undefined }}>
+            <button key={value} type="button" role="radio" aria-checked={color === value} aria-label={value} onClick={() => setColor(value)} className="grid size-11 place-items-center rounded-full ring-offset-2 ring-offset-card transition" style={{ background: value, boxShadow: color === value ? `0 0 0 2px ${value}` : undefined }}>
               {color === value && <Check size={14} className="text-white" />}
             </button>
           ))}
         </div>
         <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="ایموجی">
           {emojis.map((value) => (
-            <button key={value} type="button" role="radio" aria-checked={emoji === value} onClick={() => setEmoji(value)} className={`grid size-9 place-items-center rounded-xl text-lg transition ${emoji === value ? 'bg-card shadow ring-2 ring-primary' : 'hover:bg-card'}`}>
+            <button key={value} type="button" role="radio" aria-checked={emoji === value} onClick={() => setEmoji(value)} className={`grid size-11 place-items-center rounded-xl text-lg transition ${emoji === value ? 'bg-card shadow ring-2 ring-primary' : 'hover:bg-card'}`}>
               {value}
             </button>
           ))}
         </div>
       </form>
-      {error && <p className="text-sm text-destructive">{errorMessage(error)}</p>}
+      {error && <p role="alert" className="text-sm text-destructive">{errorMessage(error)}</p>}
     </section>
   )
 }

@@ -1,3 +1,5 @@
+import PageHeading from '../components/PageHeading'
+import QueryError from '../components/QueryError'
 import { useQuery } from '@tanstack/react-query'
 import { Crown, EyeOff } from 'lucide-react'
 import { useState } from 'react'
@@ -19,10 +21,10 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
     <div className="grid grid-cols-3 items-end gap-3">
       {order.map((entry, index) =>
         entry ? (
-          <div key={entry.userId} className={cn('flex flex-col items-center gap-2 rounded-3xl p-4 text-center', index === 1 ? 'glass pb-8 shadow-xl shadow-primary/20' : 'bg-muted/40')}>
+          <div key={entry.userId} className={cn('flex flex-col items-center gap-2 rounded-3xl p-4 text-center', index === 1 ? 'glass pb-8 ' : 'bg-muted/40')}>
             {index === 1 && <Crown className="text-[var(--warning)]" />}
             <Avatar name={entry.displayName} url={entry.avatarUrl} size={index === 1 ? 'xl' : 'lg'} />
-            <p className="w-full truncate text-sm font-black">{entry.displayName}</p>
+            <p className="w-full truncate text-sm font-bold">{entry.displayName}</p>
             <p className="text-xs font-bold text-muted-foreground">{medals[entry.rank - 1]} {formatHours(entry.seconds)}</p>
           </div>
         ) : (
@@ -41,24 +43,20 @@ export default function RankingPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <header className="rise flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight">لیگ مطالعه</h1>
-          <p className="text-sm text-muted-foreground">فقط کسانی که خودشان خواسته‌اند در جدول هستند.</p>
-        </div>
+      <PageHeading eyebrow="انگیزهٔ بیشتر، کنار هم" title="لیگ مطالعه" description="رقابتی دوستانه؛ فقط کسانی اینجا هستند که خودشان انتخاب کرده‌اند." action={
         <div className="flex flex-wrap gap-2">
           <div className="flex rounded-2xl bg-muted/70 p-1 text-sm font-bold">
             {([['day', 'امروز'], ['week', 'هفته'], ['month', 'ماه']] as const).map(([value, label]) => (
-              <button key={value} type="button" onClick={() => setPeriod(value)} className={cn('rounded-xl px-3 py-1.5', period === value ? 'bg-card shadow-sm' : 'text-muted-foreground')}>{label}</button>
+              <button key={value} type="button" aria-pressed={period === value} onClick={() => setPeriod(value)} className={cn('rounded-xl px-3 py-1.5', period === value ? 'bg-card shadow-sm' : 'text-muted-foreground')}>{label}</button>
             ))}
           </div>
           <div className="flex rounded-2xl bg-muted/70 p-1 text-sm font-bold">
             {([['everyone', 'همه'], ['friends', 'دوستان']] as const).map(([value, label]) => (
-              <button key={value} type="button" onClick={() => setScope(value)} className={cn('rounded-xl px-3 py-1.5', scope === value ? 'bg-card shadow-sm' : 'text-muted-foreground')}>{label}</button>
+              <button key={value} type="button" aria-pressed={scope === value} onClick={() => setScope(value)} className={cn('rounded-xl px-3 py-1.5', scope === value ? 'bg-card shadow-sm' : 'text-muted-foreground')}>{label}</button>
             ))}
           </div>
         </div>
-      </header>
+      } />
 
       {data && !data.optedIn && (
         <aside className="flex items-center gap-3 rounded-3xl bg-[var(--warning-soft)] p-4 text-sm">
@@ -67,18 +65,18 @@ export default function RankingPage() {
         </aside>
       )}
 
-      {board.isPending ? (
-        <div className="skeleton h-56 rounded-[2rem]" />
+      {board.isError ? <QueryError error={board.error} retry={() => void board.refetch()} /> : board.isPending ? (
+        <div className="skeleton h-56 rounded-2xl" />
       ) : data && data.entries.length > 0 ? (
         <>
           <Podium entries={data.entries.slice(0, 3)} />
-          <ol className="glass flex flex-col gap-1 rounded-[2rem] p-3 sm:p-4">
+          <ol start={4} className="glass flex flex-col gap-1 rounded-2xl p-3 sm:p-4">
             {data.entries.slice(3).map((entry) => (
               <li key={entry.userId} className={cn('flex items-center gap-3 rounded-2xl px-3 py-2.5', entry.isMe && 'bg-primary/10 ring-1 ring-primary/30')}>
-                <span className="w-7 text-center text-sm font-black text-muted-foreground">{fa(entry.rank)}</span>
+                <span className="w-7 text-center text-sm font-bold text-muted-foreground">{fa(entry.rank)}</span>
                 <Avatar name={entry.displayName} url={entry.avatarUrl} size="sm" />
-                <span className="min-w-0 flex-1 truncate font-bold">{entry.displayName}{entry.isFriend && ' 💞'}</span>
-                <span className="font-black tabular-nums">{formatHours(entry.seconds)}</span>
+                <span className="min-w-0 flex-1 truncate font-bold">{entry.displayName}{entry.isFriend && ' · دوست'}</span>
+                <span className="font-bold tabular-nums">{formatHours(entry.seconds)}</span>
               </li>
             ))}
           </ol>
@@ -87,7 +85,7 @@ export default function RankingPage() {
           )}
         </>
       ) : (
-        <p className="glass rounded-[2rem] p-10 text-center text-muted-foreground">هنوز کسی در این بازه درس نخوانده. اولین نفر باش! 🏁</p>
+        <p className="glass rounded-2xl p-10 text-center text-muted-foreground">هنوز مطالعه‌ای در این بازه ثبت نشده. با یک جلسه شروع کن.</p>
       )}
     </div>
   )

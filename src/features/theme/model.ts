@@ -2,11 +2,11 @@ export const themePresetOptions = [
   {
     value: 'sweet',
     label: 'Sweet Study',
-    description: 'صورتی آرام و گرم',
+    description: 'سبز باغ و کاغذ گرم',
     swatches: [
-      'oklch(0.57 0.18 350)',
-      'oklch(0.91 0.065 80)',
-      'oklch(0.66 0.14 190)',
+      '#28624e',
+      '#edf1e8',
+      '#3b6ab4',
     ],
   },
   {
@@ -108,16 +108,18 @@ export function applyThemeToDocument(
   root.classList.remove(...themePresetClasses)
   root.classList.add('theme-preset', `theme-${preset}`)
   root.classList.toggle('theme-dark', mode === 'dark')
+  root.classList.toggle('dark', mode === 'dark')
   root.style.colorScheme = mode
 
   const themeColor = getComputedStyle(root)
     .getPropertyValue('--background')
     .trim()
-  const themeColorMeta = document.querySelector<HTMLMetaElement>(
-    'meta[name="theme-color"]',
-  )
-
-  if (themeColor && themeColorMeta) {
-    themeColorMeta.content = themeColor
+  // The app picks its palette with a class, not only the OS setting, so every
+  // per-scheme theme-color tag must follow the chosen background or the phone
+  // status bar keeps the other mode's color.
+  if (themeColor) {
+    for (const meta of document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) {
+      meta.content = themeColor
+    }
   }
 }

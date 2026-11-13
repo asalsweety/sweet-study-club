@@ -39,3 +39,10 @@ test-results/
 *.njsproj
 *.sln
 *.sw?
+
+# Commercially licensed fonts (fontiran.com): personal machines only unless a
+# website license is bought. Never commit or deploy without that license.
+public/fonts/licensed/
+
+# Playwright MCP session output (screenshots, downloads, logs)
+.playwright-mcp/

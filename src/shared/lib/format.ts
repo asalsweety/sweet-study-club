@@ -46,6 +46,9 @@ const timeFormatter = new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute
 /** "2026-10-07" -> Jalali "۱۵ مهر" (rendered in Persian calendar). */
 export const jalaliDay = (isoDate: string) => dateFormatter.format(new Date(`${isoDate}T12:00:00+03:30`))
 export const jalaliShort = (isoDate: string) => shortFormatter.format(new Date(`${isoDate}T12:00:00+03:30`))
+const fullDateFormatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Tehran' })
+/** "2027-06-24" -> Jalali "۳ تیر ۱۴۰۶". */
+export const jalaliFullDate = (isoDate: string) => fullDateFormatter.format(new Date(`${isoDate}T12:00:00+03:30`))
 export const weekdayName = (isoDate: string) => weekdayFormatter.format(new Date(`${isoDate}T12:00:00+03:30`))
 export const clockTime = (iso: string) => timeFormatter.format(new Date(iso))
 

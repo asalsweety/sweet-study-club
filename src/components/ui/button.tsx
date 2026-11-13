@@ -4,7 +4,7 @@ import type { ComponentProps } from 'react'
 import { cn } from '@/shared/lib/utils'
 
 const buttonVariants = cva(
-  'inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-[color,background-color,border-color,box-shadow,transform] outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50 active:translate-y-px [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+  'inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-[color,background-color,border-color,box-shadow,transform] outline-none focus-visible:ring-2 focus-visible:ring-ring/40 select-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
@@ -21,11 +21,11 @@ const buttonVariants = cva(
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-9 rounded-md px-3',
+        default: 'h-11 px-4 py-2',
+        sm: 'h-10 rounded-xl px-3',
         lg: 'h-12 rounded-lg px-6 text-base',
-        icon: 'size-10',
-        'icon-sm': 'size-9',
+        icon: 'size-11',
+        'icon-sm': 'size-10',
       },
     },
     defaultVariants: {
@@ -52,6 +52,7 @@ export function Button({
   return (
     <Component
       data-slot="button"
+      data-variant={variant ?? 'default'}
       className={cn(buttonVariants({ variant, size }), className)}
       {...props}
     />

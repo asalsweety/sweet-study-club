@@ -1,11 +1,11 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { api } from '../../app/api'
 import { queryKeys, useSettings } from '../../app/session'
+import { celebrate } from '../../shared/lib/confetti'
 import { fa } from '../../shared/lib/format'
-import { pomodoroRemaining, useNow } from '../study/useStudyTimer'
-
-type Toast = { id: string; text: string }
+import { toast } from '../../shared/lib/toast'
+import { pomodoroRemaining } from '../study/useStudyTimer'
 
 function notify(title: string, body: string, enabled: boolean) {
   if (!enabled || !('Notification' in window) || Notification.permission !== 'granted') return false
@@ -17,29 +17,41 @@ function notify(title: string, body: string, enabled: boolean) {
   }
 }
 
-/** Invisible app-wide services; renders only a small toast stack. */
+/** Invisible app-wide services; their messages go to the global toaster. */
 export default function BackgroundServices() {
   const client = useQueryClient()
-  const now = useNow(5_000)
   const settings = useSettings()
   const notificationsOn = settings.data?.notificationsEnabled ?? false
-  const [toasts, setToasts] = useState<Toast[]>([])
   const fired = useRef(new Set<string>())
-  const push = (text: string) => {
-    const id = crypto.randomUUID()
-    setToasts((list) => [...list.slice(-2), { id, text }])
-    window.setTimeout(() => setToasts((list) => list.filter((toast) => toast.id !== id)), 6000)
-  }
+  const push = useCallback((text: string) => {
+    // Lead emoji becomes the toast's icon tile.
+    const match = text.match(/^(\p{Extended_Pictographic}\uFE0F?)\s*(.*)$/u)
+    if (match?.[1] && match[2]) toast(match[2], { icon: match[1], duration: 6000 })
+    else toast(text, { duration: 6000 })
+  }, [])
 
   // Presence heartbeat while the tab is visible.
   useEffect(() => {
-    const beat = () => document.visibilityState === 'visible' && void api.social.presence().catch(() => undefined)
-    beat()
-    const id = window.setInterval(beat, 30_000)
-    document.addEventListener('visibilitychange', beat)
+    let first: number | undefined
+    let interval: number | undefined
+    const beat = () => void api.social.presence().catch(() => undefined)
+    // Deferring the first heartbeat avoids duplicate writes during StrictMode
+    // setup/cleanup and keeps it out of the initial dashboard request burst.
+    const sync = () => {
+      window.clearTimeout(first)
+      window.clearInterval(interval)
+      if (document.visibilityState !== 'visible') return
+      first = window.setTimeout(() => {
+        beat()
+        interval = window.setInterval(beat, 30_000)
+      }, 1000)
+    }
+    sync()
+    document.addEventListener('visibilitychange', sync)
     return () => {
-      window.clearInterval(id)
-      document.removeEventListener('visibilitychange', beat)
+      window.clearInterval(interval)
+      window.clearTimeout(first)
+      document.removeEventListener('visibilitychange', sync)
     }
   }, [])
 
@@ -47,33 +59,54 @@ export default function BackgroundServices() {
   useEffect(() => {
     const list = cheers.data ?? []
     if (list.length === 0) return
-    for (const cheer of list) push(`${cheer.emoji} ${cheer.from.displayName} تشویقت کرد!`)
-    void api.social.cheersSeen().then(() => client.setQueryData(queryKeys.cheers, []))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cheers.data])
-
-  const reminders = useQuery({ queryKey: ['reminders'], queryFn: api.planner.reminders, refetchInterval: 5 * 60_000 })
-  useEffect(() => {
-    for (const item of reminders.data ?? []) {
-      const due = item.remindAt ? Date.parse(item.remindAt) : null
-      const key = `remind-${item.id}-${item.remindAt}`
-      if (due === null || due > now || now - due > 10 * 60_000 || fired.current.has(key)) continue
-      fired.current.add(key)
-      if (!notify('یادآور پلنر', item.title, notificationsOn)) push(`⏰ یادآور: ${item.title}`)
+    for (const cheer of list) {
+      if (fired.current.has(cheer.id)) continue
+      fired.current.add(cheer.id)
+      push(`${cheer.emoji} ${cheer.from.displayName} تشویقت کرد!`)
     }
-  }, [now, reminders.data, notificationsOn])
+    void api.social.cheersSeen().then(() => client.setQueryData(queryKeys.cheers, [])).catch(() => undefined)
+  }, [cheers.data, client, push])
 
-  const timer = client.getQueryData<Parameters<typeof pomodoroRemaining>[0]>(queryKeys.timer)
-  const pomodoro = pomodoroRemaining(timer, now)
+  const reminders = useQuery({ queryKey: queryKeys.reminders, queryFn: api.planner.reminders, refetchInterval: 5 * 60_000 })
   useEffect(() => {
-    if (!pomodoro || pomodoro.remaining > 0) return
+    let timeout: number | undefined
+    const check = () => {
+      const now = Date.now()
+      let next = Infinity
+      for (const item of reminders.data ?? []) {
+        const due = item.remindAt ? Date.parse(item.remindAt) : null
+        const key = `remind-${item.id}-${item.remindAt}`
+        if (due === null || now - due > 10 * 60_000 || fired.current.has(key)) continue
+        if (due > now) {
+          next = Math.min(next, due)
+          continue
+        }
+        fired.current.add(key)
+        if (!notify('یادآور پلنر', item.title, notificationsOn)) push(`⏰ یادآور: ${item.title}`)
+      }
+      if (Number.isFinite(next)) timeout = window.setTimeout(check, next - now)
+    }
+    // One deadline, rather than waking/rendering the app every five seconds.
+    check()
+    return () => window.clearTimeout(timeout)
+  }, [reminders.data, notificationsOn, push])
+
+  const timer = useQuery({ queryKey: queryKeys.timer, queryFn: api.timer.get, refetchInterval: 60_000 }).data
+  useEffect(() => {
+    const pomodoro = pomodoroRemaining(timer)
+    if (!pomodoro) return
     const key = `pomo-${pomodoro.phase}-${pomodoro.round}-${timer?.pomodoro?.phaseStartedAt}`
-    if (fired.current.has(key)) return
-    fired.current.add(key)
-    const text = pomodoro.phase === 'focus' ? `دور ${fa(pomodoro.round)} تمام شد؛ وقت استراحت ☕` : 'استراحت تمام شد؛ برگردیم سراغ درس 🌱'
-    if (!notify('پومودورو', text, notificationsOn)) push(text)
-    navigator.vibrate?.(200)
-  }, [pomodoro, timer, notificationsOn])
+    const fire = () => {
+      if (fired.current.has(key)) return
+      fired.current.add(key)
+      const text = pomodoro.phase === 'focus' ? `دور ${fa(pomodoro.round)} تمام شد؛ وقت استراحت ☕` : 'استراحت تمام شد؛ برگردیم سراغ درس 🌱'
+      if (!notify('پومودورو', text, notificationsOn)) push(text)
+      navigator.vibrate?.(200)
+    }
+    const due = Date.parse(timer!.pomodoro!.phaseStartedAt) + pomodoro.length * 1000
+    const timeout = window.setTimeout(fire, Math.max(0, due - Date.now()))
+    return () => window.clearTimeout(timeout)
+  }, [timer, notificationsOn, push])
 
   const gamification = useQuery({ queryKey: queryKeys.gamification, queryFn: api.progress.gamification, staleTime: 60_000 })
   useEffect(() => {
@@ -81,19 +114,15 @@ export default function BackgroundServices() {
     if (!data) return
     const fresh = data.badges.filter((badge) => badge.earned && !badge.seen)
     if (!data.levelUp && fresh.length === 0) return
-    if (data.levelUp) push(`🎉 تبریک! به سطح ${fa(data.levelUp.to)} رسیدی`)
+    const key = `awards-${data.level.level}-${fresh.map((badge) => badge.id).join(',')}`
+    if (fired.current.has(key)) return
+    fired.current.add(key)
+    if (data.levelUp) { push(`🎉 تبریک! به سطح ${fa(data.levelUp.to)} رسیدی`); celebrate({ particles: 180 }) }
     for (const badge of fresh) push(`${badge.emoji} نشان جدید: ${badge.title}`)
-    void api.progress.markSeen(fresh.map((badge) => badge.id), data.level.level).then(() => client.invalidateQueries({ queryKey: queryKeys.gamification }))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gamification.data])
+    void api.progress.markSeen(fresh.map((badge) => badge.id), data.level.level)
+      .then(() => client.invalidateQueries({ queryKey: queryKeys.gamification }))
+      .catch(() => fired.current.delete(key))
+  }, [gamification.data, client, push])
 
-  return (
-    <div aria-live="polite" className="pointer-events-none fixed inset-x-0 top-4 z-50 flex flex-col items-center gap-2 px-4" dir="rtl">
-      {toasts.map((toast) => (
-        <div key={toast.id} className="glass rise pointer-events-auto rounded-2xl px-5 py-3 text-sm font-bold shadow-2xl">
-          {toast.text}
-        </div>
-      ))}
-    </div>
-  )
+  return null
 }

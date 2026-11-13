@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus, Save, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { api } from '../../app/api'
+import { confirmAction } from '../../shared/lib/confirm'
 import { errorMessage } from '../../shared/api/http'
 import type { StudyPart } from '../../shared/api/schedule'
 import { jalaliDay } from '../../shared/lib/format'
@@ -67,19 +68,19 @@ export default function AdminSchedule() {
   const error = save.error ?? create.error ?? remove.error ?? holiday.error
 
   return (
-    <section className="glass flex flex-col gap-4 rounded-[2rem] p-5">
+    <section className="glass flex flex-col gap-4 rounded-2xl p-5">
       <header className="flex items-center justify-between">
-        <h2 className="text-lg font-black">پارت‌های روزانه</h2>
+        <h2 className="text-lg font-bold">پارت‌های روزانه</h2>
         <Button size="sm" onClick={() => create.mutate()} className="rounded-xl"><Plus size={16} /> پارت جدید</Button>
       </header>
       {error && <p className="text-sm text-destructive">{errorMessage(error)}</p>}
       <ul className="flex flex-col gap-2">
         {parts.data?.map((part) => (
-          <PartRow key={`${part.id}-${part.position}-${part.startMinute}`} part={part} onSave={(next) => save.mutate(next)} onDelete={() => confirm(`«${part.title}» حذف شود؟`) && remove.mutate(part.id)} />
+          <PartRow key={`${part.id}-${part.position}-${part.startMinute}`} part={part} onSave={(next) => save.mutate(next)} onDelete={async () => { if (await confirmAction({ title: 'حذف پارت', description: `«${part.title}» از برنامهٔ روزانهٔ باشگاه حذف شود؟` })) remove.mutate(part.id) }} />
         ))}
       </ul>
 
-      <h3 className="mt-2 font-black">تعطیلی‌ها</h3>
+      <h3 className="mt-2 font-bold">تعطیلی‌ها</h3>
       <form className="flex flex-wrap gap-2" onSubmit={(e) => { e.preventDefault(); holiday.mutate() }}>
         <Input type="date" dir="ltr" value={holidayDate} onChange={(e) => setHolidayDate(e.target.value)} className="w-44" aria-label="تاریخ تعطیلی" />
         <Input value={holidayNote} maxLength={200} onChange={(e) => setHolidayNote(e.target.value)} placeholder="توضیح (مثلاً عید فطر)" className="min-w-40 flex-1" />

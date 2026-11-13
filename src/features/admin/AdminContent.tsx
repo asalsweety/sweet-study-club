@@ -83,14 +83,14 @@ export default function AdminContent() {
 
   return (
     <div className="flex flex-col gap-5">
-      <section className="glass flex flex-col gap-3 rounded-[2rem] p-5">
-        <h2 className="text-lg font-black">💌 درخواست‌های Plan by Asal</h2>
+      <section className="glass flex flex-col gap-3 rounded-2xl p-5">
+        <h2 className="text-lg font-bold">💌 درخواست‌های Plan by Asal</h2>
         {plans.data?.length === 0 && <p className="text-sm text-muted-foreground">درخواستی نیست.</p>}
         <ul className="flex flex-col gap-2">{plans.data?.map((request) => <PlanReply key={request.id} request={request} />)}</ul>
       </section>
 
-      <section className="glass flex flex-col gap-3 rounded-[2rem] p-5">
-        <h2 className="flex items-center gap-2 text-lg font-black"><Megaphone size={18} className="text-primary" /> اطلاعیه برای همه</h2>
+      <section className="glass flex flex-col gap-3 rounded-2xl p-5">
+        <h2 className="flex items-center gap-2 text-lg font-bold"><Megaphone size={18} className="text-primary" /> اطلاعیه برای همه</h2>
         <form className="flex flex-col gap-2" onSubmit={(e) => { e.preventDefault(); broadcast.mutate() }}>
           <Input value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} placeholder="عنوان" required />
           <Textarea rows={3} value={body} maxLength={2000} onChange={(e) => setBody(e.target.value)} placeholder="متن اطلاعیه (۷ روز نمایش داده می‌شود)" required />
@@ -99,8 +99,8 @@ export default function AdminContent() {
         </form>
       </section>
 
-      <section className="glass flex flex-col gap-3 rounded-[2rem] p-5">
-        <h2 className="flex items-center gap-2 text-lg font-black"><Package size={18} className="text-primary" /> محصولات و قیمت‌ها</h2>
+      <section className="glass flex flex-col gap-3 rounded-2xl p-5">
+        <h2 className="flex items-center gap-2 text-lg font-bold"><Package size={18} className="text-primary" /> محصولات و قیمت‌ها</h2>
         <ul className="flex flex-col gap-2">{products.data?.map((product) => <ProductRow key={product.id} product={product} />)}</ul>
       </section>
     </div>

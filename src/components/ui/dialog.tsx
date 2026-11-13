@@ -1,7 +1,66 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
-import type { ComponentProps } from 'react'
+import { useRef, type ComponentProps, type PointerEvent } from 'react'
 import { cn } from '@/shared/lib/utils'
+
+/**
+ * Phone-only drag handle (hidden from the sm breakpoint by CSS). Dragging it
+ * moves the sheet with the finger; a long or fast enough pull dismisses it,
+ * anything shorter springs back. Keyboard and screen-reader users keep the
+ * close button and Escape.
+ */
+function SheetHandle() {
+  const drag = useRef<{ startY: number; startTime: number; dy: number } | null>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
+  const sheetOf = (event: PointerEvent<HTMLElement>) =>
+    event.currentTarget.closest<HTMLElement>('[data-slot="dialog-content"]')
+
+  const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    event.currentTarget.setPointerCapture(event.pointerId)
+    drag.current = { startY: event.clientY, startTime: performance.now(), dy: 0 }
+    const sheet = sheetOf(event)
+    if (sheet) sheet.style.transition = 'none'
+  }
+  const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    const state = drag.current
+    const sheet = sheetOf(event)
+    if (!state || !sheet) return
+    const raw = event.clientY - state.startY
+    // Upward drags resist, like a native sheet at full height.
+    state.dy = raw > 0 ? raw : raw / 6
+    sheet.style.transform = `translateY(${state.dy}px)`
+  }
+  const onPointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    const state = drag.current
+    const sheet = sheetOf(event)
+    drag.current = null
+    if (!state || !sheet) return
+    const velocity = state.dy / Math.max(1, performance.now() - state.startTime)
+    const dismiss = state.dy > Math.min(140, sheet.offsetHeight * 0.3) || (state.dy > 24 && velocity > 0.6)
+    sheet.style.transition = 'transform 260ms cubic-bezier(0.22, 1, 0.36, 1)'
+    if (!dismiss) {
+      sheet.style.transform = ''
+      return
+    }
+    sheet.style.transform = 'translateY(100%)'
+    sheet.setAttribute('data-swiped', '')
+    window.setTimeout(() => closeRef.current?.click(), 200)
+  }
+
+  return (
+    <>
+      <div
+        aria-hidden
+        className="sheet-handle"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+      />
+      <DialogPrimitive.Close ref={closeRef} tabIndex={-1} aria-hidden className="hidden" />
+    </>
+  )
+}
 
 export const Dialog = DialogPrimitive.Root
 export const DialogTrigger = DialogPrimitive.Trigger
@@ -43,11 +102,12 @@ export function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          'fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl border bg-background p-6 shadow-xl outline-none',
+          'fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 grid-cols-[minmax(0,1fr)] gap-4 rounded-xl border bg-background p-6 shadow-xl outline-none',
           className,
         )}
         {...props}
       >
+        <SheetHandle />
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close className="absolute left-4 top-4 rounded-sm text-muted-foreground opacity-80 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring">

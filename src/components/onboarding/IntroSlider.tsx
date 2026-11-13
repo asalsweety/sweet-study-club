@@ -118,7 +118,10 @@ export default function IntroSlider({ onFinish }: Props) {
 
           <figure className="relative hidden min-h-full overflow-hidden bg-muted lg:block">
             <img
-              src="/images/onboarding-study-room.png"
+              src="/images/onboarding-study-room.webp"
+              width={1536}
+              height={1024}
+              decoding="async"
               alt="فضای گرم و آرام مطالعه"
               className="absolute inset-0 size-full object-cover"
             />

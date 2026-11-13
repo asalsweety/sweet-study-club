@@ -1,0 +1,23 @@
+{
+  "sourceQuestions": 469,
+  "nativePersianQuestions": 445,
+  "persianTextbookTranslations": 24,
+  "packs": 33,
+  "questionPlacements": 525,
+  "tracks": {
+    "bachelor-medicine": 24,
+    "dental-basics": 8,
+    "konkur": 163,
+    "medical-basics": 189,
+    "preinternship": 141
+  },
+  "nativeTracks": {
+    "konkur": 139,
+    "medical-basics": 165,
+    "preinternship": 141
+  },
+  "sourceHashes": {
+    "persianSnapshot": "6a403aae97152aff20d01f137ff6256af34bc4a4fc3e8ec932b350d29cc30289",
+    "biologyRevision": "4460012626ee747bdb9db8c4418317798fbc67ce"
+  }
+}

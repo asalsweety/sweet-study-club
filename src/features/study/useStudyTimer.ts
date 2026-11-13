@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { api } from '../../app/api'
 import { invalidateStudyData, queryKeys } from '../../app/session'
-import { ApiClientError } from '../../shared/api/client'
+import { ApiClientError } from '../../shared/api/api-client-error'
+import { subscribeVisibleClock } from '../../shared/lib/visible-clock'
 import type { PomodoroPlan, StartTimerInput, StudyTimerState } from '../../shared/api/study-timer'
 
 export function elapsedSecondsOf(timer: StudyTimerState | null | undefined, now = Date.now()) {
@@ -22,18 +23,17 @@ export function pomodoroRemaining(timer: StudyTimerState | null | undefined, now
   return { phase: pomodoro.phase, round: pomodoro.round, rounds: plan.rounds, length, remaining: length - spent, isLongBreak }
 }
 
-export function useNow(intervalMs = 1000) {
+/** Read wall-clock time only as often as the visible UI needs it. */
+export function useNow(intervalMs: number | null = 1000) {
   const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), intervalMs)
-    return () => window.clearInterval(id)
-  }, [intervalMs])
+  useEffect(() => subscribeVisibleClock(intervalMs, setNow), [intervalMs])
   return now
 }
 
 export function useStudyTimer() {
   const client = useQueryClient()
-  const timer = useQuery({ queryKey: queryKeys.timer, queryFn: api.timer.get, refetchInterval: 60_000 })
+  // BackgroundServices owns the single app-wide polling interval.
+  const timer = useQuery({ queryKey: queryKeys.timer, queryFn: api.timer.get })
   const current = timer.data ?? null
 
   const settle = (next: StudyTimerState | null) => client.setQueryData(queryKeys.timer, next)
@@ -71,6 +71,8 @@ export function useStudyTimer() {
   return {
     timer: current,
     isLoading: timer.isPending,
+    error: timer.error,
+    refetch: timer.refetch,
     start,
     pause,
     resume,

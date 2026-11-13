@@ -25,5 +25,49 @@
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1
+  },
+  "env": {
+    "production": {
+      "name": "sweet-study-club",
+      "account_id": "cdbe3c0024e00ce5ba021665569f9af7",
+      "workers_dev": true,
+      "preview_urls": false,
+      "routes": [
+        { "pattern": "asal.zendegidarkhavarmiane.lol", "custom_domain": true }
+      ],
+      "vars": {
+        "APP_ENVIRONMENT": "production",
+        "APP_ORIGIN": "https://asal.zendegidarkhavarmiane.lol",
+        "EMAIL_PASSWORD_AUTH_ENABLED": "true"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "sweet-study-club-production",
+          "database_id": "fde7fb60-983e-4299-80b1-b3d968f9dc8a",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "ai": { "binding": "AI" }
+    },
+    "asal": {
+      "name": "sweet-study-club-test",
+      "account_id": "1a34166ec8a0cab09d02f58aa666b346",
+      "workers_dev": true,
+      "preview_urls": false,
+      "vars": {
+        "APP_ENVIRONMENT": "preview",
+        "APP_ORIGIN": "https://test.zendegidarkhavarmiane.lol",
+        "ADMIN_EMAILS": "asal.aboali@gmail.com"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "sweet-study-club-test",
+          "database_id": "05b7e7bb-a61f-4658-872c-ed92ae39a032",
+          "migrations_dir": "migrations"
+        }
+      ]
+    }
   }
 }

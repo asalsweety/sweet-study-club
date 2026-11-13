@@ -3,7 +3,7 @@ import { useSubjects } from '../../app/session'
 import type { PlannerItem } from '../../shared/api/planner'
 import { cn } from '../../shared/lib/utils'
 import { Button } from '../../components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../components/ui/dialog'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { Textarea } from '../../components/ui/textarea'
@@ -43,9 +43,10 @@ export default function PlannerItemEditor({ open, date, item, saving, onClose, o
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent dir="rtl" className="max-h-[92dvh] overflow-y-auto rounded-[2rem] sm:max-w-lg">
+      <DialogContent dir="rtl" className="max-h-[92dvh] overflow-y-auto rounded-2xl sm:max-w-lg">
         <DialogHeader className="text-right">
-          <DialogTitle className="text-xl font-black">{item ? 'ویرایش' : 'افزودن به پلنر'}</DialogTitle>
+          <DialogTitle className="text-xl font-bold">{item ? 'ویرایش' : 'افزودن به پلنر'}</DialogTitle>
+          <DialogDescription>عنوان، هدف و زمان یادآوری را برای این روز مشخص کن.</DialogDescription>
         </DialogHeader>
         <form
           className="flex flex-col gap-4"
@@ -108,7 +109,7 @@ export default function PlannerItemEditor({ open, date, item, saving, onClose, o
             <Label htmlFor="planner-remind">یادآوری (اختیاری)</Label>
             <Input id="planner-remind" type="datetime-local" dir="ltr" value={remind} onChange={(e) => setRemind(e.target.value)} min={`${date}T00:00`} />
           </div>
-          <Button type="submit" size="lg" disabled={saving || !title.trim()} className="h-12 rounded-2xl bg-[image:var(--primary-gradient)] font-black">
+          <Button type="submit" size="lg" disabled={saving || !title.trim()} className="h-12 rounded-2xl bg-primary font-bold">
             {item ? 'ذخیره' : 'افزودن'}
           </Button>
         </form>

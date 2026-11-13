@@ -1,6 +1,9 @@
+import PageHeading from '../components/PageHeading'
+import QueryError from '../components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Ban, Check, UserMinus, X } from 'lucide-react'
 import { api } from '../app/api'
+import { confirmAction } from '../shared/lib/confirm'
 import { queryKeys } from '../app/session'
 import type { FriendsResponse } from '../shared/api/social'
 import { fa } from '../shared/lib/format'
@@ -24,11 +27,15 @@ export default function FriendsPage() {
   const data = friends.data
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[1.3fr_1fr]">
+    <div className="grid gap-6">
+      <PageHeading eyebrow="کنار هم، بهتر" title="همراهان مطالعه" description="دوست‌هایت را پیدا کن، کنار هم درس بخوانید و به هم انگیزه بدهید." />
+      {friends.isError && <QueryError error={friends.error} retry={() => void friends.refetch()} />}
+      {(respond.isError || remove.isError || block.isError || unblock.isError) && <QueryError error={respond.error ?? remove.error ?? block.error ?? unblock.error} />}
+      <div className="grid items-start gap-5 lg:grid-cols-[1.3fr_1fr]">
       <div className="flex flex-col gap-5">
         <LiveStudyPanel />
-        <section className="glass rise flex flex-col gap-3 rounded-[2rem] p-5 sm:p-6">
-          <h2 className="text-lg font-black">دوستان من {data && <span className="text-sm text-muted-foreground">({fa(data.friends.length)})</span>}</h2>
+        <section className="glass rise flex flex-col gap-3 rounded-2xl p-5 sm:p-6">
+          <h2 className="text-lg font-bold">دوستان من {data && <span className="text-sm text-muted-foreground">({fa(data.friends.length)})</span>}</h2>
           <ul className="flex flex-col gap-2">
             {friends.isPending && <li className="skeleton h-16 rounded-2xl" />}
             {data?.friends.length === 0 && <li className="rounded-2xl bg-muted/40 p-5 text-center text-sm text-muted-foreground">هنوز دوستی اضافه نکردی.</li>}
@@ -42,10 +49,10 @@ export default function FriendsPage() {
                 todaySeconds={friend.todaySeconds}
                 actions={
                   <div className="flex gap-1">
-                    <Button size="icon" variant="ghost" aria-label={`حذف ${friend.displayName}`} onClick={() => confirm(`${friend.displayName} از دوستانت حذف شود؟`) && remove.mutate(friend.userId)}>
+                    <Button size="icon" variant="ghost" aria-label={`حذف ${friend.displayName}`} onClick={async () => { if (await confirmAction({ title: 'حذف دوست', description: `${friend.displayName} از دوستانت حذف شود؟` })) remove.mutate(friend.userId) }}>
                       <UserMinus size={16} />
                     </Button>
-                    <Button size="icon" variant="ghost" aria-label={`مسدود کردن ${friend.displayName}`} onClick={() => confirm(`${friend.displayName} مسدود شود؟ دیگر تو را نمی‌بیند.`) && block.mutate(friend.userId)}>
+                    <Button size="icon" variant="ghost" aria-label={`مسدود کردن ${friend.displayName}`} onClick={async () => { if (await confirmAction({ title: 'مسدود کردن', description: `${friend.displayName} مسدود شود؟ دیگر تو را نمی‌بیند.`, confirmLabel: 'مسدود کن' })) block.mutate(friend.userId) }}>
                       <Ban size={16} />
                     </Button>
                   </div>
@@ -60,8 +67,8 @@ export default function FriendsPage() {
         <AddFriendPanel />
 
         {data && data.incoming.length + data.outgoing.length > 0 && (
-          <section className="glass rise flex flex-col gap-3 rounded-[2rem] p-5 sm:p-6">
-            <h2 className="text-lg font-black">درخواست‌ها</h2>
+          <section className="glass rise flex flex-col gap-3 rounded-2xl p-5 sm:p-6">
+            <h2 className="text-lg font-bold">درخواست‌ها</h2>
             <ul className="flex flex-col gap-2">
               {data.incoming.map((request) => (
                 <li key={request.userId} className="flex items-center gap-3 rounded-2xl bg-primary/5 p-3 ring-1 ring-primary/20">
@@ -84,8 +91,8 @@ export default function FriendsPage() {
         )}
 
         {data && data.blocked.length > 0 && (
-          <section className="glass rise flex flex-col gap-3 rounded-[2rem] p-5 sm:p-6">
-            <h2 className="text-lg font-black">مسدودشده‌ها</h2>
+          <section className="glass rise flex flex-col gap-3 rounded-2xl p-5 sm:p-6">
+            <h2 className="text-lg font-bold">مسدودشده‌ها</h2>
             <ul className="flex flex-col gap-2">
               {data.blocked.map((person) => (
                 <li key={person.userId} className="flex items-center gap-3 rounded-2xl bg-muted/40 p-3">
@@ -97,6 +104,7 @@ export default function FriendsPage() {
             </ul>
           </section>
         )}
+      </div>
       </div>
     </div>
   )

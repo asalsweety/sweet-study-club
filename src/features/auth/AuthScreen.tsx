@@ -1,122 +1,123 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Eye, EyeOff, Flower2, LoaderCircle, Sparkles } from 'lucide-react'
+import { ArrowLeft, BookOpen, CalendarDays, Eye, EyeOff, Flower2, LoaderCircle, Sparkles, Timer, UsersRound } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { auth } from '../../app/auth'
-import { queryKeys } from '../../app/session'
+import { replaceSession } from '../../app/session'
+import { ApiClientError } from '../../shared/api/api-client-error'
 import { errorMessage } from '../../shared/api/http'
-import { cn } from '../../shared/lib/utils'
-import { AmbientBackground } from '../../components/AppShell'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
+import { cn } from '../../shared/lib/utils'
 
 type Mode = 'sign-in' | 'sign-up'
 
-export default function AuthScreen({ onShowIntro }: { onShowIntro: () => void }) {
+/** 0–4: length, mixed case, digits, and symbols each add a step. */
+function passwordStrength(password: string) {
+  if (!password) return 0
+  let score = password.length >= 10 ? 1 : 0
+  if (password.length >= 14) score += 1
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score += 1
+  if (/\d/.test(password)) score += 0.5
+  if (/[^\w\s]/.test(password)) score += 0.5
+  return Math.min(4, Math.floor(score))
+}
+const strengthLabels = ['خیلی کوتاه', 'قابل قبول', 'خوب', 'قوی', 'عالی']
+
+const features = [
+  { icon: Timer, title: 'تمرکز، با ریتم خودت', detail: 'مطالعهٔ آزاد، پومودورو و اتاق تمرکز' },
+  { icon: CalendarDays, title: 'یک روز قابل انجام', detail: 'برنامه‌ریزی و یادآوری کارها' },
+  { icon: BookOpen, title: 'یادگیری ماندگار', detail: 'بانک سؤال، مرور و دیدن پیشرفت' },
+  { icon: UsersRound, title: 'کنار هم، بهتر', detail: 'مطالعهٔ زنده و لیگ هفتگی دوستان' },
+]
+
+export default function AuthScreen() {
   const client = useQueryClient()
   const [mode, setMode] = useState<Mode>('sign-in')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-
+  const [created, setCreated] = useState(false)
+  const [shake, setShake] = useState(0)
   const submit = useMutation({
-    mutationFn: () => (mode === 'sign-in' ? auth.signIn(email.trim(), password) : auth.signUp(name.trim(), email.trim(), password)),
-    onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.session }),
+    mutationFn: async () => {
+      if (mode === 'sign-in') await auth.signIn(email.trim(), password)
+      else {
+        await auth.createAccount(name.trim(), email.trim(), password)
+        setCreated(true)
+        // If sign-in fails after creation, retry sign-in without creating again.
+        setMode('sign-in')
+        await auth.signIn(email.trim(), password)
+      }
+      const session = await auth.session()
+      if (!session) throw new ApiClientError('ورود تأیید نشد. اجازهٔ ذخیرهٔ کوکی را بررسی کن و دوباره وارد شو.', { code: 'SESSION_MISSING' })
+      return session
+    },
+    onSuccess: (session) => replaceSession(client, session),
+    onError: () => setShake((count) => count + 1),
   })
-
-  const onSubmit = (event: FormEvent) => {
-    event.preventDefault()
-    submit.mutate()
+  const changeMode = (next: Mode) => {
+    if (next === mode) return
+    setMode(next)
+    setPassword('')
+    setShowPassword(false)
+    setCreated(false)
+    submit.reset()
   }
+  const onSubmit = (event: FormEvent) => { event.preventDefault(); if (!submit.isPending) submit.mutate() }
+  const strength = passwordStrength(password)
 
-  return (
-    <main dir="rtl" className="relative grid min-h-dvh place-items-center px-4 py-10 text-foreground">
-      <AmbientBackground />
-      <div className="rise w-full max-w-md">
-        <div className="mb-8 flex flex-col items-center gap-3 text-center">
-          <span className="grid size-16 place-items-center rounded-3xl bg-[image:var(--primary-gradient)] text-primary-foreground shadow-2xl shadow-primary/40 motion-safe:animate-[breathe_5s_ease-in-out_infinite]">
-            <Flower2 size={30} />
-          </span>
-          <h1 className="text-3xl font-black tracking-tight">
-            <span className="text-gradient">Sweet</span> Study Club
-          </h1>
-          <p className="max-w-xs text-sm leading-7 text-muted-foreground">
-            اتاق مطالعه‌ی آرام تو؛ با تایمر، پلنر و دوست‌هایی که کنارت درس می‌خوانند.
-          </p>
+  return <main dir="rtl" className="auth-layout">
+    <section className="auth-form-side">
+      <a href="/" className="brand-lockup [animation:fade-in_600ms_ease-out_backwards]" aria-label="Sweet Study Club">
+        <span className="brand-mark shadow-[var(--glow-primary)]"><Flower2 size={24} /></span>
+        <span dir="ltr">sweet study<span className="block text-[10px] font-medium tracking-[0.24em] text-muted-foreground">A LITTLE EVERY DAY</span></span>
+      </a>
+      <div className="auth-mobile-art" aria-hidden>
+        <img src="/images/onboarding-study-room.webp" alt="" fetchPriority="high" />
+      </div>
+      <div className="auth-form-wrap stagger">
+        <p className="eyebrow flex items-center gap-2"><Sparkles size={13} />فضای کوچک تو برای پیشرفت‌های بزرگ</p>
+        <h1 key={mode} className="mt-4 text-3xl font-extrabold leading-relaxed tracking-tight [animation:rise-in_520ms_var(--ease-spring)_backwards] sm:text-4xl">{mode === 'sign-in' ? 'خوش برگشتی.' : 'از همین‌جا شروع کن.'}</h1>
+        <p className="mt-2 text-sm leading-7 text-muted-foreground">{mode === 'sign-in' ? 'وارد حسابت شو؛ یک قدم دیگر به هدفت نزدیک‌تر.' : 'یک حساب برای مطالعه، برنامه‌ریزی و یادگیری.'}</p>
+
+        <div role="tablist" aria-label="نوع ورود" className="segmented mt-7" data-active={mode === 'sign-in' ? 0 : 1}>
+          <span aria-hidden className="segmented-thumb" />
+          <button type="button" role="tab" aria-selected={mode === 'sign-in'} disabled={submit.isPending} onClick={() => changeMode('sign-in')}>ورود</button>
+          <button type="button" role="tab" aria-selected={mode === 'sign-up'} disabled={submit.isPending} onClick={() => changeMode('sign-up')}>ساخت حساب</button>
         </div>
 
-        <form onSubmit={onSubmit} className="glass rounded-[2rem] p-6 sm:p-8">
-          <div className="mb-6 grid grid-cols-2 rounded-2xl bg-muted/70 p-1 text-sm font-bold">
-            {(['sign-in', 'sign-up'] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setMode(value)}
-                className={cn(
-                  'rounded-xl py-2.5 transition-all',
-                  mode === value ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {value === 'sign-in' ? 'ورود' : 'ساخت حساب'}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex flex-col gap-4">
-            {mode === 'sign-up' && (
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="auth-name">اسمت</Label>
-                <Input id="auth-name" required maxLength={60} value={name} onChange={(e) => setName(e.target.value)} placeholder="مثلاً سارا" autoComplete="nickname" />
-              </div>
-            )}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="auth-email">ایمیل</Label>
-              <Input id="auth-email" required type="email" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" />
-            </div>
-            <div className="flex flex-col gap-2">
+        <form key={`${mode}-${shake}`} onSubmit={onSubmit} className={cn('mt-6 grid gap-5', shake > 0 && 'shake')} aria-label={mode === 'sign-in' ? 'ورود به حساب' : 'ساخت حساب'} aria-busy={submit.isPending}>
+          <fieldset disabled={submit.isPending} className="grid min-w-0 gap-5">
+            {mode === 'sign-up' && <div className="grid gap-2 [animation:rise-in_420ms_var(--ease-spring)_backwards]"><Label htmlFor="auth-name">نام نمایشی</Label><Input id="auth-name" required minLength={2} maxLength={40} value={name} onChange={(e) => setName(e.target.value)} placeholder="دوست داری چه صدایت کنیم؟" autoComplete="nickname" enterKeyHint="next" /></div>}
+            <div className="grid gap-2"><Label htmlFor="auth-email">ایمیل</Label><Input id="auth-email" required type="email" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="next" /></div>
+            <div className="grid gap-2">
               <Label htmlFor="auth-password">رمز عبور</Label>
-              <div className="relative">
-                <Input
-                  id="auth-password"
-                  required
-                  minLength={10}
-                  type={showPassword ? 'text' : 'password'}
-                  dir="ltr"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
-                  className="pl-11"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((value) => !value)}
-                  aria-label={showPassword ? 'پنهان کردن رمز' : 'نمایش رمز'}
-                  className="absolute inset-y-0 left-2 grid w-8 place-items-center text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-                </button>
+              <div className="relative"><Input id="auth-password" required minLength={mode === 'sign-up' ? 10 : undefined} maxLength={128} type={showPassword ? 'text' : 'password'} dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'} aria-describedby={mode === 'sign-up' ? 'password-hint' : undefined} enterKeyHint="go" className="pl-12" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'پنهان کردن رمز' : 'نمایش رمز'} aria-pressed={showPassword} className="absolute inset-y-0 left-0 grid w-12 place-items-center rounded-xl text-muted-foreground transition-transform active:scale-90">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
               </div>
-              {mode === 'sign-up' && <p className="text-xs text-muted-foreground">حداقل ۱۰ کاراکتر.</p>}
+              {mode === 'sign-up' && <div id="password-hint" className="grid gap-2">
+                <div className="strength-meter" data-strength={strength} aria-hidden>{[1, 2, 3, 4].map((step) => <span key={step} data-on={strength >= step ? '' : undefined} />)}</div>
+                <p className="flex justify-between text-xs leading-6 text-muted-foreground"><span>بین ۱۰ تا ۱۲۸ کاراکتر؛ ترکیب حرف، عدد و نماد بهتر است.</span>{password && <span className="font-bold text-foreground">{strengthLabels[strength]}</span>}</p>
+              </div>}
             </div>
-
-            {submit.isError && (
-              <p role="alert" className="rounded-2xl bg-[var(--destructive-soft)] px-4 py-3 text-sm text-[var(--destructive-text)]">
-                {errorMessage(submit.error)}
-              </p>
-            )}
-
-            <Button type="submit" size="lg" disabled={submit.isPending} className="mt-2 h-12 rounded-2xl bg-[image:var(--primary-gradient)] text-base font-black shadow-lg shadow-primary/30">
-              {submit.isPending ? <LoaderCircle className="animate-spin" /> : <Sparkles />}
-              {mode === 'sign-in' ? 'ورود به اتاق مطالعه' : 'ساخت حساب و شروع'}
-            </Button>
-          </div>
+          </fieldset>
+          {created && submit.isError && <p role="status" className="rounded-xl bg-secondary p-3 text-sm leading-7">حسابت ساخته شد. برای ادامه، با همین ایمیل و رمز وارد شو.</p>}
+          {submit.isError && <p role="alert" className="rounded-xl bg-[var(--destructive-soft)] p-3 text-sm leading-7 text-[var(--destructive-text)] [animation:rise-in_360ms_var(--ease-spring)_backwards]">{errorMessage(submit.error)}</p>}
+          <Button size="lg" disabled={submit.isPending || (mode === 'sign-up' && name.trim().length < 2)} type="submit" className="h-13 w-full rounded-2xl text-base">{submit.isPending ? <LoaderCircle className="animate-spin" /> : null}{submit.isPending ? (mode === 'sign-in' ? 'در حال ورود…' : 'در حال ساخت حساب…') : mode === 'sign-in' ? 'ورود به فضای مطالعه' : 'ساخت حساب و شروع'}{!submit.isPending && <ArrowLeft />}</Button>
         </form>
-
-        <button type="button" onClick={onShowIntro} className="mx-auto mt-6 block text-sm font-bold text-muted-foreground hover:text-primary">
-          Sweet Study Club چیست؟
-        </button>
       </div>
-    </main>
-  )
+      <p className="mt-10 text-xs text-muted-foreground">هر روز، کمی بهتر از دیروز.</p>
+    </section>
+    <aside className="auth-story" aria-label="دربارهٔ فضای مطالعه">
+      <div className="auth-art-frame"><img src="/images/onboarding-study-room.webp" alt="یک میز مطالعهٔ آرام کنار پنجره" className="auth-art" fetchPriority="high" /></div>
+      <div className="auth-story-content">
+        <span className="eyebrow">SWEET STUDY CLUB</span>
+        <h2 className="mt-4 text-3xl font-extrabold leading-relaxed tracking-tight xl:text-4xl">برای رؤیاهات،<br />هر روز جا باز کن.</h2>
+        <p className="mt-4 max-w-sm text-sm leading-8 text-muted-foreground">یک گوشهٔ آرام برای تمرکز. یک برنامهٔ روشن برای امروز. و همراه‌هایی برای ادامهٔ راه.</p>
+        <div className="stagger mt-8 grid gap-3 xl:grid-cols-2">{features.map(({ icon: Icon, title, detail }) => <div key={title} className="auth-feature"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-[var(--glow-primary)]"><Icon size={19} /></span><div><p className="text-sm font-bold">{title}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{detail}</p></div></div>)}</div>
+      </div>
+    </aside>
+  </main>
 }

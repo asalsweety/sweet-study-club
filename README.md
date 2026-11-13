@@ -11,7 +11,38 @@ The accepted architecture is documented in `docs/adr/0001-cloudflare-pwa-expo.md
 - Features: email/password accounts (Better Auth), study timer with scheduled parts / free / Pomodoro modes, konkur-style test results (درصد with negative marking), focus rating and notes, a full-screen focus room with a digital or animated Chibi Asal scene and generated ambient sounds, daily/monthly planner with reminders, progress (day/week/month vs previous, best/longest day, favourite subject, heatmap), XP/levels/badges, Study DNA, CSV/PNG/print exports, friends (codes, invite links, requests, blocking), opt-in Live Study and leaderboard league, cheers, shop with Sweet Plus and Plan by Asal requests, and the admin Studio (overview, users/roles, daily parts, holidays, plan replies, broadcasts, prices).
 - The PWA installs with maskable icons, shortcuts and an offline app shell; API responses are never cached.
 - Payments use a local-only stand-in (`/api/shop/orders/:id/dev-pay` refuses outside `APP_ENVIRONMENT=local`) until a real gateway is configured.
-- No Cloudflare resource or production deployment has been created from this repository yet. `wrangler.jsonc` intentionally contains a non-deployable placeholder database ID.
+- Production is deployed at <https://asal.zendegidarkhavarmiane.lol> in the domain owner's Cloudflare account, with an isolated D1 database, encrypted auth secret, email/password sign-in and Workers AI. See [deployment instructions](docs/cloudflare-production.md). The older `env.asal` test deployment remains separate; the top-level configuration is local-only.
+
+## Learning and exams
+
+The **Learning and exam hub** lives at `/learn`, with question banks, educational and exam modes, mind maps, micro-lessons, spaced review, private notes/highlights, preparation checklists, score tracking, and AI assistance. Its library contains 445 native Persian exam questions and 24 Persian textbook adaptations, with original paper images and source answer keys. Studio includes content import and scheduled weekly publication. See [docs/learning-hub.md](docs/learning-hub.md) for content provenance and configuration.
+
+## Experience and showcase features
+
+- **Motion system.** Pages cascade in section by section, the active navigation pill morphs between items (View Transitions where supported), dialogs spring open, numbers count up, the daily goal ring draws itself in, and charts grow from their baseline. Every animation respects `prefers-reduced-motion`. Styles live in `src/styles/experience.css`.
+- **Command palette.** `Ctrl/⌘ + K` (or `/`) opens a search over every page plus quick actions: start a session, open the focus room, invite a friend, switch dark mode or any theme preset. It folds Arabic/Persian letter forms and digits so either keyboard matches.
+- **Live session capsule.** While a timer runs, a capsule with the subject and live clock sits in the desktop header and floats above the phone tab bar; one tap returns to the focus room.
+- **Session celebration.** Finishing a session (from Today or the focus room) shows confetti, a trophy card with animated minutes and test percentage, and progress toward today's goal. Level-ups also fire confetti.
+- **Asal's pixel study room.** When a session starts, a lo-fi pixel-art room appears in the timer card and fills the focus room ("اتاق پیکسلی"): Asal writes and nods along while the timer runs, dozes with floating "z"s when paused, and sips tea with happy eyes on a pomodoro break, beside a rainy or snowy city window, string lights, a desk lamp, a steaming mug and a sleeping cat. The four scene options change the room and weather; day and night follow Tehran time. Her sprite is generated from the illustrated character by `python scripts/pixelate-asal.py` (Pillow) into `public/images/pixel/asal-desk.png`. The scene draws at ~12 fps, pauses off-screen, and shows a still frame for reduced-motion users.
+- **Focus room.** The pixel room or an animated aurora backdrop with a breathing halo, a compact control dock, a fullscreen button, `Space` to pause/resume, `F` for fullscreen, and a screen wake lock while a session runs.
+- **Clock.** Timers use the display font with fixed-width digit slots so the time never jitters, and the colon breathes while running.
+- **In-app confirmations.** Deleting a plan item, subject, friend or club part, and blocking someone, use the app's own confirmation dialog instead of the browser's.
+- **Native feel on phones.** A floating glass tab bar, bottom sheets with a swipe-down handle, safe-area padding under the notch and home indicator, no tap flash or long-press text selection on controls, 16px inputs (no iOS zoom), no stuck hover states, per-theme status-bar color, and light haptics on Android.
+- **Typography.** Body text uses Estedad (`@fontsource-variable/estedad`, OFL). Titles, headings and clocks use the display face: the handwritten **Mahboubeh Mehravar** where licensed, otherwise the free **Lalezar** (`@fontsource/lalezar`, OFL). All free fonts are self-hosted and precached for offline use.
+
+### Title font license
+
+Mahboubeh Mehravar is a commercial fontiran.com font. Its terms allow use on a personal computer but require a **website license** before the file is served from a public server. The file therefore lives in the git-ignored `public/fonts/licensed/mahboubeh-mehravar.woff2`, loads during local development, and is stripped from every production build (and never precached) unless the build runs with `VITE_TITLE_FONT_LICENSED=true`. Set that only after buying the website license; without it, the live site uses Lalezar for titles.
+
+### Demo data for a walkthrough or video
+
+`npm run demo:seed` fills the **local** D1 database (the script hard-codes `--local`) with a ready-to-use admin login: five weeks of study history with a current streak, six subjects, today's planner, and five study friends, two of them studying live. Rerun it any time to reset the demo and move its timeline to today.
+
+- Email: `demo@sweetstudy.test`
+- Password: `sweet-study-demo` (local demo only)
+- Override with `DEMO_EMAIL=… DEMO_PASSWORD=… npm run demo:seed`.
+
+The first sign-in shows the demo's earned badges as toasts and a level-up celebration, which makes a good opening shot.
 
 ## Requirements
 
@@ -45,6 +76,10 @@ If the local database state becomes disposable, remove only the project-specific
 - `npm run build` creates `dist/client` and `dist/sweet_study_club`, including the PWA service worker and generated deployment configuration.
 - `npm run preview` runs the built output in the Workers runtime for a production-like local smoke test.
 - `npm run validate` runs lint, strict type checking, tests, and the production build in sequence.
+- `npm run perf:report` reports the built welcome JavaScript graph, CSS, and onboarding image sizes.
+- `npm run check:performance` enforces size budgets after a build; it also runs in `validate`.
+
+The performance audit, measured before/after results, and development tradeoffs are documented in [docs/performance.md](docs/performance.md).
 
 The Vite launcher supplies a project-local temporary directory because Windows-mounted WSL environments can expose an unwritable system TEMP path. It also prevents Cloudflare tooling from importing legacy frontend `.env` values into the Worker environment.
 
@@ -85,7 +120,7 @@ The current SVG icon is sufficient for the foundation build, but production inst
 - `GET /api/ready` proves D1 is reachable and the expected foundation migration exists.
 - Readiness failures return a generic `503` response and a request ID; internal database details are not sent to the browser.
 - `migrations/0001_foundation.sql` creates schema metadata; `0002_auth_foundation.sql` adds Better Auth storage; `0003_study_timer_foundation.sql` adds constrained study logs, active timers, and idempotent command receipts.
-- `/api/auth/*` is the project-owned authentication boundary. Email/password is enabled only in the local environment until outbound email verification, recovery, Turnstile, and rate-limit gates are implemented.
+- `/api/auth/*` is the project-owned authentication boundary. Remote email/password requires `EMAIL_PASSWORD_AUTH_ENABLED=true`; production enables it with D1-backed rate limits and secure cookies. Unverified remote signups cannot gain admin roles. Email verification/recovery still requires a mail provider.
 - `GET /api/profile` returns the authenticated user's provider-neutral profile; `PATCH /api/profile` accepts only display-name and theme changes.
 - Profile routes derive the user ID from the verified session. Query parameters and request bodies cannot select another user or grant a role.
 - `GET /api/study/timer` returns only the authenticated user's active timer. The mutation endpoints are intentionally not exposed until their retry and concurrency rules pass as one reviewed slice.
@@ -94,7 +129,10 @@ Wrangler copies `.dev.vars` into build output only for local preview and does no
 
 ## Deployment Preparation
 
-Remote deployment is intentionally blocked until a Cloudflare account and environments are selected.
+The `asal` test environment has been deployed. Its isolated account checks,
+database, encrypted secret, public origin, and cross-account domain instructions
+are documented in [`docs/cloudflare-asal-deployment.md`](docs/cloudflare-asal-deployment.md).
+Production still requires its own environment and release gates:
 
 1. Create separate preview and production D1 databases and replace the placeholder IDs in environment-specific Wrangler configuration.
 2. Apply migrations to preview first and run API integration and browser smoke tests.

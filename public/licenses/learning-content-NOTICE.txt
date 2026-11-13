@@ -1,0 +1,30 @@
+Sweet Study Club: sourced learning content
+
+MedMCQA
+Ankit Pal, Logesh Kumar Umapathi, Malaikannan Sankarasubbu (2022).
+MedMCQA: A Large-scale Multi-Subject Multi-Choice Dataset for Medical domain Question Answering.
+Proceedings of Machine Learning Research 174:248–260.
+https://proceedings.mlr.press/v174/pal22a.html
+Source: https://huggingface.co/datasets/openlifescienceai/medmcqa
+The source dataset card declares Apache-2.0. License text: medmcqa-apache-2.0.txt.
+Only selected single-choice validation records with supplied explanations are imported.
+Question wording, options, and answer keys are retained. Markup and whitespace are normalized.
+Subject-to-track placement and medium difficulty are editorial classifications, not source exam metadata.
+These are international medical exam study materials, not official Iranian exam papers.
+
+OpenStax Biology 2e
+Mary Ann Clark, Matthew Douglas, Jung Choi. Published by OpenStax, Rice University, 2018.
+Imported from the CC BY 4.0 edition pinned to commit:
+4460012626ee747bdb9db8c4418317798fbc67ce (20 December 2024).
+https://github.com/openstax/osbooks-biology-bundle/tree/4460012626ee747bdb9db8c4418317798fbc67ce
+License of that edition:
+https://github.com/openstax/osbooks-biology-bundle/blob/4460012626ee747bdb9db8c4418317798fbc67ce/LICENSE
+https://creativecommons.org/licenses/by/4.0/
+The original license text is included as openstax-biology-cc-by-4.0.txt.
+Twenty-four exercises have Persian translations and explanatory adaptations by Sweet Study Club.
+The original answer-option order and published correct indices are retained.
+English exercises without explanatory solutions explicitly show the original published answer key.
+Persian mind maps and micro-lessons are editorial adaptations of the corresponding concepts.
+The current live OpenStax edition has a different license; this import specifically uses the pinned 2024 edition.
+Original source module and exercise IDs are included with every question.
+These are textbook exercises, not Iranian national examination questions.

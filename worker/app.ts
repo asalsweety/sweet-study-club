@@ -18,6 +18,7 @@ import { progressRoutes } from './routes/progress'
 import { shopRoutes } from './routes/shop'
 import { socialRoutes } from './routes/social'
 import { studyRoutes } from './routes/study'
+import { learningRoutes } from './routes/learning'
 import type { WorkerEnvironment } from './types'
 
 const serviceName = 'sweet-study-club-api' as const
@@ -69,7 +70,7 @@ export function createWorkerApp(options: WorkerAppOptions = {}) {
         .bind('schema_version')
         .first<{ value: string }>()
 
-      if (metadata?.value !== '7') {
+      if (metadata?.value !== '11') {
         throw new Error('The expected database migration is missing.')
       }
 
@@ -163,6 +164,7 @@ export function createWorkerApp(options: WorkerAppOptions = {}) {
   app.route('/api', socialRoutes(requireSession))
   app.route('/api', shopRoutes(requireSession))
   app.route('/api', adminRoutes(requireSession))
+  app.route('/api', learningRoutes(requireSession))
 
   app.notFound((context) => {
     if (context.req.path.startsWith('/api/')) {

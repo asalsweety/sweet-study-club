@@ -1,0 +1,2610 @@
+{
+  "repository": "openstax/osbooks-biology-bundle",
+  "revision": "4460012626ee747bdb9db8c4418317798fbc67ce",
+  "questions": [
+    {
+      "id": "fs-id1313020",
+      "module": "m66438",
+      "chapterNumber": 3,
+      "chapterTitle": "Biological Macromolecules",
+      "question": "Dehydration synthesis leads to formation of",
+      "options": [
+        "monomers",
+        "polymers",
+        "water and polymers",
+        "none of the above"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1342364",
+      "module": "m66438",
+      "chapterNumber": 3,
+      "chapterTitle": "Biological Macromolecules",
+      "question": "During the breakdown of polymers, which of the following reactions takes place?",
+      "options": [
+        "hydrolysis",
+        "dehydration",
+        "condensation",
+        "covalent bond"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-idm71000699",
+      "module": "m66438",
+      "chapterNumber": 3,
+      "chapterTitle": "Biological Macromolecules",
+      "question": "The following chemical reactants produce the ester ethyl ethanoate (C4H8O2): C2H6O + CH3COOH What type of reaction occurs to make ethyl ethanoate?",
+      "options": [
+        "condensation",
+        "hydrolysis",
+        "combustion",
+        "acid-base reaction"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id2310536",
+      "module": "m66440",
+      "chapterNumber": 3,
+      "chapterTitle": "Biological Macromolecules",
+      "question": "An example of a monosaccharide is ________.",
+      "options": [
+        "fructose",
+        "glucose",
+        "galactose",
+        "all of the above"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1352111",
+      "module": "m66440",
+      "chapterNumber": 3,
+      "chapterTitle": "Biological Macromolecules",
+      "question": "Cellulose and starch are examples of:",
+      "options": [
+        "monosaccharides",
+        "disaccharides",
+        "lipids",
+        "polysaccharides"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1730970",
+      "module": "m66440",
+      "chapterNumber": 3,
+      "chapterTitle": "Biological Macromolecules",
+      "question": "Plant cell walls contain which of the following in abundance?",
+      "options": [
+        "starch",
+        "cellulose",
+        "glycogen",
+        "lactose"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1478280",
+      "module": "m66440",
+      "chapterNumber": 3,
+      "chapterTitle": "Biological Macromolecules",
+      "question": "Lactose is a disaccharide formed by the formation of a ________ bond between glucose and ________.",
+      "options": [
+        "glycosidic; lactose",
+        "glycosidic; galactose",
+        "hydrogen; sucrose",
+        "hydrogen; fructose"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-idm71000702",
+      "module": "m66440",
+      "chapterNumber": 3,
+      "chapterTitle": "Biological Macromolecules",
+      "question": "Which of the following is not an extracellular matrix role of carbohydrates?",
+      "options": [
+        "protect an insect’s internal organs from external trauma",
+        "prevent plant cells from lysing after the plant is watered",
+        "maintain the shape of a fungal spore",
+        "provide energy for muscle movement"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1292143",
+      "module": "m66441",
+      "chapterNumber": 3,
+      "chapterTitle": "Biological Macromolecules",
+      "question": "Saturated fats have all of the following characteristics except:",
+      "options": [
+        "they are solid at room temperature",
+        "they have single bonds within the carbon chain",
+        "they are usually obtained from animal sources",
+        "they tend to dissolve in water easily"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1407667",
+      "module": "m66441",
+      "chapterNumber": 3,
+      "chapterTitle": "Biological Macromolecules",
+      "question": "Phospholipids are important components of ________.",
+      "options": [
+        "the plasma membrane of cells",
+        "the ring structure of steroids",
+        "the waxy covering on leaves",
+        "the double bond in hydrocarbon chains"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-idm71000704",
+      "module": "m66441",
+      "chapterNumber": 3,
+      "chapterTitle": "Biological Macromolecules",
+      "question": "Cholesterol is an integral part of plasma membranes. Based on its structure, where is it found in the membrane?",
+      "options": [
+        "on the extracellular surface",
+        "embedded with the phospholipid heads",
+        "within the tail bilayer",
+        "attached to the intracellular surface"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id2385460",
+      "module": "m66442",
+      "chapterNumber": 3,
+      "chapterTitle": "Biological Macromolecules",
+      "question": "The monomers that make up proteins are called ________.",
+      "options": [
+        "nucleotides",
+        "disaccharides",
+        "amino acids",
+        "chaperones"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1837286",
+      "module": "m66442",
+      "chapterNumber": 3,
+      "chapterTitle": "Biological Macromolecules",
+      "question": "The α-helix and the β-pleated sheet are part of which protein structure?",
+      "options": [
+        "primary",
+        "secondary",
+        "tertiary",
+        "quaternary"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-idm71000707",
+      "module": "m66442",
+      "chapterNumber": 3,
+      "chapterTitle": "Biological Macromolecules",
+      "question": "Mad cow disease is an infectious disease where one misfolded protein causes all other copies of the protein to begin misfolding. This is an example of a disease impacting ____ structure.",
+      "options": [
+        "primary",
+        "secondary",
+        "tertiary",
+        "quaternary"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id2024549",
+      "module": "m66443",
+      "chapterNumber": 3,
+      "chapterTitle": "Biological Macromolecules",
+      "question": "A nucleotide of DNA may contain ________.",
+      "options": [
+        "ribose, uracil, and a phosphate group",
+        "deoxyribose, uracil, and a phosphate group",
+        "deoxyribose, thymine, and a phosphate group",
+        "ribose, thymine, and a phosphate group"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id2081310",
+      "module": "m66443",
+      "chapterNumber": 3,
+      "chapterTitle": "Biological Macromolecules",
+      "question": "The building blocks of nucleic acids are ________.",
+      "options": [
+        "sugars",
+        "nitrogenous bases",
+        "peptides",
+        "nucleotides"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-idm71000707",
+      "module": "m66443",
+      "chapterNumber": 3,
+      "chapterTitle": "Biological Macromolecules",
+      "question": "How does the double helix structure of DNA support its role in encoding the genome?",
+      "options": [
+        "The sugar-phosphate backbone provides a template for DNA replication.",
+        "tRNA pairing with the template strand creates proteins encoded by the genome.",
+        "Complementary base pairing creates a very stable structure.",
+        "Complementary base pairing allows for easy editing of both strands of DNA."
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1775146",
+      "module": "m66445",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "When viewing a specimen through a light microscope, scientists use ________ to distinguish the individual components of cells.",
+      "options": [
+        "a beam of electrons",
+        "radioactive isotopes",
+        "special stains",
+        "high temperatures"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1989359",
+      "module": "m66445",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "The ________ is the basic unit of life.",
+      "options": [
+        "organism",
+        "cell",
+        "tissue",
+        "organ"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1617238",
+      "module": "m66446",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "Prokaryotes depend on ________ to obtain some materials and to get rid of wastes.",
+      "options": [
+        "ribosomes",
+        "flagella",
+        "cell division",
+        "diffusion"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id866358",
+      "module": "m66446",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "Bacteria that lack fimbriae are less likely to ________.",
+      "options": [
+        "adhere to cell surfaces",
+        "swim through bodily fluids",
+        "synthesize proteins",
+        "retain the ability to divide"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-idm71000708",
+      "module": "m66446",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "Which of the following organisms is a prokaryote?",
+      "options": [
+        "amoeba",
+        "influenza A virus",
+        "charophyte algae",
+        "E. coli"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1798051",
+      "module": "m66449",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "Which of the following is surrounded by two phospholipid bilayers?",
+      "options": [
+        "the ribosomes",
+        "the vesicles",
+        "the cytoplasm",
+        "the nucleoplasm"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id2004118",
+      "module": "m66449",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "Peroxisomes got their name because hydrogen peroxide is:",
+      "options": [
+        "used in their detoxification reactions",
+        "produced during their oxidation reactions",
+        "incorporated into their membranes",
+        "a cofactor for the organelles’ enzymes"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1429843",
+      "module": "m66449",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "In plant cells, the function of the lysosomes is carried out by __________.",
+      "options": [
+        "vacuoles",
+        "peroxisomes",
+        "ribosomes",
+        "nuclei"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id1624048",
+      "module": "m66449",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "Which of the following is both in eukaryotic and prokaryotic cells?",
+      "options": [
+        "nucleus",
+        "mitochondrion",
+        "vacuole",
+        "ribosomes"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-idm71000710",
+      "module": "m66449",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "Tay-Sachs disease is a genetic disorder that results in the destruction of neurons due to a buildup of sphingolipids in the cells. Which organelle is malfunctioning in Tay-Sachs?",
+      "options": [
+        "lysosome",
+        "endoplasmic reticulum",
+        "peroxisome",
+        "mitochondria"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id1486983",
+      "module": "m66452",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "Which of the following is not a component of the endomembrane system?",
+      "options": [
+        "mitochondrion",
+        "Golgi apparatus",
+        "endoplasmic reticulum",
+        "lysosome"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id1758285",
+      "module": "m66452",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "The process by which a cell engulfs a foreign particle is known as:",
+      "options": [
+        "endosymbiosis",
+        "phagocytosis",
+        "hydrolysis",
+        "membrane synthesis"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id833165",
+      "module": "m66452",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "Which of the following is most likely to have the greatest concentration of smooth endoplasmic reticulum?",
+      "options": [
+        "a cell that secretes enzymes",
+        "a cell that destroys pathogens",
+        "a cell that makes steroid hormones",
+        "a cell that engages in photosynthesis"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1703517",
+      "module": "m66452",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "Which of the following sequences correctly lists in order the steps involved in the incorporation of a proteinaceous molecule within a cell?",
+      "options": [
+        "protein synthesis of the protein on the ribosome; modification in the Golgi apparatus; packaging in the endoplasmic reticulum; tagging in the vesicle",
+        "synthesis of the protein on the lysosome; tagging in the Golgi; packaging in the vesicle; distribution in the endoplasmic reticulum",
+        "synthesis of the protein on the ribosome; modification in the endoplasmic reticulum; tagging in the Golgi; distribution via the vesicle",
+        "synthesis of the protein on the lysosome; packaging in the vesicle; distribution via the Golgi; tagging in the endoplasmic reticulum"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-idm71000711",
+      "module": "m66452",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "Congenital disorders of glycosylation are a growing class of rare diseases. Which organelle would be most commonly involved in the glycoprotein disorder portion of the group?",
+      "options": [
+        "RER",
+        "ribosomes",
+        "endosomes",
+        "Golgi apparatus"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1645274",
+      "module": "m66454",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "Which of the following have the ability to disassemble and reform quickly?",
+      "options": [
+        "microfilaments and intermediate filaments",
+        "microfilaments and microtubules",
+        "intermediate filaments and microtubules",
+        "only intermediate filaments"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id2219667",
+      "module": "m66454",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "Which of the following do not play a role in intracellular movement?",
+      "options": [
+        "microfilaments and intermediate filaments",
+        "microfilaments and microtubules",
+        "intermediate filaments and microtubules",
+        "only intermediate filaments"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-idm71000714",
+      "module": "m66454",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "In humans, _____ are used to move a cell within its environment while _____ are used to move the environment relative to the cell.",
+      "options": [
+        "cilia, pseudopodia",
+        "flagella; cilia",
+        "microtubules; flagella",
+        "microfilaments; microtubules"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1722302",
+      "module": "m66455",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "Which of the following are only in plant cells?",
+      "options": [
+        "gap junctions",
+        "desmosomes",
+        "plasmodesmata",
+        "tight junctions"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1434588",
+      "module": "m66455",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "The key components of desmosomes are cadherins and __________.",
+      "options": [
+        "actin",
+        "microfilaments",
+        "intermediate filaments",
+        "microtubules"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-idm71000716",
+      "module": "m66455",
+      "chapterNumber": 4,
+      "chapterTitle": "Cell Structure",
+      "question": "Diseased animal cells may produce molecules that activate death cascades to kill the cells in a controlled manner. Why would neighboring healthy cells also die?",
+      "options": [
+        "The death molecule is passed through desmosomes.",
+        "The death molecule is passed through plasmodesmata.",
+        "The death molecule disrupts the extracellular matrix.",
+        "The death molecule passes through gap junctions."
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1511651",
+      "module": "m66373",
+      "chapterNumber": 5,
+      "chapterTitle": "Structure and Function of Plasma Membranes",
+      "question": "Which plasma membrane component can be either found on its surface or embedded in the membrane structure?",
+      "options": [
+        "protein",
+        "cholesterol",
+        "carbohydrate",
+        "phospholipid"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id1268735",
+      "module": "m66373",
+      "chapterNumber": 5,
+      "chapterTitle": "Structure and Function of Plasma Membranes",
+      "question": "Which characteristic of a phospholipid contributes to the fluidity of the membrane?",
+      "options": [
+        "its head",
+        "cholesterol",
+        "a saturated fatty acid tail",
+        "double bonds in the fatty acid tail"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id2163365",
+      "module": "m66373",
+      "chapterNumber": 5,
+      "chapterTitle": "Structure and Function of Plasma Membranes",
+      "question": "What is the primary function of carbohydrates attached to the exterior of cell membranes?",
+      "options": [
+        "identification of the cell",
+        "flexibility of the membrane",
+        "strengthening the membrane",
+        "channels through membrane"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-idm71000716",
+      "module": "m66373",
+      "chapterNumber": 5,
+      "chapterTitle": "Structure and Function of Plasma Membranes",
+      "question": "A scientist compares the plasma membrane composition of an animal from the Mediterranean coast with one from the Mojave Desert. Which hypothesis is most likely to be correct?",
+      "options": [
+        "The cells from the Mediterranean coast animal will have more fluid plasma membranes.",
+        "The cells from the Mojave Desert animal will have a higher cholesterol concentration in the plasma membranes.",
+        "The cells’ plasma membranes will be indistinguishable.",
+        "The cells from the Mediterranean coast animal will have a higher glycoprotein content, while the cells from the Mojave Desert animal will have a higher lipoprotein content."
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1422483",
+      "module": "m66374",
+      "chapterNumber": 5,
+      "chapterTitle": "Structure and Function of Plasma Membranes",
+      "question": "Water moves via osmosis _________.",
+      "options": [
+        "throughout the cytoplasm",
+        "from an area with a high concentration of other solutes to a lower one",
+        "from an area with a high concentration of water to one of lower concentration",
+        "from an area with a low concentration of water to higher concentration"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1243838",
+      "module": "m66374",
+      "chapterNumber": 5,
+      "chapterTitle": "Structure and Function of Plasma Membranes",
+      "question": "The principal force driving movement in diffusion is the __________.",
+      "options": [
+        "temperature",
+        "particle size",
+        "concentration gradient",
+        "membrane surface area"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1986270",
+      "module": "m66374",
+      "chapterNumber": 5,
+      "chapterTitle": "Structure and Function of Plasma Membranes",
+      "question": "What problem is faced by organisms that live in fresh water?",
+      "options": [
+        "Their bodies tend to take in too much water.",
+        "They have no way of controlling their tonicity.",
+        "Only salt water poses problems for animals that live in it.",
+        "Their bodies tend to lose too much water to their environment."
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-idm71000720",
+      "module": "m66374",
+      "chapterNumber": 5,
+      "chapterTitle": "Structure and Function of Plasma Membranes",
+      "question": "In which situation would passive transport not use a transport protein for entry into a cell?",
+      "options": [
+        "water flowing into a hypertonic environment",
+        "glucose being absorbed from the blood",
+        "an ion flowing into a nerve cell to create an electrical potential",
+        "oxygen moving into a cell after oxygen deprivation"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id2000653",
+      "module": "m66375",
+      "chapterNumber": 5,
+      "chapterTitle": "Structure and Function of Plasma Membranes",
+      "question": "Active transport must function continuously because __________.",
+      "options": [
+        "plasma membranes wear out",
+        "not all membranes are amphiphilic",
+        "facilitated transport opposes active transport",
+        "diffusion is constantly moving solutes in opposite directions"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1421748",
+      "module": "m66375",
+      "chapterNumber": 5,
+      "chapterTitle": "Structure and Function of Plasma Membranes",
+      "question": "How does the sodium-potassium pump make the interior of the cell negatively charged?",
+      "options": [
+        "by expelling anions",
+        "by pulling in anions",
+        "by expelling more cations than are taken in",
+        "by taking in and expelling an equal number of cations"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id2188234",
+      "module": "m66375",
+      "chapterNumber": 5,
+      "chapterTitle": "Structure and Function of Plasma Membranes",
+      "question": "What is the combination of an electrical gradient and a concentration gradient called?",
+      "options": [
+        "potential gradient",
+        "electrical potential",
+        "concentration potential",
+        "electrochemical gradient"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1853625",
+      "module": "m66376",
+      "chapterNumber": 5,
+      "chapterTitle": "Structure and Function of Plasma Membranes",
+      "question": "What happens to the membrane of a vesicle after exocytosis?",
+      "options": [
+        "It leaves the cell.",
+        "It is disassembled by the cell.",
+        "It fuses with and becomes part of the plasma membrane.",
+        "It is used again in another exocytosis event."
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id2116533",
+      "module": "m66376",
+      "chapterNumber": 5,
+      "chapterTitle": "Structure and Function of Plasma Membranes",
+      "question": "Which transport mechanism can bring whole cells into a cell?",
+      "options": [
+        "pinocytosis",
+        "phagocytosis",
+        "facilitated transport",
+        "primary active transport"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1702994",
+      "module": "m66376",
+      "chapterNumber": 5,
+      "chapterTitle": "Structure and Function of Plasma Membranes",
+      "question": "In what important way does receptor-mediated endocytosis differ from phagocytosis?",
+      "options": [
+        "It transports only small amounts of fluid.",
+        "It does not involve the pinching off of membrane.",
+        "It brings in only a specifically targeted substance.",
+        "It brings substances into the cell, while phagocytosis removes substances."
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-idm71000723",
+      "module": "m66376",
+      "chapterNumber": 5,
+      "chapterTitle": "Structure and Function of Plasma Membranes",
+      "question": "Many viruses enter host cells through receptor-mediated endocytosis. What is an advantage of this entry strategy?",
+      "options": [
+        "The virus directly enters the cytoplasm of the cell.",
+        "The virus is protected from recognition by white blood cells.",
+        "The virus only enters its target host cell type.",
+        "The virus can directly inject its genome into the cell’s nucleus."
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-idm71000725",
+      "module": "m66376",
+      "chapterNumber": 5,
+      "chapterTitle": "Structure and Function of Plasma Membranes",
+      "question": "Which of the following organelles relies on exocytosis to complete its function?",
+      "options": [
+        "Golgi apparatus",
+        "vacuole",
+        "mitochondria",
+        "endoplasmic reticulum"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-idm71000726",
+      "module": "m66376",
+      "chapterNumber": 5,
+      "chapterTitle": "Structure and Function of Plasma Membranes",
+      "question": "Imagine a cell can perform exocytosis, but only minimal endocytosis. What would happen to the cell?",
+      "options": [
+        "The cell would secrete all its intracellular proteins.",
+        "The plasma membrane would increase in size over time.",
+        "The cell would stop expressing integral receptor proteins in its plasma membrane.",
+        "The cell would lyse."
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1786661",
+      "module": "m66457",
+      "chapterNumber": 6,
+      "chapterTitle": "Metabolism",
+      "question": "Energy is stored long-term in the bonds of _____ and used short-term to perform work from a(n) _____ molecule.",
+      "options": [
+        "ATP : glucose",
+        "an anabolic molecule : catabolic molecule",
+        "glucose : ATP",
+        "a catabolic molecule : anabolic molecule"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1396747",
+      "module": "m66457",
+      "chapterNumber": 6,
+      "chapterTitle": "Metabolism",
+      "question": "DNA replication involves unwinding two strands of parent DNA, copying each strand to synthesize complementary strands, and releasing the parent and daughter DNA. Which of the following accurately describes this process?",
+      "options": [
+        "This is an anabolic process.",
+        "This is a catabolic process.",
+        "This is both anabolic and catabolic.",
+        "This is a metabolic process but is neither anabolic nor catabolic."
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id2258341",
+      "module": "m66459",
+      "chapterNumber": 6,
+      "chapterTitle": "Metabolism",
+      "question": "Consider a pendulum swinging. Which type(s) of energy is/are associated with the pendulum in the following instances: i. the moment at which it completes one cycle, just before it begins to fall back towards the other end, ii. the moment that it is in the middle between the two ends, and iii. just before it reaches the end of one cycle (just before instant i.).",
+      "options": [
+        "i. potential and kinetic, ii. potential and kinetic, iii. kinetic",
+        "i. potential, ii. potential and kinetic, iii. potential and kinetic",
+        "i. potential, ii. kinetic, iii. potential and kinetic",
+        "i. potential and kinetic, ii. kinetic iii. kinetic"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1791408",
+      "module": "m66459",
+      "chapterNumber": 6,
+      "chapterTitle": "Metabolism",
+      "question": "Which of the following comparisons or contrasts between endergonic and exergonic reactions is false?",
+      "options": [
+        "Endergonic reactions have a positive ∆G and exergonic reactions have a negative ∆G.",
+        "Endergonic reactions consume energy and exergonic reactions release energy.",
+        "Both endergonic and exergonic reactions require a small amount of energy to overcome an activation barrier.",
+        "Endergonic reactions take place slowly and exergonic reactions take place quickly."
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1772148",
+      "module": "m66459",
+      "chapterNumber": 6,
+      "chapterTitle": "Metabolism",
+      "question": "Which of the following is the best way to judge the relative activation energies between two given chemical reactions?",
+      "options": [
+        "Compare the ∆G values between the two reactions.",
+        "Compare their reaction rates.",
+        "Compare their ideal environmental conditions.",
+        "Compare the spontaneity between the two reactions."
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1242488",
+      "module": "m66461",
+      "chapterNumber": 6,
+      "chapterTitle": "Metabolism",
+      "question": "Which of the following is not an example of an energy transformation?",
+      "options": [
+        "turning on a light switch",
+        "solar panels at work",
+        "formation of static electricity",
+        "none of the above"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id2229379",
+      "module": "m66461",
+      "chapterNumber": 6,
+      "chapterTitle": "Metabolism",
+      "question": "In each of the three systems, determine the state of entropy (low or high) when comparing the first and second: i. the instant that a perfume bottle is sprayed compared with 30 seconds later, ii. an old 1950s car compared with a brand new car, and iii. a living cell compared with a dead cell.",
+      "options": [
+        "i. low, ii. high, iii. low",
+        "i. low, ii. high, iii. high",
+        "i. high, ii. low, iii. high",
+        "i. high, ii. low, iii. low"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id1547306",
+      "module": "m66462",
+      "chapterNumber": 6,
+      "chapterTitle": "Metabolism",
+      "question": "The energy released by the hydrolysis of ATP is____",
+      "options": [
+        "primarily stored between the alpha and beta phosphates",
+        "equal to −57 kcal/mol",
+        "harnessed as heat energy by the cell to perform work",
+        "providing energy to coupled reactions"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1445158",
+      "module": "m66462",
+      "chapterNumber": 6,
+      "chapterTitle": "Metabolism",
+      "question": "Which of the following molecules is likely to have the most potential energy?",
+      "options": [
+        "sucrose",
+        "ATP",
+        "glucose",
+        "ADP"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id1724046",
+      "module": "m66463",
+      "chapterNumber": 6,
+      "chapterTitle": "Metabolism",
+      "question": "Which of the following is not true about enzymes:",
+      "options": [
+        "They increase ∆G of reactions.",
+        "They are usually made of amino acids.",
+        "They lower the activation energy of chemical reactions.",
+        "Each one is specific to the particular substrate(s) to which it binds."
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id2229279",
+      "module": "m66463",
+      "chapterNumber": 6,
+      "chapterTitle": "Metabolism",
+      "question": "An allosteric inhibitor does which of the following?",
+      "options": [
+        "Binds to an enzyme away from the active site and changes the conformation of the active site, increasing its affinity for substrate binding.",
+        "Binds to the active site and blocks it from binding substrate.",
+        "Binds to an enzyme away from the active site and changes the conformation of the active site, decreasing its affinity for the substrate.",
+        "Binds directly to the active site and mimics the substrate."
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id2316761",
+      "module": "m66463",
+      "chapterNumber": 6,
+      "chapterTitle": "Metabolism",
+      "question": "Which of the following analogies best describes the induced-fit model of enzyme-substrate binding?",
+      "options": [
+        "a hug between two people",
+        "a key fitting into a lock",
+        "a square peg fitting through the square hole and a round peg fitting through the round hole of a children’s toy",
+        "the fitting together of two jigsaw puzzle pieces"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id1957993",
+      "module": "m66465",
+      "chapterNumber": 7,
+      "chapterTitle": "Cellular Respiration",
+      "question": "The energy currency used by cells is ________.",
+      "options": [
+        "ATP",
+        "ADP",
+        "AMP",
+        "adenosine"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id1419484",
+      "module": "m66465",
+      "chapterNumber": 7,
+      "chapterTitle": "Cellular Respiration",
+      "question": "A reducing chemical reaction ________.",
+      "options": [
+        "reduces the compound to a simpler form",
+        "adds an electron to the substrate",
+        "removes a hydrogen atom from the substrate",
+        "is a catabolic reaction"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1470359",
+      "module": "m66466",
+      "chapterNumber": 7,
+      "chapterTitle": "Cellular Respiration",
+      "question": "During the second half of glycolysis, what occurs?",
+      "options": [
+        "ATP is used up.",
+        "Fructose is split in two.",
+        "ATP is made.",
+        "Glucose becomes fructose."
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id2569068",
+      "module": "m66467",
+      "chapterNumber": 7,
+      "chapterTitle": "Cellular Respiration",
+      "question": "What is removed from pyruvate during its conversion into an acetyl group?",
+      "options": [
+        "oxygen",
+        "ATP",
+        "B vitamin",
+        "carbon dioxide"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id2169636",
+      "module": "m66467",
+      "chapterNumber": 7,
+      "chapterTitle": "Cellular Respiration",
+      "question": "What do the electrons added to NAD+ do?",
+      "options": [
+        "They become part of a fermentation pathway.",
+        "They go to another pathway for ATP production.",
+        "They energize the entry of the acetyl group into the citric acid cycle.",
+        "They are converted to NADP."
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1438300",
+      "module": "m66467",
+      "chapterNumber": 7,
+      "chapterTitle": "Cellular Respiration",
+      "question": "GTP or ATP is produced during the conversion of ________.",
+      "options": [
+        "isocitrate into α-ketoglutarate",
+        "succinyl CoA into succinate",
+        "fumarate into malate",
+        "malate into oxaloacetate"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1393295",
+      "module": "m66467",
+      "chapterNumber": 7,
+      "chapterTitle": "Cellular Respiration",
+      "question": "How many NADH molecules are produced on each turn of the citric acid cycle?",
+      "options": [
+        "one",
+        "two",
+        "three",
+        "four"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id3026200",
+      "module": "m66468",
+      "chapterNumber": 7,
+      "chapterTitle": "Cellular Respiration",
+      "question": "What compound receives electrons from NADH?",
+      "options": [
+        "FMN",
+        "ubiquinone",
+        "cytochrome c1",
+        "oxygen"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id1770002",
+      "module": "m66468",
+      "chapterNumber": 7,
+      "chapterTitle": "Cellular Respiration",
+      "question": "Chemiosmosis involves ________.",
+      "options": [
+        "the movement of electrons across the cell membrane",
+        "the movement of hydrogen atoms across a mitochondrial membrane",
+        "the movement of hydrogen ions across a mitochondrial membrane",
+        "the movement of glucose through the cell membrane"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id2348312",
+      "module": "m66469",
+      "chapterNumber": 7,
+      "chapterTitle": "Cellular Respiration",
+      "question": "Which of the following fermentation methods can occur in animal skeletal muscles?",
+      "options": [
+        "lactic acid fermentation",
+        "alcohol fermentation",
+        "mixed acid fermentation",
+        "propionic fermentation"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id2228167",
+      "module": "m66470",
+      "chapterNumber": 7,
+      "chapterTitle": "Cellular Respiration",
+      "question": "A major connection for sugars in glycolysis is ________.",
+      "options": [
+        "glucose-6-phosphate",
+        "fructose-1,6-bisphosphate",
+        "dihydroxyacetone phosphate",
+        "phosphoenolpyruvate"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id2065416",
+      "module": "m66470",
+      "chapterNumber": 7,
+      "chapterTitle": "Cellular Respiration",
+      "question": "Beta-oxidation is ________.",
+      "options": [
+        "the breakdown of sugars",
+        "the assembly of sugars",
+        "the breakdown of fatty acids",
+        "the removal of amino groups from amino acids"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1864534",
+      "module": "m66471",
+      "chapterNumber": 7,
+      "chapterTitle": "Cellular Respiration",
+      "question": "The effect of high levels of ADP is to ________ in cellular respiration.",
+      "options": [
+        "increase the activity of specific enzymes",
+        "decrease the activity of specific enzymes",
+        "have no effect on the activity of specific enzymes",
+        "slow down the pathway"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id2890387",
+      "module": "m66471",
+      "chapterNumber": 7,
+      "chapterTitle": "Cellular Respiration",
+      "question": "The control of which enzyme exerts the most control on glycolysis?",
+      "options": [
+        "hexokinase",
+        "phosphofructokinase",
+        "glucose-6-phosphatase",
+        "aldolase"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-idm106883952",
+      "module": "m66473",
+      "chapterNumber": 8,
+      "chapterTitle": "Photosynthesis",
+      "question": "Which of the following components is not used by both plants and cyanobacteria to carry out photosynthesis?",
+      "options": [
+        "chloroplasts",
+        "chlorophyll",
+        "carbon dioxide",
+        "water"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-idp62360928",
+      "module": "m66473",
+      "chapterNumber": 8,
+      "chapterTitle": "Photosynthesis",
+      "question": "What two main products result from photosynthesis?",
+      "options": [
+        "oxygen and carbon dioxide",
+        "chlorophyll and oxygen",
+        "sugars/carbohydrates and oxygen",
+        "sugars/carbohydrates and carbon dioxide"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-idm83342320",
+      "module": "m66473",
+      "chapterNumber": 8,
+      "chapterTitle": "Photosynthesis",
+      "question": "In which compartment of the plant cell do the light-independent reactions of photosynthesis take place?",
+      "options": [
+        "thylakoid",
+        "stroma",
+        "outer membrane",
+        "mesophyll"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-idm72864672",
+      "module": "m66473",
+      "chapterNumber": 8,
+      "chapterTitle": "Photosynthesis",
+      "question": "Which statement about thylakoids in eukaryotes is not correct?",
+      "options": [
+        "Thylakoids are assembled into stacks.",
+        "Thylakoids exist as a maze of folded membranes.",
+        "The space surrounding thylakoids is called stroma.",
+        "Thylakoids contain chlorophyll."
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "eip-470",
+      "module": "m66473",
+      "chapterNumber": 8,
+      "chapterTitle": "Photosynthesis",
+      "question": "Predict the end result if a chloroplast’s light-independent enzymes developed a mutation that prevented them from activating in response to light.",
+      "options": [
+        "G3P accumulation",
+        "ATP and NADPH accumulation",
+        "Water accumulation",
+        "Carbon dioxide depletion"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "eip-336",
+      "module": "m66473",
+      "chapterNumber": 8,
+      "chapterTitle": "Photosynthesis",
+      "question": "How are the NADPH and G3P molecules made during photosynthesis similar?",
+      "options": [
+        "They are both end products of photosynthesis.",
+        "They are both substrates for photosynthesis.",
+        "They are both produced from carbon dioxide.",
+        "They both store energy in chemical bonds."
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-idm197809616",
+      "module": "m66474",
+      "chapterNumber": 8,
+      "chapterTitle": "Photosynthesis",
+      "question": "Which of the following structures is not a component of a photosystem?",
+      "options": [
+        "ATP synthase",
+        "antenna molecule",
+        "reaction center",
+        "primary electron acceptor"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-idm133225312",
+      "module": "m66474",
+      "chapterNumber": 8,
+      "chapterTitle": "Photosynthesis",
+      "question": "How many photons does it take to fully reduce one molecule of NADP+ to NADPH?",
+      "options": [
+        "1",
+        "2",
+        "4",
+        "8"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-idm144749168",
+      "module": "m66474",
+      "chapterNumber": 8,
+      "chapterTitle": "Photosynthesis",
+      "question": "Which complex is not involved in the establishment of conditions for ATP synthesis?",
+      "options": [
+        "photosystem I",
+        "ATP synthase",
+        "photosystem II",
+        "cytochrome complex"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-idm133171248",
+      "module": "m66474",
+      "chapterNumber": 8,
+      "chapterTitle": "Photosynthesis",
+      "question": "From which component of the light-dependent reactions does NADPH form most directly?",
+      "options": [
+        "photosystem II",
+        "photosystem I",
+        "cytochrome complex",
+        "ATP synthase"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "eip-404",
+      "module": "m66474",
+      "chapterNumber": 8,
+      "chapterTitle": "Photosynthesis",
+      "question": "Three of the same species of plant are each grown under a different colored light for the same amount of time. Plant A is grown under blue light, Plant B is grown under green light, and Plant C is grown under orange light. Assuming the plants use only chlorophyll a and chlorophyll b for photosynthesis, what would be the predicted order of the plants from most growth to least growth?",
+      "options": [
+        "A, C, B",
+        "A, B, C",
+        "C, A, B",
+        "B, A, C"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "eip-808",
+      "module": "m66474",
+      "chapterNumber": 8,
+      "chapterTitle": "Photosynthesis",
+      "question": "Plants containing only chlorophyll b are exposed to radiation with the following wavelengths: 10nm (x-rays), 450nm (blue light), 670nm (red light), and 800nm (infrared light). Which plants harness the most energy for photosynthesis?",
+      "options": [
+        "X-ray irradiated plants",
+        "Blue light irradiated plants",
+        "Red light irradiated plants",
+        "Infrared irradiated plants"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-idm107405520",
+      "module": "m66475",
+      "chapterNumber": 8,
+      "chapterTitle": "Photosynthesis",
+      "question": "Which molecule must enter the Calvin cycle continually for the light-independent reactions to take place?",
+      "options": [
+        "RuBisCO",
+        "RuBP",
+        "3-PGA",
+        "CO2"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-idp62052848",
+      "module": "m66475",
+      "chapterNumber": 8,
+      "chapterTitle": "Photosynthesis",
+      "question": "Which order of molecular conversions is correct for the Calvin cycle?",
+      "options": [
+        "RuBP + G3P → 3-PGA → sugar",
+        "RuBisCO → CO 2 → RuBP → G3P",
+        "RuBP + CO 2 → [ RuBisCO ] 3-PGA → G3P",
+        "CO 2 → 3-PGA → RuBP → G3P"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-idm99331456",
+      "module": "m66475",
+      "chapterNumber": 8,
+      "chapterTitle": "Photosynthesis",
+      "question": "Where in eukaryotic cells does the Calvin cycle take place?",
+      "options": [
+        "thylakoid membrane",
+        "thylakoid lumen",
+        "chloroplast stroma",
+        "granum"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "eip-228",
+      "module": "m66475",
+      "chapterNumber": 8,
+      "chapterTitle": "Photosynthesis",
+      "question": "If four molecules of carbon dioxide enter the Calvin cycle (four “turns” of the cycle), how many G3P molecules are produced and how many are exported?",
+      "options": [
+        "4 G3P made, 1 G3P exported",
+        "4 G3P made, 2 G3P exported",
+        "8 G3P made, 1 G3P exported",
+        "8 G3P made, 4 G3P exported"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1414909",
+      "module": "m66477",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "A diploid cell has_______ the number of chromosomes as a haploid cell.",
+      "options": [
+        "one-fourth",
+        "half",
+        "twice",
+        "four times"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1359443",
+      "module": "m66477",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "An organism’s traits are determined by the specific combination of inherited _____.",
+      "options": [
+        "cells.",
+        "genes.",
+        "proteins.",
+        "chromatids."
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id2642317",
+      "module": "m66477",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "The first level of DNA organization in a eukaryotic cell is maintained by which molecule?",
+      "options": [
+        "cohesin",
+        "condensin",
+        "chromatin",
+        "histone"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id2315550",
+      "module": "m66477",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "Identical copies of chromatin held together by cohesin at the centromere are called _____.",
+      "options": [
+        "histones.",
+        "nucleosomes.",
+        "chromatin.",
+        "sister chromatids."
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1671396",
+      "module": "m66478",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "Chromosomes are duplicated during what stage of the cell cycle?",
+      "options": [
+        "G1 phase",
+        "S phase",
+        "prophase",
+        "prometaphase"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id2755057",
+      "module": "m66478",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "Which of the following events does not occur during some stages of interphase?",
+      "options": [
+        "DNA duplication",
+        "organelle duplication",
+        "increase in cell size",
+        "separation of sister chromatids"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1458009",
+      "module": "m66478",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "The mitotic spindles arise from which cell structure?",
+      "options": [
+        "centromere",
+        "centrosome",
+        "kinetochore",
+        "cleavage furrow"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1462637",
+      "module": "m66478",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "Attachment of the mitotic spindle fibers to the kinetochores is a characteristic of which stage of mitosis?",
+      "options": [
+        "prophase",
+        "prometaphase",
+        "metaphase",
+        "anaphase"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1565777",
+      "module": "m66478",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "Unpacking of chromosomes and the formation of a new nuclear envelope is a characteristic of which stage of mitosis?",
+      "options": [
+        "prometaphase",
+        "metaphase",
+        "anaphase",
+        "telophase"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1506066",
+      "module": "m66478",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "Separation of the sister chromatids is a characteristic of which stage of mitosis?",
+      "options": [
+        "prometaphase",
+        "metaphase",
+        "anaphase",
+        "telophase"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1433213",
+      "module": "m66478",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "The chromosomes become visible under a light microscope during which stage of mitosis?",
+      "options": [
+        "prophase",
+        "prometaphase",
+        "metaphase",
+        "anaphase"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id1414671",
+      "module": "m66478",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "The fusing of Golgi vesicles at the metaphase plate of dividing plant cells forms what structure?",
+      "options": [
+        "cell plate",
+        "actin ring",
+        "cleavage furrow",
+        "mitotic spindle"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id3241208",
+      "module": "m66479",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "At which of the cell-cycle checkpoints do external forces have the greatest influence?",
+      "options": [
+        "G1 checkpoint",
+        "G2 checkpoint",
+        "M checkpoint",
+        "G0 checkpoint"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id1595608",
+      "module": "m66479",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "What is the main prerequisite for clearance at the G2 checkpoint?",
+      "options": [
+        "cell has reached a sufficient size",
+        "an adequate stockpile of nucleotides",
+        "accurate and complete DNA replication",
+        "proper attachment of mitotic spindle fibers to kinetochores"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id2046795",
+      "module": "m66479",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "If the M checkpoint is not cleared, what stage of mitosis will be blocked?",
+      "options": [
+        "prophase",
+        "prometaphase",
+        "metaphase",
+        "anaphase"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id2321141",
+      "module": "m66479",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "Which protein is a positive regulator that phosphorylates other proteins when activated?",
+      "options": [
+        "p53",
+        "retinoblastoma protein (Rb)",
+        "cyclin",
+        "cyclin-dependent kinase (Cdk)"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id2899970",
+      "module": "m66479",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "Many of the negative regulator proteins of the cell cycle were discovered in what type of cells?",
+      "options": [
+        "gametes",
+        "cells in G0",
+        "cancer cells",
+        "stem cells"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1836812",
+      "module": "m66479",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "Which negative regulatory molecule can trigger cell suicide (apoptosis) if vital cell cycle events do not occur?",
+      "options": [
+        "p53",
+        "p21",
+        "retinoblastoma protein (Rb)",
+        "cyclin-dependent kinase (Cdk)"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id2315550",
+      "module": "m66480",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "___________ are changes to the order of nucleotides in a segment of DNA that codes for a protein.",
+      "options": [
+        "Proto-oncogenes",
+        "Tumor suppressor genes",
+        "Gene mutations",
+        "Negative regulators"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1305287",
+      "module": "m66480",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "A gene that codes for a positive cell-cycle regulator is called a(n) _____.",
+      "options": [
+        "kinase inhibitor.",
+        "tumor suppressor gene.",
+        "proto-oncogene.",
+        "oncogene."
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id2046795",
+      "module": "m66480",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "A mutated gene that codes for an altered version of Cdk that is active in the absence of cyclin is a(n) _____.",
+      "options": [
+        "kinase inhibitor.",
+        "tumor suppressor gene.",
+        "proto-oncogene.",
+        "oncogene."
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id2641842",
+      "module": "m66480",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "Which molecule is a Cdk inhibitor that is controlled by p53?",
+      "options": [
+        "cyclin",
+        "anti-kinase",
+        "Rb",
+        "p21"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id2106304",
+      "module": "m66481",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "Which eukaryotic cell-cycle event is missing in binary fission?",
+      "options": [
+        "cell growth",
+        "DNA duplication",
+        "karyokinesis",
+        "cytokinesis"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1466552",
+      "module": "m66481",
+      "chapterNumber": 10,
+      "chapterTitle": "Cell Reproduction",
+      "question": "FtsZ proteins direct the formation of a _______ that will eventually form the new cell walls of the daughter cells.",
+      "options": [
+        "contractile ring",
+        "cell plate",
+        "cytoskeleton",
+        "septum"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1181228",
+      "module": "m66483",
+      "chapterNumber": 11,
+      "chapterTitle": "Meiosis and Sexual Reproduction",
+      "question": "Meiosis usually produces ________ daughter cells.",
+      "options": [
+        "two haploid",
+        "two diploid",
+        "four haploid",
+        "four diploid"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1744220",
+      "module": "m66483",
+      "chapterNumber": 11,
+      "chapterTitle": "Meiosis and Sexual Reproduction",
+      "question": "What structure is most important in forming the tetrads?",
+      "options": [
+        "centromere",
+        "synaptonemal complex",
+        "chiasma",
+        "kinetochore"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id933450",
+      "module": "m66483",
+      "chapterNumber": 11,
+      "chapterTitle": "Meiosis and Sexual Reproduction",
+      "question": "At which stage of meiosis are sister chromatids separated from each other?",
+      "options": [
+        "prophase I",
+        "prophase II",
+        "anaphase I",
+        "anaphase II"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1466651",
+      "module": "m66483",
+      "chapterNumber": 11,
+      "chapterTitle": "Meiosis and Sexual Reproduction",
+      "question": "At metaphase I, homologous chromosomes are connected only at what structures?",
+      "options": [
+        "chiasmata",
+        "recombination nodules",
+        "microtubules",
+        "kinetochores"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id1628288",
+      "module": "m66483",
+      "chapterNumber": 11,
+      "chapterTitle": "Meiosis and Sexual Reproduction",
+      "question": "Which of the following is not true in regard to crossover?",
+      "options": [
+        "Spindle microtubules guide the transfer of DNA across the synaptonemal complex.",
+        "Nonsister chromatids exchange genetic material.",
+        "Chiasmata are formed.",
+        "Recombination nodules mark the crossover point."
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id941668",
+      "module": "m66483",
+      "chapterNumber": 11,
+      "chapterTitle": "Meiosis and Sexual Reproduction",
+      "question": "What phase of mitotic interphase is missing from meiotic interkinesis?",
+      "options": [
+        "G0 phase",
+        "G1 phase",
+        "S phase",
+        "G2 phase"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1440220",
+      "module": "m66483",
+      "chapterNumber": 11,
+      "chapterTitle": "Meiosis and Sexual Reproduction",
+      "question": "The part of meiosis that is similar to mitosis is ________.",
+      "options": [
+        "meiosis I",
+        "anaphase I",
+        "meiosis II",
+        "interkinesis"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1321696",
+      "module": "m66483",
+      "chapterNumber": 11,
+      "chapterTitle": "Meiosis and Sexual Reproduction",
+      "question": "If a muscle cell of a typical organism has 32 chromosomes, how many chromosomes will be in a gamete of that same organism?",
+      "options": [
+        "8",
+        "16",
+        "32",
+        "64"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1172212",
+      "module": "m66483",
+      "chapterNumber": 11,
+      "chapterTitle": "Meiosis and Sexual Reproduction",
+      "question": "Which statement best describes the genetic content of the two daughter cells in prophase II of meiosis?",
+      "options": [
+        "haploid with one copy of each gene",
+        "haploid with two copies of each gene",
+        "diploid with two copies of each gene",
+        "diploid with four copies of each gene"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1172214",
+      "module": "m66483",
+      "chapterNumber": 11,
+      "chapterTitle": "Meiosis and Sexual Reproduction",
+      "question": "The pea plants used in Mendel’s genetic inheritance studies were diploid, with 14 chromosomes in somatic cells. Assuming no crossing over events occur, how many unique gametes could one pea plant produce?",
+      "options": [
+        "28",
+        "128",
+        "196",
+        "16,384"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1172216",
+      "module": "m66483",
+      "chapterNumber": 11,
+      "chapterTitle": "Meiosis and Sexual Reproduction",
+      "question": "How do telophase I and telophase II differ during meiosis in animal cells?",
+      "options": [
+        "Cells remain diploid at the end of telophase I, but are haploid at the end of telophase II.",
+        "Daughter cells form a cell plate to divide during telophase I, but divide by cytokinesis during telophase II.",
+        "Cells enter interphase after telophase I, but not after telophase II.",
+        "Chromosomes can remain condensed at the end of telophase I, but decondense after telophase II."
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1172211",
+      "module": "m66484",
+      "chapterNumber": 11,
+      "chapterTitle": "Meiosis and Sexual Reproduction",
+      "question": "What is a likely evolutionary advantage of sexual reproduction over asexual reproduction?",
+      "options": [
+        "Sexual reproduction involves fewer steps.",
+        "There is a lower chance of using up the resources in a given environment.",
+        "Sexual reproduction results in variation in the offspring.",
+        "Sexual reproduction is more cost-effective."
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1338802",
+      "module": "m66484",
+      "chapterNumber": 11,
+      "chapterTitle": "Meiosis and Sexual Reproduction",
+      "question": "Which type of life cycle has both a haploid and diploid multicellular stage?",
+      "options": [
+        "asexual life cycles",
+        "most animal life cycles",
+        "most fungal life cycles",
+        "alternation of generations"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1740750",
+      "module": "m66484",
+      "chapterNumber": 11,
+      "chapterTitle": "Meiosis and Sexual Reproduction",
+      "question": "What is the ploidy of the most conspicuous form of most fungi?",
+      "options": [
+        "diploid",
+        "haploid",
+        "alternation of generations",
+        "asexual"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id872280",
+      "module": "m66484",
+      "chapterNumber": 11,
+      "chapterTitle": "Meiosis and Sexual Reproduction",
+      "question": "A diploid, multicellular life-cycle stage that gives rise to haploid cells by meiosis is called a ________.",
+      "options": [
+        "sporophyte",
+        "gametophyte",
+        "spore",
+        "gamete"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id1172218",
+      "module": "m66484",
+      "chapterNumber": 11,
+      "chapterTitle": "Meiosis and Sexual Reproduction",
+      "question": "Hydras and jellyfish both live in a freshwater lake that is slowly being acidified by the runoff from a chemical plant built upstream. Which population is predicted to be better able to cope with the changing environment?",
+      "options": [
+        "jellyfish",
+        "hydra",
+        "The populations will be equally able to cope.",
+        "Both populations will die."
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id1172220",
+      "module": "m66484",
+      "chapterNumber": 11,
+      "chapterTitle": "Meiosis and Sexual Reproduction",
+      "question": "Many farmers are worried about the decreasing genetic diversity of plants associated with generations of artificial selection and inbreeding. Why is limiting random sexual reproduction of food crops concerning?",
+      "options": [
+        "Mutations during asexual reproduction decrease plant fitness.",
+        "Consumers do not trust identical-appearing produce.",
+        "Larger portions of the plant populations are susceptible to the same diseases.",
+        "Spores are not viable in an agricultural setting."
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1438253",
+      "module": "m66486",
+      "chapterNumber": 12,
+      "chapterTitle": "Mendel's Experiments and Heredity",
+      "question": "Mendel performed hybridizations by transferring pollen from the _______ of the male plant to the female ova.",
+      "options": [
+        "anther",
+        "pistil",
+        "stigma",
+        "seed"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id2571565",
+      "module": "m66486",
+      "chapterNumber": 12,
+      "chapterTitle": "Mendel's Experiments and Heredity",
+      "question": "Which is one of the seven characteristics that Mendel observed in pea plants?",
+      "options": [
+        "flower size",
+        "seed texture",
+        "leaf shape",
+        "stem color"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1635350",
+      "module": "m66486",
+      "chapterNumber": 12,
+      "chapterTitle": "Mendel's Experiments and Heredity",
+      "question": "Imagine you are performing a cross involving seed color in garden pea plants. What F1 offspring would you expect if you cross true-breeding parents with green seeds and yellow seeds? Yellow seed color is dominant over green.",
+      "options": [
+        "100 percent yellow-green seeds",
+        "100 percent yellow seeds",
+        "50 percent yellow, 50 percent green seeds",
+        "25 percent green, 75 percent yellow seeds"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1243838",
+      "module": "m66486",
+      "chapterNumber": 12,
+      "chapterTitle": "Mendel's Experiments and Heredity",
+      "question": "Consider a cross to investigate the pea pod texture trait, involving constricted or inflated pods. Mendel found that the traits behave according to a dominant/recessive pattern in which inflated pods were dominant. If you performed this cross and obtained 650 inflated-pod plants in the F2 generation, approximately how many constricted-pod plants would you expect to have?",
+      "options": [
+        "600",
+        "165",
+        "217",
+        "468"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "eip-248",
+      "module": "m66486",
+      "chapterNumber": 12,
+      "chapterTitle": "Mendel's Experiments and Heredity",
+      "question": "A scientist pollinates a true-breeding pea plant with violet, terminal flowers with pollen from a true-breeding pea plant with white, axial flowers. Which of the following observations would most accurately describe the F2 generation?",
+      "options": [
+        "75% violet flowers; 75% terminal flowers",
+        "75% white flowers in a terminal position",
+        "75% violet flowers; 75% axial flowers",
+        "75% violet flowers in an axial position"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1451758",
+      "module": "m66487",
+      "chapterNumber": 12,
+      "chapterTitle": "Mendel's Experiments and Heredity",
+      "question": "The observable traits expressed by an organism are described as its ________.",
+      "options": [
+        "phenotype",
+        "genotype",
+        "alleles",
+        "zygote"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id2186982",
+      "module": "m66487",
+      "chapterNumber": 12,
+      "chapterTitle": "Mendel's Experiments and Heredity",
+      "question": "A recessive trait will be observed in individuals that are ________ for that trait.",
+      "options": [
+        "heterozygous",
+        "homozygous or heterozygous",
+        "homozygous",
+        "diploid"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id2012396",
+      "module": "m66487",
+      "chapterNumber": 12,
+      "chapterTitle": "Mendel's Experiments and Heredity",
+      "question": "If black and white true-breeding mice are mated and the result is all gray offspring, what inheritance pattern would this be indicative of?",
+      "options": [
+        "dominance",
+        "codominance",
+        "multiple alleles",
+        "incomplete dominance"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1209293",
+      "module": "m66487",
+      "chapterNumber": 12,
+      "chapterTitle": "Mendel's Experiments and Heredity",
+      "question": "The ABO blood groups in humans are expressed as the IA, IB, and i alleles. The IA allele encodes the A blood group antigen, IB encodes B, and i encodes O. Both A and B are dominant to O. If a heterozygous blood type A parent (IAi) and a heterozygous blood type B parent (IBi) mate, one quarter of their offspring will have AB blood type (IAIB) in which both antigens are expressed equally. Therefore, ABO blood groups are an example of:",
+      "options": [
+        "multiple alleles and incomplete dominance",
+        "codominance and incomplete dominance",
+        "incomplete dominance only",
+        "multiple alleles and codominance"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1381227",
+      "module": "m66487",
+      "chapterNumber": 12,
+      "chapterTitle": "Mendel's Experiments and Heredity",
+      "question": "In a mating between two individuals that are heterozygous for a recessive lethal allele that is expressed in utero, what genotypic ratio (homozygous dominant:heterozygous:homozygous recessive) would you expect to observe in the offspring?",
+      "options": [
+        "1:2:1",
+        "3:1:1",
+        "1:2:0",
+        "0:2:1"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "eip-575",
+      "module": "m66487",
+      "chapterNumber": 12,
+      "chapterTitle": "Mendel's Experiments and Heredity",
+      "question": "If the allele encoding polydactyly (six fingers) is dominant why do most people have five fingers?",
+      "options": [
+        "Genetic elements suppress the polydactyl gene.",
+        "Polydactyly is embryonic lethal.",
+        "The sixth finger is removed at birth.",
+        "The polydactyl allele is very rare in the human population."
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "eip-929",
+      "module": "m66487",
+      "chapterNumber": 12,
+      "chapterTitle": "Mendel's Experiments and Heredity",
+      "question": "A farmer raises black and white chickens. To his surprise, when the first generation of eggs hatch all the chickens are black with white speckles throughout their feathers. What should the farmer expect when the eggs laid after interbreeding the speckled chickens hatch?",
+      "options": [
+        "All the offspring will be speckled.",
+        "75% of the offspring will be speckled, and 25% will be black.",
+        "50% of the offspring will be speckled, 25% will be black, and 25% will be white.",
+        "50% of the offspring will be black and 50% of the offspring will be white."
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id2076945",
+      "module": "m66488",
+      "chapterNumber": 12,
+      "chapterTitle": "Mendel's Experiments and Heredity",
+      "question": "Assuming no gene linkage, in a dihybrid cross of AABB x aabb with AaBb F1 heterozygotes, what is the ratio of the F1 gametes (AB, aB, Ab, ab) that will give rise to the F2 offspring?",
+      "options": [
+        "1:1:1:1",
+        "1:3:3:1",
+        "1:2:2:1",
+        "4:3:2:1"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id1397496",
+      "module": "m66488",
+      "chapterNumber": 12,
+      "chapterTitle": "Mendel's Experiments and Heredity",
+      "question": "The forked line and probability methods make use of what probability rule?",
+      "options": [
+        "test cross",
+        "product rule",
+        "monohybrid rule",
+        "sum rule"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1424126",
+      "module": "m66488",
+      "chapterNumber": 12,
+      "chapterTitle": "Mendel's Experiments and Heredity",
+      "question": "How many different offspring genotypes are expected in a trihybrid cross between parents heterozygous for all three traits when the traits behave in a dominant and recessive pattern? How many phenotypes?",
+      "options": [
+        "64 genotypes; 16 phenotypes",
+        "16 genotypes; 64 phenotypes",
+        "8 genotypes; 27 phenotypes",
+        "27 genotypes; 8 phenotypes"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "eip-290",
+      "module": "m66488",
+      "chapterNumber": 12,
+      "chapterTitle": "Mendel's Experiments and Heredity",
+      "question": "Labrador retrievers’ fur color is controlled by two alleles, E and B. Any dog with the ee__ genotype develops into a yellow lab, while B_E_ dogs become black labs and bbE_ dogs become chocolate labs. This is an example of _____.",
+      "options": [
+        "epistasis",
+        "codominance",
+        "incomplete dominance",
+        "linkage"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "eip-297",
+      "module": "m66488",
+      "chapterNumber": 12,
+      "chapterTitle": "Mendel's Experiments and Heredity",
+      "question": "Which of the following situations does not follow the Law of Independent Assortment?",
+      "options": [
+        "A blond person and a brown-haired person produce three offspring over time, all of who have blond hair.",
+        "A white cow crossed with a brown bull produces roan cattle.",
+        "Mating a hog with a sow produces six female piglets.",
+        "Men are more likely to experience hemophilia than women."
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id2897046",
+      "module": "m66386",
+      "chapterNumber": 14,
+      "chapterTitle": "DNA Structure and Function",
+      "question": "If DNA of a particular species was analyzed and it was found that it contains 27 percent A, what would be the percentage of C?",
+      "options": [
+        "27 percent",
+        "30 percent",
+        "23 percent",
+        "54 percent"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1435268",
+      "module": "m66386",
+      "chapterNumber": 14,
+      "chapterTitle": "DNA Structure and Function",
+      "question": "The experiments by Hershey and Chase helped confirm that DNA was the hereditary material on the basis of the finding that:",
+      "options": [
+        "radioactive phage were found in the pellet",
+        "radioactive cells were found in the supernatant",
+        "radioactive sulfur was found inside the cell",
+        "radioactive phosphorus was found in the cell"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "eip-758",
+      "module": "m66386",
+      "chapterNumber": 14,
+      "chapterTitle": "DNA Structure and Function",
+      "question": "Bacterial transformation is a major concern in many medical settings. Why might health care providers be concerned?",
+      "options": [
+        "Pathogenic bacteria could introduce disease-causing genes in non-pathogenic bacteria.",
+        "Antibiotic resistance genes could be introduced to new bacteria to create “superbugs.”",
+        "Bacteriophages could spread DNA encoding toxins to new bacteria.",
+        "All of the above."
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id2709296",
+      "module": "m66387",
+      "chapterNumber": 14,
+      "chapterTitle": "DNA Structure and Function",
+      "question": "DNA double helix does not have which of the following?",
+      "options": [
+        "antiparallel configuration",
+        "complementary base pairing",
+        "major and minor grooves",
+        "uracil"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id2688539",
+      "module": "m66387",
+      "chapterNumber": 14,
+      "chapterTitle": "DNA Structure and Function",
+      "question": "In eukaryotes, what is the DNA wrapped around?",
+      "options": [
+        "single-stranded binding proteins",
+        "sliding clamp",
+        "polymerase",
+        "histones"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id2956539",
+      "module": "m66389",
+      "chapterNumber": 14,
+      "chapterTitle": "DNA Structure and Function",
+      "question": "Meselson and Stahl's experiments proved that DNA replicates by which mode?",
+      "options": [
+        "conservative",
+        "semi-conservative",
+        "dispersive",
+        "none of the above"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id2300016",
+      "module": "m66389",
+      "chapterNumber": 14,
+      "chapterTitle": "DNA Structure and Function",
+      "question": "If the sequence of the 5'-3' strand is AATGCTAC, then the complementary sequence has the following sequence:",
+      "options": [
+        "3'-AATGCTAC-5'",
+        "3'-CATCGTAA-5'",
+        "3'-TTACGATG-5'",
+        "3'-GTAGCATT-5'"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "eip-917",
+      "module": "m66389",
+      "chapterNumber": 14,
+      "chapterTitle": "DNA Structure and Function",
+      "question": "How did Meselson and Stahl support Watson and Crick’s double-helix model?",
+      "options": [
+        "They demonstrated that each strand serves as a template for synthesizing a new strand of DNA.",
+        "They showed that the DNA strands break and recombine without losing genetic material.",
+        "They proved that DNA maintains a double-helix structure while undergoing semi-conservative replication.",
+        "They demonstrated that conservative replication maintains the complementary base pairing of each DNA helix."
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id1341900",
+      "module": "m66390",
+      "chapterNumber": 14,
+      "chapterTitle": "DNA Structure and Function",
+      "question": "Which of the following components is not involved during the formation of the replication fork?",
+      "options": [
+        "single-strand binding proteins",
+        "helicase",
+        "origin of replication",
+        "ligase"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id2075108",
+      "module": "m66390",
+      "chapterNumber": 14,
+      "chapterTitle": "DNA Structure and Function",
+      "question": "Which of the following does the enzyme primase synthesize?",
+      "options": [
+        "DNA primer",
+        "RNA primer",
+        "Okazaki fragments",
+        "phosphodiester linkage"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1406784",
+      "module": "m66390",
+      "chapterNumber": 14,
+      "chapterTitle": "DNA Structure and Function",
+      "question": "In which direction does DNA replication take place?",
+      "options": [
+        "5'-3'",
+        "3'-5'",
+        "5'",
+        "3'"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "eip-794",
+      "module": "m66390",
+      "chapterNumber": 14,
+      "chapterTitle": "DNA Structure and Function",
+      "question": "A scientist randomly mutates the DNA of a bacterium. She then sequences the bacterium’s daughter cells, and finds that the daughters have many errors in their replicated DNA. The parent bacterium likely acquired a mutation in which enzyme?",
+      "options": [
+        "DNA ligase",
+        "DNA pol II",
+        "Primase",
+        "DNA pol I"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id2739491",
+      "module": "m66391",
+      "chapterNumber": 14,
+      "chapterTitle": "DNA Structure and Function",
+      "question": "The ends of the linear chromosomes are maintained by",
+      "options": [
+        "helicase",
+        "primase",
+        "DNA pol",
+        "telomerase"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "eip-979",
+      "module": "m66391",
+      "chapterNumber": 14,
+      "chapterTitle": "DNA Structure and Function",
+      "question": "Which of the following is not a true statement comparing prokaryotic and eukaryotic DNA replication?",
+      "options": [
+        "Both eukaryotic and prokaryotic DNA polymerases build off RNA primers made by primase.",
+        "Eukaryotic DNA replication requires multiple replication forks, while prokaryotic replication uses a single origin to rapidly replicate the entire genome.",
+        "DNA replication always occurs in the nucleus.",
+        "Eukaryotic DNA replication involves more polymerases than prokaryotic replication."
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1951731",
+      "module": "m66392",
+      "chapterNumber": 14,
+      "chapterTitle": "DNA Structure and Function",
+      "question": "During proofreading, which of the following enzymes reads the DNA?",
+      "options": [
+        "primase",
+        "topoisomerase",
+        "DNA polymerase",
+        "helicase"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id1414909",
+      "module": "m66392",
+      "chapterNumber": 14,
+      "chapterTitle": "DNA Structure and Function",
+      "question": "The initial mechanism for repairing nucleotide errors in DNA is ________.",
+      "options": [
+        "mismatch repair",
+        "DNA polymerase proofreading",
+        "nucleotide excision repair",
+        "thymine dimers"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "eip-338",
+      "module": "m66392",
+      "chapterNumber": 14,
+      "chapterTitle": "DNA Structure and Function",
+      "question": "A scientist creates fruit fly larvae with a mutation that eliminates the exonuclease function of DNA pol. Which prediction about the mutational load in the adult fruit flies is most likely to be correct?",
+      "options": [
+        "The adults with the DNA pol mutation will have significantly more mutations than average.",
+        "The adults with the DNA pol mutation will have slightly more mutations than average.",
+        "The adults with the DNA pol mutation will have the same number of mutations as average.",
+        "The adults with the DNA pol mutation will have fewer mutations than average."
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id2024650",
+      "module": "m66497",
+      "chapterNumber": 15,
+      "chapterTitle": "Genes and Proteins",
+      "question": "The AUC and AUA codons in mRNA both specify isoleucine. What feature of the genetic code explains this?",
+      "options": [
+        "complementarity",
+        "nonsense codons",
+        "universality",
+        "degeneracy"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1428699",
+      "module": "m66497",
+      "chapterNumber": 15,
+      "chapterTitle": "Genes and Proteins",
+      "question": "How many nucleotides are in 12 mRNA codons?",
+      "options": [
+        "12",
+        "24",
+        "36",
+        "48"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "eip-725",
+      "module": "m66497",
+      "chapterNumber": 15,
+      "chapterTitle": "Genes and Proteins",
+      "question": "Which event contradicts the central dogma of molecular biology?",
+      "options": [
+        "Poly-A polymerase enzymes process mRNA in the nucleus.",
+        "Endonuclease enzymes splice out and repair damaged DNA.",
+        "Scientists use reverse transcriptase enzymes to make DNA from RNA.",
+        "Codons specifying amino acids are degenerate and universal."
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id2914875",
+      "module": "m66498",
+      "chapterNumber": 15,
+      "chapterTitle": "Genes and Proteins",
+      "question": "Which subunit of the E. coli polymerase confers specificity to transcription?",
+      "options": [
+        "α",
+        "β",
+        "β'",
+        "σ"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1313546",
+      "module": "m66498",
+      "chapterNumber": 15,
+      "chapterTitle": "Genes and Proteins",
+      "question": "The -10 and -35 regions of prokaryotic promoters are called consensus sequences because ________.",
+      "options": [
+        "they are identical in all bacterial species",
+        "they are similar in all bacterial species",
+        "they exist in all organisms",
+        "they have the same function in all organisms"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "eip-845",
+      "module": "m66498",
+      "chapterNumber": 15,
+      "chapterTitle": "Genes and Proteins",
+      "question": "Three different bacteria species have the following consensus sequences upstream of a conserved gene. Order the bacteria from most to least efficient initiation of gene transcription.",
+      "options": [
+        "A > B > C",
+        "B > C > A",
+        "C > B > A",
+        "A > C > B"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id2062496",
+      "module": "m66499",
+      "chapterNumber": 15,
+      "chapterTitle": "Genes and Proteins",
+      "question": "Which feature of promoters can be found in both prokaryotes and eukaryotes?",
+      "options": [
+        "GC box",
+        "TATA box",
+        "octamer box",
+        "-10 and -35 sequences"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1419233",
+      "module": "m66499",
+      "chapterNumber": 15,
+      "chapterTitle": "Genes and Proteins",
+      "question": "What transcripts will be most affected by low levels of α-amanitin?",
+      "options": [
+        "18S and 28S rRNAs",
+        "pre-mRNAs",
+        "5S rRNAs and tRNAs",
+        "other small nuclear RNAs"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "eip-788",
+      "module": "m66499",
+      "chapterNumber": 15,
+      "chapterTitle": "Genes and Proteins",
+      "question": "How do enhancers and promoters differ?",
+      "options": [
+        "Enhancers bind transcription factors to silence gene expression, while promoters activate transcription.",
+        "Enhancers increase the efficiency of gene expression, but are not essential for transcription. Promoter recognition is essential to transcription initiation.",
+        "Promoters bind transcription factors to increase the efficiency of transcription. Enhancers bind RNA polymerases to initiate transcription.",
+        "There is no difference. Both are transcription factor-binding sequences in DNA."
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "fs-id1466731",
+      "module": "m66500",
+      "chapterNumber": 15,
+      "chapterTitle": "Genes and Proteins",
+      "question": "Which pre-mRNA processing step is important for initiating translation?",
+      "options": [
+        "poly-A tail",
+        "RNA editing",
+        "splicing",
+        "7-methylguanosine cap"
+      ],
+      "correctIndex": 3
+    },
+    {
+      "id": "fs-id1428536",
+      "module": "m66500",
+      "chapterNumber": 15,
+      "chapterTitle": "Genes and Proteins",
+      "question": "What processing step enhances the stability of pre-tRNAs and pre-rRNAs?",
+      "options": [
+        "methylation",
+        "nucleotide modification",
+        "cleavage",
+        "splicing"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "fs-id2904762",
+      "module": "m66501",
+      "chapterNumber": 15,
+      "chapterTitle": "Genes and Proteins",
+      "question": "The RNA components of ribosomes are synthesized in the ________.",
+      "options": [
+        "cytoplasm",
+        "nucleus",
+        "nucleolus",
+        "endoplasmic reticulum"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "id": "fs-id2991759",
+      "module": "m66501",
+      "chapterNumber": 15,
+      "chapterTitle": "Genes and Proteins",
+      "question": "In any given species, there are at least how many types of aminoacyl tRNA synthetases?",
+      "options": [
+        "20",
+        "40",
+        "100",
+        "200"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "id": "eip-874",
+      "module": "m66501",
+      "chapterNumber": 15,
+      "chapterTitle": "Genes and Proteins",
+      "question": "A scientist introduces a mutation that makes the 60S ribosomal subunit nonfunctional in a human cell line. What would be the predicted effect on translation?",
+      "options": [
+        "Translation stalls after the initiation AUG codon is identified.",
+        "The ribosome cannot catalyze the formation of peptide bonds between the tRNAs in the A and P sites.",
+        "The ribosome cannot interact with mRNAs.",
+        "tRNAs cannot exit the E site of the ribosome."
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

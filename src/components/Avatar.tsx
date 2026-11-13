@@ -40,7 +40,7 @@ export default function Avatar({ name, url, size = 'md', status = null, classNam
       ) : (
         <span
           aria-hidden
-          className={cn('grid place-items-center rounded-2xl font-black text-white shadow-inner', sizes[size])}
+          className={cn('grid place-items-center rounded-2xl font-bold text-white shadow-inner', sizes[size])}
           style={{ background: `linear-gradient(135deg, oklch(0.72 0.14 ${hue}), oklch(0.58 0.17 ${(hue + 40) % 360}))` }}
         >
           {initial}

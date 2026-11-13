@@ -1,0 +1,38 @@
+.study-helper-position {
+  position: fixed;
+  left: max(1rem, env(safe-area-inset-left));
+  bottom: calc(6rem + env(safe-area-inset-bottom));
+}
+
+.study-helper-panel {
+  z-index: 45;
+  width: min(360px, calc(100vw - 2rem - env(safe-area-inset-left) - env(safe-area-inset-right)));
+  max-height: calc(100dvh - 7.5rem - env(safe-area-inset-bottom) - env(safe-area-inset-top));
+}
+
+/* Keep the last page action scrollable above the floating character. */
+.app-workspace .workspace-footer { padding-bottom: 15rem; }
+
+.asal-character { position: relative; display: inline-block; flex-shrink: 0; overflow: hidden; }
+.asal-character-sheet { position: absolute; inset: 0 auto auto 0; width: 300%; height: 200%; max-width: none; }
+.asal-character-greeting { animation: asal-greeting 1.6s steps(1, end); }
+
+/* A short wave, a 112ms blink, another wave, then back to the neutral frame. */
+@keyframes asal-greeting {
+  0%, 100% { transform: translate(0, 0); }
+  12%, 44% { transform: translate(-33.333333%, 0); }
+  25% { transform: translate(-66.666667%, 0); }
+  32%, 68% { transform: translate(0, -50%); }
+  56% { transform: translate(-33.333333%, -50%); }
+  82% { transform: translate(-66.666667%, -50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .asal-character-greeting { animation: none; }
+}
+
+@media (min-width: 1024px) {
+  .study-helper-position { bottom: max(1.5rem, env(safe-area-inset-bottom)); }
+  .study-helper-panel { max-height: calc(100dvh - 3rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+  .app-workspace .workspace-footer { padding-bottom: 11rem; }
+}

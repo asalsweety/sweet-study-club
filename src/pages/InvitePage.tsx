@@ -23,24 +23,24 @@ export default function InvitePage() {
   }, [token])
 
   return (
-    <section className="glass rise mx-auto mt-10 flex max-w-md flex-col items-center gap-4 rounded-[2rem] p-8 text-center">
+    <section className="glass rise mx-auto mt-10 flex max-w-md flex-col items-center gap-4 rounded-2xl p-8 text-center">
       <span className="grid size-16 place-items-center rounded-3xl bg-primary/10 text-primary">
         {accept.isPending ? <LoaderCircle className="animate-spin" /> : <HeartHandshake size={30} />}
       </span>
       {accept.isPending && <p className="font-bold">در حال پذیرفتن دعوت...</p>}
       {accept.isSuccess && (
         <>
-          <h1 className="text-2xl font-black">حالا با هم دوست هستید 💞</h1>
+          <h1 className="text-2xl font-bold">حالا با هم دوست هستید 💞</h1>
           <p className="text-sm text-muted-foreground">از این به بعد مطالعه‌ی زنده‌ی هم را می‌بینید و می‌توانید همدیگر را تشویق کنید.</p>
         </>
       )}
       {accept.isError && (
         <>
-          <h1 className="text-xl font-black">دعوت پذیرفته نشد</h1>
+          <h1 className="text-xl font-bold">دعوت پذیرفته نشد</h1>
           <p className="text-sm text-muted-foreground">{errorMessage(accept.error, 'این لینک دعوت نامعتبر یا منقضی است.')}</p>
         </>
       )}
-      <Button asChild className="rounded-2xl bg-[image:var(--primary-gradient)] font-bold">
+      <Button asChild className="rounded-2xl bg-primary font-bold">
         <Link to={appRoutes.friends}>رفتن به دوستان</Link>
       </Button>
     </section>

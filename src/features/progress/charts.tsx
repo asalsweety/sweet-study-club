@@ -7,14 +7,14 @@ export function DayBars({ days, compact = false }: { days: Day[]; compact?: bool
   const max = Math.max(3600, ...days.map((day) => day.seconds))
   return (
     <div className="flex h-44 items-end gap-1.5" role="img" aria-label="نمودار مطالعه‌ی روزانه">
-      {days.map((day) => {
+      {days.map((day, index) => {
         const height = Math.round((day.seconds / max) * 100)
         return (
           <div key={day.date} className="group flex h-full flex-1 flex-col items-center justify-end gap-1">
             <span className="text-[10px] font-bold text-muted-foreground opacity-0 transition group-hover:opacity-100">{formatHours(day.seconds)}</span>
             <div
-              className={cn('w-full rounded-t-xl bg-[image:var(--primary-gradient-vertical)] transition-all duration-700', day.seconds === 0 && 'bg-none bg-muted')}
-              style={{ height: `${Math.max(day.seconds === 0 ? 4 : 8, height)}%` }}
+              className={cn('grow-bar w-full rounded-t-xl bg-[image:var(--primary-gradient-vertical)] transition-[height,filter] duration-700 hover:brightness-110', day.seconds === 0 && 'bg-none bg-muted')}
+              style={{ height: `${Math.max(day.seconds === 0 ? 4 : 8, height)}%`, animationDelay: `${Math.min(index, 30) * 25}ms` }}
               title={`${jalaliShort(day.date)}: ${formatHours(day.seconds)}`}
             />
             {!compact && <span className="truncate text-[10px] text-muted-foreground">{jalaliShort(day.date).split(' ')[0]}</span>}
@@ -43,7 +43,7 @@ export function SubjectBreakdown({ rows, colors }: { rows: SubjectRow[]; colors:
             <span className="size-3 shrink-0 rounded-full" style={{ background: colors.get(row.name) ?? 'var(--primary)' }} />
             <span className="flex-1 font-bold">{row.name}</span>
             {row.tests > 0 && <span className="text-xs text-muted-foreground">{fa(row.tests)} تست{row.percent !== null && ` · ${fa(row.percent)}٪`}</span>}
-            <span className="w-14 text-left font-black tabular-nums">{formatHours(row.seconds)}</span>
+            <span className="w-14 text-left font-bold tabular-nums">{formatHours(row.seconds)}</span>
           </li>
         ))}
       </ul>
@@ -56,8 +56,8 @@ export function Heatmap({ days }: { days: Day[] }) {
   const shades = ['bg-muted', 'bg-primary/25', 'bg-primary/50', 'bg-primary/75', 'bg-primary']
   return (
     <div className="grid grid-flow-col grid-rows-7 gap-1 overflow-x-auto pb-1" role="img" aria-label="نقشه‌ی حرارتی مطالعه">
-      {days.map((day) => (
-        <span key={day.date} title={`${jalaliShort(day.date)}: ${formatHours(day.seconds)}`} className={cn('size-3.5 rounded-[4px]', shades[level(day.seconds)])} />
+      {days.map((day, index) => (
+        <span key={day.date} title={`${jalaliShort(day.date)}: ${formatHours(day.seconds)}`} className={cn('size-3.5 rounded-[4px] [animation:pop-in_420ms_var(--ease-spring)_backwards]', shades[level(day.seconds)])} style={{ animationDelay: `${Math.floor(index / 7) * 22}ms` }} />
       ))}
     </div>
   )

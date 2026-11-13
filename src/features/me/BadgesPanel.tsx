@@ -14,19 +14,19 @@ const tierRing = {
 
 export default function BadgesPanel() {
   const data = useQuery({ queryKey: queryKeys.gamification, queryFn: api.progress.gamification }).data
-  if (!data) return <div className="skeleton h-72 rounded-[2rem]" />
+  if (!data) return <div className="skeleton h-72 rounded-2xl" />
   const earned = data.badges.filter((badge) => badge.earned).length
 
   return (
-    <section className="glass rise flex flex-col gap-4 rounded-[2rem] p-5 sm:p-6">
+    <section className="glass rise flex flex-col gap-4 rounded-2xl p-5 sm:p-6">
       <header className="flex items-center justify-between">
-        <h2 className="flex items-center gap-2 text-lg font-black"><Medal size={19} className="text-primary" /> نشان‌ها</h2>
+        <h2 className="flex items-center gap-2 text-lg font-bold"><Medal size={19} className="text-primary" /> نشان‌ها</h2>
         <span className="text-sm font-bold text-muted-foreground">{fa(earned)} از {fa(data.badges.length)}</span>
       </header>
 
-      <div className="rounded-3xl bg-[image:var(--primary-gradient)] p-4 text-primary-foreground shadow-lg shadow-primary/25">
+      <div className="rounded-3xl bg-primary p-4 text-primary-foreground ">
         <div className="flex items-end justify-between">
-          <p className="text-3xl font-black">سطح {fa(data.level.level)}</p>
+          <p className="text-3xl font-bold">سطح {fa(data.level.level)}</p>
           <p className="text-sm opacity-80">{fa(data.level.experience)} XP</p>
         </div>
         <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white/25">
@@ -46,7 +46,7 @@ export default function BadgesPanel() {
             title={badge.description}
           >
             <span className="text-3xl" aria-hidden>{badge.emoji}</span>
-            <span className="text-xs font-black">{badge.title}</span>
+            <span className="text-xs font-bold">{badge.title}</span>
             <span className="text-[10px] text-muted-foreground">{badge.earned && badge.awardedAt ? jalaliShort(badge.awardedAt.slice(0, 10)) : badge.description}</span>
             {badge.earned && !badge.seen && <span className="absolute top-2 left-2 size-2 rounded-full bg-primary motion-safe:animate-ping" aria-label="جدید" />}
           </li>

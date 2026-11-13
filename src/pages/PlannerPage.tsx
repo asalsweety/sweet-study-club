@@ -1,6 +1,8 @@
+import PageHeading from '../components/PageHeading'
+import QueryError from '../components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Bell, ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { api } from '../app/api'
 import { queryKeys } from '../app/session'
 import type { PlannerItem } from '../shared/api/planner'
@@ -8,6 +10,7 @@ import { errorMessage } from '../shared/api/http'
 import { clockTime, fa, jalaliDay, jalaliShort, weekdayName } from '../shared/lib/format'
 import { addDays, tehranClock } from '../shared/lib/tehran'
 import { cn } from '../shared/lib/utils'
+import { confirmAction } from '../shared/lib/confirm'
 import { Button } from '../components/ui/button'
 import PlannerItemEditor, { type PlannerDraft } from '../features/planner/PlannerItemEditor'
 
@@ -23,7 +26,12 @@ export default function PlannerPage() {
   const to = addDays(anchor, 34)
   const key = queryKeys.planner(from, to)
   const items = useQuery({ queryKey: key, queryFn: () => api.planner.list(from, to) })
-  const refresh = () => client.invalidateQueries({ queryKey: ['planner'] })
+  const refresh = async () => {
+    await Promise.all([
+      client.invalidateQueries({ queryKey: ['planner'] }),
+      client.invalidateQueries({ queryKey: queryKeys.reminders }),
+    ])
+  }
 
   const save = useMutation({
     mutationFn: (draft: PlannerDraft) =>
@@ -36,18 +44,28 @@ export default function PlannerPage() {
   const toggle = useMutation({ mutationFn: (item: PlannerItem) => api.planner.update(item.id, { isDone: !item.isDone }), onSuccess: refresh })
   const remove = useMutation({ mutationFn: (id: string) => api.planner.remove(id), onSuccess: refresh })
 
-  const days = Array.from({ length: 35 }, (_, index) => addDays(anchor, index))
-  const byDate = new Map<string, PlannerItem[]>()
-  for (const item of items.data ?? []) byDate.set(item.date, [...(byDate.get(item.date) ?? []), item])
+  const days = useMemo(() => Array.from({ length: 35 }, (_, index) => addDays(anchor, index)), [anchor])
+  const byDate = useMemo(() => {
+    const dates = new Map<string, PlannerItem[]>()
+    for (const item of items.data ?? []) {
+      const group = dates.get(item.date)
+      if (group) group.push(item)
+      else dates.set(item.date, [item])
+    }
+    return dates
+  }, [items.data])
   const dayItems = byDate.get(selected) ?? []
   const done = dayItems.filter((item) => item.kind === 'task' && item.isDone).length
   const tasks = dayItems.filter((item) => item.kind === 'task').length
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[1.1fr_1fr]">
-      <section className="glass rise rounded-[2rem] p-5 sm:p-6">
+    <div className="grid gap-6">
+      <PageHeading eyebrow="یک روز، یک قدم" title="برنامهٔ من" description="کارهای مهم را مشخص کن؛ برای استراحت هم جا بگذار." action={<Button onClick={() => setEditing('new')}><Plus />کار جدید</Button>} />
+      {items.isError && <QueryError error={items.error} retry={() => void items.refetch()} />}
+      <div className="grid items-start gap-5 xl:grid-cols-[1fr_1.15fr]">
+      <section className="glass rise rounded-2xl p-5 sm:p-6">
         <header className="mb-4 flex items-center justify-between">
-          <h1 className="text-xl font-black">پلنر ماهانه</h1>
+          <h2 className="text-lg font-bold">تقویم مطالعه</h2>
           <div className="flex gap-1">
             <Button size="icon" variant="ghost" aria-label="هفته‌های قبل" onClick={() => setAnchor(addDays(anchor, -28))}>
               <ChevronRight />
@@ -72,9 +90,12 @@ export default function PlannerPage() {
                 key={date}
                 type="button"
                 onClick={() => setSelected(date)}
+                aria-label={`${weekdayName(date)}، ${jalaliDay(date)}`}
+                aria-pressed={date === selected}
+                aria-current={date === today ? 'date' : undefined}
                 className={cn(
                   'flex aspect-square flex-col items-center justify-center gap-0.5 rounded-2xl text-sm transition-all',
-                  date === selected ? 'bg-[image:var(--primary-gradient)] font-black text-primary-foreground shadow-lg shadow-primary/25' : 'hover:bg-secondary',
+                  date === selected ? 'bg-primary font-bold text-primary-foreground ' : 'hover:bg-secondary',
                   date === today && date !== selected && 'ring-2 ring-primary/50',
                   date < today && date !== selected && 'text-muted-foreground',
                 )}
@@ -92,13 +113,13 @@ export default function PlannerPage() {
         </p>
       </section>
 
-      <section className="glass rise rounded-[2rem] p-5 sm:p-6">
+      <section className="glass rise rounded-2xl p-5 sm:p-6">
         <header className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-xl font-black">{weekdayName(selected)}، {jalaliDay(selected)}</h2>
+            <h2 className="text-xl font-bold">{weekdayName(selected)}، {jalaliDay(selected)}</h2>
             <p className="text-sm text-muted-foreground">{tasks > 0 ? `${fa(done)} از ${fa(tasks)} کار انجام شد` : 'برای این روز هنوز چیزی ننوشتی.'}</p>
           </div>
-          <Button onClick={() => setEditing('new')} className="rounded-2xl bg-[image:var(--primary-gradient)] font-bold">
+          <Button onClick={() => setEditing('new')} className="rounded-2xl bg-primary font-bold">
             <Plus /> افزودن
           </Button>
         </header>
@@ -107,7 +128,8 @@ export default function PlannerPage() {
             <div className="h-full rounded-full bg-[image:var(--primary-gradient-horizontal)] transition-all duration-700" style={{ width: `${(done / tasks) * 100}%` }} />
           </div>
         )}
-        {(save.isError || remove.isError) && <p className="mb-3 text-sm text-destructive">{errorMessage(save.error ?? remove.error)}</p>}
+        {(save.isError || remove.isError || toggle.isError) && <p className="mb-3 text-sm text-destructive">{errorMessage(save.error ?? remove.error ?? toggle.error)}</p>}
+        {!items.isPending && !items.isError && dayItems.length === 0 && <div className="rounded-xl border border-dashed border-border p-8 text-center"><p className="text-sm font-bold">یک روز خالی، کلی امکان.</p><p className="my-3 text-sm leading-7 text-muted-foreground">اولین کار امروز را اضافه کن؛ لازم نیست برنامه‌ات شلوغ باشد.</p><Button variant="outline" onClick={() => setEditing('new')}><Plus />افزودن اولین کار</Button></div>}
         <ul className="flex flex-col gap-2">
           {items.isPending && <li className="skeleton h-16 rounded-2xl" />}
           {dayItems.map((item) => (
@@ -129,15 +151,16 @@ export default function PlannerPage() {
                 </p>
                 {item.details && <p className="mt-1 text-sm leading-6 text-foreground/80">{item.details}</p>}
               </div>
-              <div className="flex gap-1 opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100">
+              <div className="flex gap-1">
                 <Button size="icon" variant="ghost" aria-label="ویرایش" onClick={() => setEditing(item)}><Pencil size={16} /></Button>
-                <Button size="icon" variant="ghost" aria-label="حذف" onClick={() => remove.mutate(item.id)}><Trash2 size={16} /></Button>
+                <Button size="icon" variant="ghost" aria-label="حذف" disabled={remove.isPending} onClick={async () => { if (await confirmAction({ title: 'حذف از برنامه', description: `«${item.title}» از برنامه‌ات حذف شود؟` })) remove.mutate(item.id) }}><Trash2 size={16} /></Button>
               </div>
             </li>
           ))}
         </ul>
       </section>
 
+      </div>
       {editing && (
         <PlannerItemEditor
           key={editing === 'new' ? `new-${selected}` : editing.id}

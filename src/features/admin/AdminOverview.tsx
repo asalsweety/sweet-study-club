@@ -5,6 +5,7 @@ import { api } from '../../app/api'
 import { errorMessage } from '../../shared/api/http'
 import { fa, faGrouped, formatDuration, formatHours, formatToman } from '../../shared/lib/format'
 import { Input } from '../../components/ui/input'
+import { useDebouncedValue } from '../../shared/lib/useDebouncedValue'
 
 export function AdminOverview() {
   const overview = useQuery({ queryKey: ['admin', 'overview'], queryFn: api.admin.overview, refetchInterval: 60_000 }).data
@@ -24,7 +25,7 @@ export function AdminOverview() {
       {tiles.map(([label, value]) => (
         <div key={label} className="glass rounded-3xl p-4">
           <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="mt-1 text-lg font-black">{value}</p>
+          <p className="mt-1 text-lg font-bold">{value}</p>
         </div>
       ))}
     </section>
@@ -34,15 +35,16 @@ export function AdminOverview() {
 export function AdminUsers() {
   const client = useQueryClient()
   const [q, setQ] = useState('')
-  const users = useQuery({ queryKey: ['admin', 'users', q], queryFn: () => api.admin.users(q) })
+  const search = useDebouncedValue(q.trim())
+  const users = useQuery({ queryKey: ['admin', 'users', search], queryFn: () => api.admin.users(search) })
   const role = useMutation({
     mutationFn: (v: { id: string; role: 'member' | 'admin' }) => api.admin.setRole(v.id, v.role),
     onSuccess: () => client.invalidateQueries({ queryKey: ['admin', 'users'] }),
   })
 
   return (
-    <section className="glass flex flex-col gap-3 rounded-[2rem] p-5">
-      <h2 className="text-lg font-black">کاربران</h2>
+    <section className="glass flex flex-col gap-3 rounded-2xl p-5">
+      <h2 className="text-lg font-bold">کاربران</h2>
       <div className="relative">
         <Search size={16} className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground" />
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="جست‌وجوی نام یا ایمیل" className="pr-9" />

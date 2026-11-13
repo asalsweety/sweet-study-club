@@ -1,10 +1,12 @@
 import {
   QueryClient,
   QueryClientProvider,
+  QueryCache,
+  MutationCache,
 } from '@tanstack/react-query'
 import { useEffect, useState, type ReactNode } from 'react'
 import { BrowserRouter, useLocation } from 'react-router-dom'
-import { ApiClientError } from '../shared/api/client'
+import { ApiClientError } from '../shared/api/api-client-error'
 
 type ApplicationProvidersProps = {
   children: ReactNode
@@ -34,8 +36,15 @@ export default function ApplicationProviders({
   children,
 }: ApplicationProvidersProps) {
   const [queryClient] = useState(
-    () =>
-      new QueryClient({
+    () => {
+      const recheckSession = (error: Error) => {
+        if (error instanceof ApiClientError && error.status === 401) {
+          void client.invalidateQueries({ queryKey: ['session'] })
+        }
+      }
+      const client = new QueryClient({
+        queryCache: new QueryCache({ onError: recheckSession }),
+        mutationCache: new MutationCache({ onError: recheckSession }),
         defaultOptions: {
           queries: {
             retry: shouldRetryQuery,
@@ -45,7 +54,9 @@ export default function ApplicationProviders({
             retry: false,
           },
         },
-      }),
+      })
+      return client
+    },
   )
 
   return (

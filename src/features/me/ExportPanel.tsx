@@ -33,7 +33,7 @@ export default function ExportPanel({ profile }: { profile: UserProfile }) {
       const rows = logs.map((log) => [
         tehranClock(Date.parse(log.startedAt)).date,
         log.subjectName,
-        log.mode,
+        ({ free: 'آزاد', pomodoro: 'پومودورو', scheduled: 'پارت برنامه' } as Record<string, string>)[log.mode] ?? log.mode,
         Math.round(log.durationSeconds / 60),
         log.testCount,
         log.testsCorrect,
@@ -67,16 +67,16 @@ export default function ExportPanel({ profile }: { profile: UserProfile }) {
   }
 
   return (
-    <section id="export" className="glass rise flex flex-col gap-4 rounded-[2rem] p-5 sm:p-6">
-      <h2 className="flex items-center gap-2 text-lg font-black"><Download size={19} className="text-primary" /> خروجی و کارت اشتراک</h2>
+    <section id="export" className="glass rise flex flex-col gap-4 rounded-2xl p-5 sm:p-6">
+      <h2 className="flex items-center gap-2 text-lg font-bold"><Download size={19} className="text-primary" /> خروجی و کارت اشتراک</h2>
 
-      <div ref={card} dir="rtl" className="overflow-hidden rounded-3xl bg-[image:var(--primary-gradient)] p-6 text-white shadow-xl">
+      <div ref={card} dir="rtl" className="overflow-hidden rounded-3xl bg-primary p-6 text-primary-foreground">
         <p className="text-sm opacity-80">Sweet Study Club · هفته‌ی من</p>
-        <p className="mt-1 text-2xl font-black">{profile.displayName}</p>
+        <p className="mt-1 text-2xl font-bold">{profile.displayName}</p>
         <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-          <div className="rounded-2xl bg-white/15 p-2"><p className="text-lg font-black">{week ? formatHours(week.current.totalSeconds) : '—'}</p><p className="text-[10px] opacity-80">ساعت</p></div>
-          <div className="rounded-2xl bg-white/15 p-2"><p className="text-lg font-black">{fa(week?.streak.current ?? 0)}</p><p className="text-[10px] opacity-80">روز پیاپی</p></div>
-          <div className="rounded-2xl bg-white/15 p-2"><p className="text-lg font-black">{fa(level?.level ?? 1)}</p><p className="text-[10px] opacity-80">سطح</p></div>
+          <div className="rounded-2xl bg-white/15 p-2"><p className="text-lg font-bold">{week ? formatHours(week.current.totalSeconds) : '—'}</p><p className="text-[10px] opacity-80">ساعت</p></div>
+          <div className="rounded-2xl bg-white/15 p-2"><p className="text-lg font-bold">{fa(week?.streak.current ?? 0)}</p><p className="text-[10px] opacity-80">روز پیاپی</p></div>
+          <div className="rounded-2xl bg-white/15 p-2"><p className="text-lg font-bold">{fa(level?.level ?? 1)}</p><p className="text-[10px] opacity-80">سطح</p></div>
         </div>
         <p className="mt-3 text-xs opacity-80">
           {week ? `${jalaliDay(week.current.from)} تا ${jalaliDay(week.current.to)} · درس محبوب: ${week.current.favoriteSubject ?? '—'}` : ''}

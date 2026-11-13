@@ -2,21 +2,23 @@ import { CalendarClock, PartyPopper } from 'lucide-react'
 import type { DaySchedule } from '../../shared/api/schedule'
 import { clockTime } from '../../shared/lib/format'
 import { cn } from '../../shared/lib/utils'
+import { Button } from '../../components/ui/button'
 
 type TodayPartsProps = {
   schedule: DaySchedule | undefined
   now: number
   activeSessionId: string | null
+  onStart?: (() => void) | undefined
 }
 
-export default function TodayParts({ schedule, now, activeSessionId }: TodayPartsProps) {
-  if (!schedule) return <div className="skeleton h-64 rounded-[2rem]" />
+export default function TodayParts({ schedule, now, activeSessionId, onStart }: TodayPartsProps) {
+  if (!schedule) return <div className="skeleton h-64 rounded-2xl" />
 
   return (
-    <section className="glass rise rounded-[2rem] p-5 sm:p-6">
+    <section className="glass rise rounded-2xl p-5 sm:p-6">
       <header className="mb-4 flex items-center gap-2">
         <CalendarClock size={19} className="text-primary" />
-        <h2 className="text-lg font-black">پارت‌های امروز</h2>
+        <h2 className="text-lg font-bold">برنامهٔ باشگاه امروز</h2>
       </header>
 
       {schedule.isHoliday ? (
@@ -26,7 +28,7 @@ export default function TodayParts({ schedule, now, activeSessionId }: TodayPart
           {schedule.holidayNote && <p className="text-sm text-muted-foreground">{schedule.holidayNote}</p>}
         </div>
       ) : schedule.sessions.length === 0 ? (
-        <p className="rounded-2xl bg-muted/60 p-5 text-center text-sm text-muted-foreground">برای امروز پارتی تعریف نشده است.</p>
+        <div className="rounded-xl bg-muted/40 px-5 py-8 text-center"><p className="text-sm font-bold">امروز با ریتم خودت پیش برو.</p><p className="mt-2 text-xs leading-7 text-muted-foreground">جلسهٔ گروهی نداریم؛ می‌توانی مطالعهٔ آزاد یا پومودورو را شروع کنی.</p>{onStart && <Button variant="outline" className="mt-4" onClick={onStart}>شروع یک جلسه</Button>}</div>
       ) : (
         <ol className="relative flex flex-col gap-2 before:absolute before:inset-y-3 before:right-[0.9rem] before:w-px before:bg-border">
           {schedule.sessions.map((session) => {
@@ -48,7 +50,7 @@ export default function TodayParts({ schedule, now, activeSessionId }: TodayPart
                 />
                 <div
                   className={cn(
-                    'flex flex-1 items-center justify-between gap-3 overflow-hidden rounded-2xl px-4 py-3 transition-colors',
+                    'relative flex flex-1 flex-wrap items-center justify-between gap-3 overflow-hidden rounded-2xl px-4 py-3 transition-colors',
                     state === 'open' ? 'bg-primary/10 ring-1 ring-primary/30' : 'bg-muted/40',
                     (state === 'past' || state === 'cancelled') && 'opacity-70',
                   )}
@@ -70,6 +72,7 @@ export default function TodayParts({ schedule, now, activeSessionId }: TodayPart
                             ? 'لغو شد'
                             : 'به‌زودی'}
                   </span>
+                  {state === 'open' && onStart && <Button size="sm" onClick={onStart}>شروع</Button>}
                   {state === 'open' && (
                     <span aria-hidden className="absolute inset-x-0 bottom-0 h-1 bg-primary/20">
                       <span className="block h-full bg-primary" style={{ width: `${Math.round(progress * 100)}%` }} />

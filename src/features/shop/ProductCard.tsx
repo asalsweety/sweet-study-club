@@ -36,27 +36,27 @@ export default function ProductCard({ product, paymentsMode }: { product: Produc
   const featured = product.kind === 'subscription' || product.kind === 'plan_by_asal'
 
   return (
-    <article className={cn('glass rise flex flex-col gap-3 rounded-[2rem] p-5', featured && 'ring-2 ring-primary/40')}>
+    <article className={cn('glass rise flex flex-col gap-3 rounded-2xl p-5', featured && 'ring-2 ring-primary/40')}>
       <div className="flex items-start justify-between gap-3">
         <span className="grid size-12 place-items-center rounded-2xl bg-primary/10 text-2xl">{style.emoji}</span>
         <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-bold">{style.label}</span>
       </div>
       <div>
-        <h3 className="text-lg font-black">{product.title}</h3>
+        <h3 className="text-lg font-bold">{product.title}</h3>
         <p className="mt-1 text-sm leading-6 text-muted-foreground">{product.summary}</p>
       </div>
       <p className="text-sm leading-7 text-foreground/80">{product.description}</p>
       <div className="mt-auto flex items-center justify-between gap-3 pt-2">
         <div>
-          <p className="text-xl font-black text-gradient">{formatToman(product.priceToman)}</p>
+          <p className="text-xl font-bold text-gradient">{formatToman(product.priceToman)}</p>
           {product.durationDays && <p className="text-xs text-muted-foreground">برای {product.durationDays} روز</p>}
         </div>
         {product.owned && product.durationDays === null ? (
           <span className="flex items-center gap-1 text-sm font-bold text-[var(--success-text)]"><BadgeCheck size={18} /> خریداری شده</span>
         ) : (
-          <Button onClick={() => buy.mutate()} disabled={buy.isPending} className="rounded-2xl bg-[image:var(--primary-gradient)] font-black shadow-md shadow-primary/25">
+          <Button onClick={() => buy.mutate()} disabled={buy.isPending || paymentsMode === 'unavailable'} className="rounded-xl bg-primary font-bold">
             {buy.isPending ? <LoaderCircle className="animate-spin" /> : <ShoppingBag />}
-            {product.owned ? 'تمدید' : 'خرید'}
+            {paymentsMode === 'unavailable' ? 'به‌زودی' : product.owned ? 'تمدید' : 'خرید'}
           </Button>
         )}
       </div>

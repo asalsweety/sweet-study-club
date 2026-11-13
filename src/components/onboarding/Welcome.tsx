@@ -75,7 +75,10 @@ export default function Welcome({
 
           <figure className="relative min-h-80 overflow-hidden bg-muted lg:min-h-full">
             <img
-              src="/images/onboarding-study-room.png"
+              src="/images/onboarding-study-room.webp"
+              width={1536}
+              height={1024}
+              decoding="async"
               alt="دانش‌آموزی در اتاق مطالعه گرم و آرام کنار میز و گربه"
               className="absolute inset-0 size-full object-cover object-center"
             />

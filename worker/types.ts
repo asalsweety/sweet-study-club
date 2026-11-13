@@ -4,7 +4,9 @@ export type WorkerBindings = {
   APP_ORIGIN?: string
   ASSETS: Fetcher
   BETTER_AUTH_SECRET?: string
+  EMAIL_PASSWORD_AUTH_ENABLED?: string
   DB: D1Database
+  AI?: Ai
 }
 
 export type WorkerEnvironment = {
