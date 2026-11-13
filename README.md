@@ -28,11 +28,11 @@ The **Learning and exam hub** lives at `/learn`, with question banks, educationa
 - **Clock.** Timers use the display font with fixed-width digit slots so the time never jitters, and the colon breathes while running.
 - **In-app confirmations.** Deleting a plan item, subject, friend or club part, and blocking someone, use the app's own confirmation dialog instead of the browser's.
 - **Native feel on phones.** A floating glass tab bar, bottom sheets with a swipe-down handle, safe-area padding under the notch and home indicator, no tap flash or long-press text selection on controls, 16px inputs (no iOS zoom), no stuck hover states, per-theme status-bar color, and light haptics on Android.
-- **Typography.** Body text uses Estedad (`@fontsource-variable/estedad`, OFL). Titles, headings and clocks use the display face: the handwritten **Mahboubeh Mehravar** where licensed, otherwise the free **Lalezar** (`@fontsource/lalezar`, OFL). All free fonts are self-hosted and precached for offline use.
+- **Typography.** Body text uses Estedad (`@fontsource-variable/estedad`, OFL). Titles, headings and clocks use the handwritten **Mahboubeh Mehravar**, with the free **Lalezar** (`@fontsource/lalezar`, OFL) as fallback. All free fonts are self-hosted and precached for offline use.
 
-### Title font license
+### Title font
 
-Mahboubeh Mehravar is a commercial fontiran.com font. Its terms allow use on a personal computer but require a **website license** before the file is served from a public server. The file therefore lives in the git-ignored `public/fonts/licensed/mahboubeh-mehravar.woff2`, loads during local development, and is stripped from every production build (and never precached) unless the build runs with `VITE_TITLE_FONT_LICENSED=true`. Set that only after buying the website license; without it, the live site uses Lalezar for titles.
+Titles use **Mahboubeh Mehravar** (fontiran.com), which the owner confirmed is free to use on the site. The file is kept out of this public repository in the git-ignored `public/fonts/licensed/mahboubeh-mehravar.woff2`. `npm run cf:build:production` ships and precaches it whenever that file exists on the building machine, and prints whether it was included; a checkout without the file falls back to the free Lalezar. Other builds include it only with `VITE_TITLE_FONT_LICENSED=true`.
 
 ### Demo data for a walkthrough or video
 
