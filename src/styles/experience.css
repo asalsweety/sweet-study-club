@@ -1154,7 +1154,7 @@ h2,
 
 /* Tall phone screens would crop the room to Asal's face, so the room becomes
    a framed window under the header and the clock sits below it. */
-@media (orientation: portrait) and (max-width: 767px) {
+@media (orientation: portrait) and (max-width: 1100px) {
   /* In the page flow under the controls row, so wrapped buttons never
      cover it; the session controls are centred in the space below. */
   .pixel-backdrop {
@@ -1234,7 +1234,7 @@ h2,
   animation: rise-in 700ms var(--ease-spring) 200ms backwards;
 }
 
-@media (orientation: portrait) and (max-width: 767px) {
+@media (orientation: portrait) and (max-width: 1100px) {
   .pixel-dock {
     width: 100%;
     background: rgba(255, 255, 255, 0.06);
@@ -1242,7 +1242,7 @@ h2,
 }
 
 /* Wide screens: a compact bar in the corner, like a lo-fi stream overlay. */
-@media (min-width: 768px), (orientation: landscape) {
+@media (orientation: landscape), (min-width: 1101px) {
   .pixel-dock {
     position: absolute;
     left: 1.5rem;
@@ -1255,5 +1255,122 @@ h2,
 
   .pixel-dock .focus-keys {
     display: none;
+  }
+}
+
+/* Tablets in portrait (iPad): the room is a large framed card and the
+   session controls sit centred beneath it. */
+@media (orientation: portrait) and (min-width: 600px) and (max-width: 1100px) {
+  .pixel-backdrop {
+    max-width: 56rem;
+    margin-top: 1rem;
+    border-radius: 2rem;
+  }
+
+  .pixel-dock {
+    width: auto;
+    min-width: 26rem;
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+/* ---- Today layout ----
+   Phones stack; tablets pair the goal ring with the weekly chart and the
+   schedule with the quick links; desktops keep the side column. */
+.today-grid {
+  display: grid;
+  gap: 1.25rem;
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "hero" "goal" "metrics" "parts" "week" "links";
+}
+
+.today-grid > [class*="grid-area:goal"],
+.today-grid > [class*="grid-area:hero"] {
+  align-self: stretch;
+}
+
+@media (min-width: 768px) {
+  .today-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "hero hero"
+      "goal week"
+      "metrics metrics"
+      "parts links";
+  }
+
+  .today-grid > [class*="grid-area:week"] > section {
+    height: 100%;
+  }
+
+  .today-grid > [class*="grid-area:week"] {
+    align-self: stretch;
+  }
+}
+
+@media (min-width: 1280px) {
+  .today-grid {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    grid-template-areas:
+      "hero goal"
+      "metrics metrics"
+      "parts week"
+      "parts links";
+  }
+
+  .today-grid > [class*="grid-area:week"] {
+    align-self: start;
+  }
+}
+
+/* ---- Icon rail sidebar (iPad landscape, iPad Pro portrait) ----
+   Between 1024px and 1279px the full sidebar would squeeze the page, so it
+   becomes a slim rail of icons; labels move into tooltips. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .desktop-sidebar {
+    width: 5.5rem !important;
+    align-items: center;
+    padding-inline: 0.75rem !important;
+  }
+
+  .desktop-sidebar .brand-lockup > span:last-child,
+  .desktop-sidebar .nav-caption,
+  .desktop-sidebar .hero-card,
+  .desktop-sidebar a[href="/me"] > div,
+  .desktop-sidebar a[href="/me"] > svg {
+    display: none;
+  }
+
+  .desktop-sidebar .brand-lockup {
+    padding: 0;
+  }
+
+  .desktop-sidebar nav {
+    width: 100%;
+  }
+
+  .desktop-sidebar .nav-item {
+    justify-content: center;
+    padding-inline: 0;
+    min-height: 3.1rem;
+  }
+
+  .desktop-sidebar .nav-item > span:not(.nav-pill) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .desktop-sidebar .nav-pill::before {
+    display: none;
+  }
+
+  .desktop-sidebar a[href="/me"] {
+    justify-content: center;
+    border-top: 0 !important;
   }
 }

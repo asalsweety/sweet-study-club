@@ -80,8 +80,8 @@ export default function HomePage({ profile }: { profile: UserProfile }) {
   return <div className="grid gap-7">
     <PageHeading eyebrow={`${weekdayName(today)}، ${jalaliDay(today)}`} title={`${greeting()}، ${profile.displayName}`} description={todaySeconds > 0 ? `امروز ${formatDuration(todaySeconds)} برای هدفت وقت گذاشتی. قدم بعدی با تو.` : 'یک نفس عمیق. یک قدم کوچک. امروز از همین‌جا شروع می‌شود.'} />
     {timer.error && <QueryError error={timer.error} retry={() => void timer.refetch()} />}
-    <div className="grid items-stretch gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
-      {timer.isLoading ? <div className="skeleton min-h-64 rounded-[1.75rem]" aria-label="در حال بررسی جلسهٔ فعال" /> : timer.timer ? <ActiveTimerCard timer={timer} onStop={() => setFinishing(true)} /> : <section className="hero-card flex min-h-64 flex-col justify-between gap-8 p-6 sm:p-9">
+    <div className="today-grid">
+      <div className="min-w-0 [grid-area:hero]">{timer.isLoading ? <div className="skeleton min-h-64 rounded-[1.75rem]" aria-label="در حال بررسی جلسهٔ فعال" /> : timer.timer ? <ActiveTimerCard timer={timer} onStop={() => setFinishing(true)} /> : <section className="hero-card flex min-h-64 flex-col justify-between gap-8 p-6 sm:p-9">
         <div aria-hidden className="orb -left-10 -top-16 size-48 bg-primary/25" />
         <div aria-hidden className="orb -bottom-20 left-1/3 size-40 bg-[var(--chart-4)]/20 [animation-delay:-4s]" />
         <div className="relative flex items-start justify-between gap-4">
@@ -96,14 +96,13 @@ export default function HomePage({ profile }: { profile: UserProfile }) {
           <Button size="lg" disabled={Boolean(timer.error)} onClick={() => setStarting(true)} className="h-14 rounded-2xl px-7 text-base"><Play size={18} className="fill-current" />شروع مطالعه<ArrowLeft size={16} /></Button>
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">{['آزاد', 'پومودورو', 'همراه باشگاه'].map((mode) => <span key={mode} className="rounded-full border border-border bg-card/60 px-3 py-1.5 backdrop-blur">{mode}</span>)}</div>
         </div>
-      </section>}
-      <section className="surface relative flex flex-col items-center justify-center gap-4 overflow-hidden p-6">
+      </section>}</div>
+      <section className="surface relative flex flex-col items-center justify-center gap-4 overflow-hidden p-6 [grid-area:goal]">
         <div className="flex w-full items-center justify-between"><h2 className="text-sm font-bold">هدف امروز</h2><Target size={17} className="text-muted-foreground" /></div>
         {progress.isError ? <QueryError error={progress.error} retry={() => void progress.refetch()} /> : progress.isPending ? <div className="skeleton size-[152px] rounded-full" /> : <GoalRing value={goalShare} label="پیشرفت هدف امروز"><div><p className="text-4xl font-extrabold"><AnimatedNumber value={Math.floor(todaySeconds / 60)} /></p><p className="mt-1 text-xs text-muted-foreground">دقیقه مطالعه</p></div></GoalRing>}
         {goalShare >= 1 ? <p className="rounded-full bg-[var(--success-soft)] px-3 py-1 text-xs font-bold text-[var(--success-text)] [animation:pop-in_500ms_var(--ease-spring)_backwards]">🎉 هدف امروز کامل شد</p> : <Link to={`${appRoutes.profile}?section=settings`} viewTransition className="text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline">{goalMinutes > 0 ? `${fa(Math.round(goalShare * 100))}٪ از ${fa(goalMinutes)} دقیقه · تغییر هدف` : 'تعیین هدف روزانه'}</Link>}
       </section>
-    </div>
-    <section aria-label="نگاهی به مسیر تو" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <section aria-label="نگاهی به مسیر تو" className="grid grid-cols-1 gap-3 [grid-area:metrics] sm:grid-cols-3">
       {metrics.map(({ icon: Icon, title, value, unit, prefix, hint, tone, progress: share }) => <div key={title} className="surface lift relative overflow-hidden p-5">
         <p className="flex items-center gap-2 text-xs text-muted-foreground"><span className={cn('grid size-8 place-items-center rounded-xl bg-muted', tone)}><Icon size={16} /></span>{title}</p>
         <p className="mt-4 text-2xl font-extrabold">{value === undefined ? (title === 'تا روز کنکور' ? <Link to={`${appRoutes.profile}?section=settings`} viewTransition className="text-sm text-primary underline underline-offset-4">تعیین تاریخ</Link> : '—') : <>{prefix}<AnimatedNumber value={value} /> {unit && <span className="text-sm font-semibold text-muted-foreground">{unit}</span>}</>}</p>
@@ -111,12 +110,9 @@ export default function HomePage({ profile }: { profile: UserProfile }) {
         {share !== undefined && <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-[var(--chart-4)] transition-[width] duration-1000 ease-out" style={{ width: `${Math.round(share * 100)}%` }} /></div>}
       </div>)}
     </section>
-    <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
-      {schedule.isError ? <QueryError error={schedule.error} retry={() => void schedule.refetch()} /> : <TodayParts schedule={schedule.data} now={now} activeSessionId={timer.timer?.sessionId ?? null} onStart={timer.timer || timer.isLoading || timer.error ? undefined : () => setStarting(true)} />}
-      <div className="grid gap-5">
-        <WeekChart today={today} />
-        <section className="surface px-5 py-4"><h2 className="mb-1 pt-2 text-base font-bold">قدم بعدی تو</h2>{[{ to: appRoutes.planner, icon: CalendarDays, title: 'روزت را بچین', hint: 'یک برنامهٔ سبک و قابل انجام' }, { to: appRoutes.learning, icon: BookOpen, title: 'چیزی تازه یاد بگیر', hint: 'تمرین و مرور، کنار هم' }].map(({ to, icon: Icon, title, hint }) => <Link key={to} to={to} viewTransition className="quick-link group"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-secondary text-primary transition-transform duration-300 group-hover:scale-110"><Icon size={19} strokeWidth={1.8} /></span><div className="flex-1"><p className="text-sm font-bold">{title}</p><p className="mt-1 text-xs leading-6 text-muted-foreground">{hint}</p></div><ArrowLeft size={15} className="transition-transform duration-300 group-hover:-translate-x-1" /></Link>)}</section>
-      </div>
+      <div className="min-w-0 [grid-area:parts]">{schedule.isError ? <QueryError error={schedule.error} retry={() => void schedule.refetch()} /> : <TodayParts schedule={schedule.data} now={now} activeSessionId={timer.timer?.sessionId ?? null} onStart={timer.timer || timer.isLoading || timer.error ? undefined : () => setStarting(true)} />}</div>
+        <div className="min-w-0 [grid-area:week]"><WeekChart today={today} /></div>
+        <section className="surface px-5 py-4 [grid-area:links]"><h2 className="mb-1 pt-2 text-base font-bold">قدم بعدی تو</h2>{[{ to: appRoutes.planner, icon: CalendarDays, title: 'روزت را بچین', hint: 'یک برنامهٔ سبک و قابل انجام' }, { to: appRoutes.learning, icon: BookOpen, title: 'چیزی تازه یاد بگیر', hint: 'تمرین و مرور، کنار هم' }].map(({ to, icon: Icon, title, hint }) => <Link key={to} to={to} viewTransition className="quick-link group"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-secondary text-primary transition-transform duration-300 group-hover:scale-110"><Icon size={19} strokeWidth={1.8} /></span><div className="flex-1"><p className="text-sm font-bold">{title}</p><p className="mt-1 text-xs leading-6 text-muted-foreground">{hint}</p></div><ArrowLeft size={15} className="transition-transform duration-300 group-hover:-translate-x-1" /></Link>)}</section>
     </div>
     {broadcasts.data?.slice(0, 1).map((item) => <aside key={item.id} className="surface flex items-start gap-3 p-5"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground"><Megaphone size={18} /></span><div><p className="text-sm font-bold">{item.title}</p><p className="mt-1 text-sm leading-7 text-muted-foreground">{item.body}</p></div></aside>)}
     <StartStudySheet key={openPart?.id ?? 'free'} open={starting} onOpenChange={setStarting} openPart={openPart} timer={timer} onStarted={() => setStarting(false)} />

@@ -19,7 +19,7 @@ import { sceneThemes, type ChibiScene as SceneId } from '../features/focus/scene
 import FinishSessionSheet from '../features/study/FinishSessionSheet'
 import { elapsedSecondsOf, pomodoroRemaining, useNow, useStudyTimer } from '../features/study/useStudyTimer'
 
-const pill = 'min-h-11 flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-xs font-bold text-white backdrop-blur-md transition hover:bg-white/20 active:scale-95 sm:px-4 sm:text-sm'
+const pill = 'min-h-11 flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-white/10 bg-white/10 px-3 py-2 text-xs font-bold text-white backdrop-blur-md transition hover:bg-white/20 active:scale-95 sm:px-4 sm:text-sm'
 
 // The clock owns its one-second updates; the scene, controls and audio stay still.
 function FocusClock({ state, display }: { state: StudyTimerState; display: 'digital' | 'chibi' }) {

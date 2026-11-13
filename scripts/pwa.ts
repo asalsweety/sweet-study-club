@@ -37,8 +37,8 @@ export function pwaPlugins() {
         '**/html2canvas-*.js',
         '**/purify*.js',
         '**/images/**',
-        // Never precache the commercial title font (license-gated).
-        '**/fonts/licensed/**',
+        // The title font is precached only in builds that ship it.
+        ...(process.env.VITE_TITLE_FONT_LICENSED === 'true' ? [] : ['**/fonts/licensed/**']),
       ],
       navigateFallback: '/index.html',
       navigateFallbackDenylist: [/^\/api\//],
