@@ -3,7 +3,7 @@ import { appRoutes } from './routes'
 
 export const primaryNavigation = [
   { path: appRoutes.home, label: 'امروز', icon: House },
-  { path: appRoutes.planner, label: 'برنامهٔ من', icon: CalendarDays },
+  { path: appRoutes.planner, label: 'برنامۀ من', icon: CalendarDays },
   { path: appRoutes.learning, label: 'یادگیری', icon: BookOpen },
   { path: appRoutes.progress, label: 'پیشرفت', icon: BarChart3 },
 ] as const

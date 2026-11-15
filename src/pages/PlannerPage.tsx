@@ -60,7 +60,7 @@ export default function PlannerPage() {
 
   return (
     <div className="grid gap-6">
-      <PageHeading eyebrow="یک روز، یک قدم" title="برنامهٔ من" description="کارهای مهم را مشخص کن؛ برای استراحت هم جا بگذار." action={<Button onClick={() => setEditing('new')}><Plus />کار جدید</Button>} />
+      <PageHeading eyebrow="یک روز، یک قدم" title="برنامۀ من" description="کارهای مهم را مشخص کن؛ برای استراحت هم جا بگذار." action={<Button onClick={() => setEditing('new')}><Plus />کار جدید</Button>} />
       {items.isError && <QueryError error={items.error} retry={() => void items.refetch()} />}
       <div className="grid items-start gap-5 xl:grid-cols-[1fr_1.15fr]">
       <section className="glass rise rounded-2xl p-5 sm:p-6">

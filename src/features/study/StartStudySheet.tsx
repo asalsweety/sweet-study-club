@@ -1,7 +1,10 @@
 import { CalendarClock, Coffee, LoaderCircle, Lock, Play, Timer } from 'lucide-react'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { appRoutes } from '../../app/navigation/routes'
 import { useSettings, useSubjects } from '../../app/session'
 import { errorMessage } from '../../shared/api/http'
+import { subjectsForProfile } from '../../shared/lib/education'
 import { fa } from '../../shared/lib/format'
 import type { ScheduledSession } from '../../shared/api/schedule'
 import type { PomodoroPlan, TimerMode } from '../../shared/api/study-timer'
@@ -26,9 +29,6 @@ const presets: (PomodoroPlan & { label: string })[] = [
   { label: '۹۰ / ۱۵', focusMinutes: 90, breakMinutes: 15, longBreakMinutes: 30, rounds: 2 },
 ]
 
-// Offered until the person saves their own subjects in settings.
-const starterSubjects = [['زیست‌شناسی', '🧬'], ['شیمی', '⚗️'], ['فیزیک', '⚡'], ['ریاضی', '📐'], ['ادبیات فارسی', '📚'], ['زبان انگلیسی', '🌍']] as const
-
 const modes: { id: TimerMode; title: string; hint: string; icon: typeof Timer }[] = [
   { id: 'scheduled', title: 'پارت امروز', hint: 'طبق برنامه‌ی روزانه', icon: CalendarClock },
   { id: 'free', title: 'مطالعه‌ی آزاد', hint: 'هر وقت دلت خواست', icon: Timer },
@@ -43,11 +43,17 @@ export default function StartStudySheet({ open, onOpenChange, openPart, timer, o
   const [custom, setCustom] = useState('')
   const [plan, setPlan] = useState<PomodoroPlan | null>(null)
   const [focusLock, setFocusLock] = useState(false)
+  const navigate = useNavigate()
 
   const chosenPlan = plan ?? settings.data?.pomodoro ?? presets[0]!
+  // Offered until the person has their own subjects: the defaults for their field.
+  const starterSubjects = subjectsForProfile(settings.data?.educationGroup, settings.data?.educationStage).map((item) => [item.name, item.emoji] as const)
   const subjectName = (custom.trim() || subject || subjects.data?.[0]?.name || '').slice(0, 80)
 
   const begin = () => {
+    // Full focus: go fullscreen inside the tap (browsers require a gesture),
+    // then open the focus room once the session exists.
+    if (focusLock && !document.fullscreenElement) void document.documentElement.requestFullscreen?.().catch(() => undefined)
     timer.start.mutate(
       {
         mode,
@@ -56,7 +62,7 @@ export default function StartStudySheet({ open, onOpenChange, openPart, timer, o
         focusLockEnabled: focusLock,
         pomodoro: mode === 'pomodoro' ? { focusMinutes: chosenPlan.focusMinutes, breakMinutes: chosenPlan.breakMinutes, longBreakMinutes: chosenPlan.longBreakMinutes, rounds: chosenPlan.rounds } : null,
       },
-      { onSuccess: onStarted },
+      { onSuccess: () => { onStarted(); if (focusLock) navigate(appRoutes.focus, { viewTransition: true }) } },
     )
   }
 
@@ -161,8 +167,9 @@ export default function StartStudySheet({ open, onOpenChange, openPart, timer, o
         )}
 
         <label className="flex items-center justify-between gap-3 rounded-2xl bg-muted/60 p-3.5">
-          <span className="flex items-center gap-2 text-sm font-bold">
-            <Lock size={16} className="text-primary" /> حالت تمرکز کامل
+          <span className="grid gap-0.5">
+            <span className="flex items-center gap-2 text-sm font-bold"><Lock size={16} className="text-primary" /> حالت تمرکز کامل</span>
+            <span className="text-xs font-normal text-muted-foreground">تمام‌صفحه در اتاق تمرکز، شمارش حواس‌پرتی‌ها و هشدار هنگام خروج</span>
           </span>
           <Switch checked={focusLock} onCheckedChange={setFocusLock} aria-label="حالت تمرکز کامل" />
         </label>

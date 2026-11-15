@@ -22,10 +22,12 @@ const H = 144
 const FRAME_MS = 1000 / 12
 const DESK_Y = 112
 const SPRITE_URL = '/images/pixel/asal-desk.png'
-const SPRITE_W = 69
-const SPRITE_H = 64
-const SPRITE_X = 128 - 35
-const SPRITE_Y = DESK_Y - 57
+// Frame size of public/images/pixel/asal-desk.png (three frames side by side);
+// the desk hides everything below her collar (89% of the height).
+const SPRITE_W = 86
+const SPRITE_H = 80
+const SPRITE_X = 128 - SPRITE_W / 2
+const SPRITE_Y = DESK_Y - Math.round(SPRITE_H * 0.89)
 
 type Rect = (x: number, y: number, w: number, h: number, color: string) => void
 type Palette = { skin: string; skinShade: string; sleeve: string; sleeveShade: string; sleeveLight: string }
@@ -278,7 +280,7 @@ function drawMug(t: number, state: PixelSceneState, palette: Palette, ctx: Canva
   const sipping = state === 'break'
   const tilt = sipping && (t % 3.2) < 1.3 ? 1 : 0
   const mx = sipping ? 126 : 166
-  const my = sipping ? SPRITE_Y + 41 - tilt : DESK_Y - 9
+  const my = sipping ? SPRITE_Y + Math.round(SPRITE_H * 0.64) - tilt : DESK_Y - 9
   if (sipping) {
     r(mx - 4, my + 4, 5, 5, palette.skin); r(mx + 9, my + 4, 4, 5, palette.skin)
   }
@@ -296,9 +298,9 @@ function drawCat(t: number, r: Rect) {
   const x = 196
   const y = DESK_Y - 11
   const breathe = Math.sin(t * 1.25) > 0.15 ? 1 : 0
-  const fur = '#eea766'
-  const dark = '#c47c45'
-  const outline = '#5b3b29'
+  const fur = '#f7f4ef'
+  const dark = '#dcd5cb'
+  const outline = '#7a6a62'
   // Curled loaf, head on the left.
   for (let row = 0; row < 10; row++) {
     const width = row < 2 ? 18 - (2 - row) * 4 : row > 8 ? 26 : 28
@@ -311,7 +313,7 @@ function drawCat(t: number, r: Rect) {
   r(x, y + 2, 11, 8, fur); r(x - 1, y + 3, 1, 6, outline); r(x, y + 1, 11, 1, outline)
   r(x + 1, y - 1, 2, 2, fur); r(x + 1, y - 2, 1, 1, outline); r(x + 7, y - 1, 2, 2, fur); r(x + 8, y - 2, 1, 1, outline)
   r(x + 2, y + 5, 2, 1, outline); r(x + 7, y + 5, 2, 1, outline)
-  r(x + 5, y + 6, 1, 1, '#e7838f'); r(x + 1, y + 7, 9, 2, '#fbe7d4')
+  r(x + 5, y + 6, 1, 1, '#ef8fa0'); r(x + 1, y + 7, 9, 2, '#ffffff'); r(x + 2, y - 1, 1, 1, '#f3b3c0'); r(x + 7, y - 1, 1, 1, '#f3b3c0')
   // Tail curls around the front and flicks now and then.
   const flick = Math.floor(t * 1.4) % 5 === 0 ? 1 : 0
   r(x + 10, y + 9, 22, 2, fur); r(x + 8 - flick, y + 8 - flick, 3, 2, dark)
@@ -322,8 +324,8 @@ function drawSleepZ(ctx: CanvasRenderingContext2D, t: number, r: Rect) {
     const phase = ((t * 0.35) + i / 3) % 1
     ctx.globalAlpha = Math.sin(phase * Math.PI)
     const size = 3 + i
-    const zx = SPRITE_X + 58 + phase * 12 + i * 3
-    const zy = SPRITE_Y + 8 - phase * 22
+    const zx = SPRITE_X + SPRITE_W * 0.84 + phase * 12 + i * 3
+    const zy = SPRITE_Y + 10 - phase * 22
     r(zx, zy, size, 1, '#ffffff'); r(zx + size - 2, zy + 1, 1, 1, '#ffffff'); r(zx + 1, zy + 2, 1, 1, '#ffffff'); r(zx, zy + 3, size, 1, '#ffffff')
   }
   ctx.globalAlpha = 1
@@ -349,8 +351,8 @@ function samplePalette(sprite: HTMLImageElement): Palette {
     ctx.drawImage(sprite, 0, 0, SPRITE_W, SPRITE_H, 0, 0, SPRITE_W, SPRITE_H)
     const data = ctx.getImageData(0, 0, SPRITE_W, SPRITE_H).data
     const at = (x: number, y: number) => { const i = (y * SPRITE_W + x) * 4; return `#${[data[i], data[i + 1], data[i + 2]].map((c) => (c ?? 0).toString(16).padStart(2, '0')).join('')}` }
-    const sleeve = at(25, 60)
-    const skin = at(37, 40)
+    const sleeve = at(Math.round(SPRITE_W * 0.36), Math.round(SPRITE_H * 0.94))
+    const skin = at(Math.round(SPRITE_W * 0.536), Math.round(SPRITE_H * 0.625))
     return { skin, skinShade: mix(skin, -0.1), sleeve, sleeveShade: mix(sleeve, -0.22), sleeveLight: mix(sleeve, 0.18) }
   } catch {
     return fallbackPalette

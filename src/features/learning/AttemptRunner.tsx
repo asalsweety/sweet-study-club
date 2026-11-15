@@ -35,7 +35,7 @@ function AnnotationEditor({ question, entry, explanationRef }: { question: Attem
     setSelectionError('')
   }
   return <details className="rounded-2xl border border-border/60 p-4" open={saved || undefined}>
-    <summary className="cursor-pointer text-sm font-bold"><Bookmark className="ml-2 inline size-4 text-primary" />دفترچهٔ من</summary>
+    <summary className="cursor-pointer text-sm font-bold"><Bookmark className="ml-2 inline size-4 text-primary" />دفترچۀ من</summary>
     <div className="mt-4 grid gap-3">
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={saved} onChange={(e) => setSaved(e.target.checked)} /> نشان‌کردن سؤال برای بعد</label>
       <label className="grid gap-2 text-sm font-bold">یادداشت من<Textarea value={note} maxLength={5000} rows={3} onChange={(e) => setNote(e.target.value)} placeholder="نکته یا دلیل اشتباهم…" /></label>
@@ -52,6 +52,9 @@ function QuestionCard({ attempt, item, index, total, onUpdate, onGo, onFinish, e
 }) {
   const [selected, setSelected] = useState<number | null>(item.selectedIndex)
   const [feedbackTab, setFeedbackTab] = useState<'explanation' | 'map' | 'micro'>('explanation')
+  // Typed text first; the scanned paper stays one tap away for figures and tables.
+  const textOnly = item.prompt.trim().length > 0
+  const [showPaper, setShowPaper] = useState(!textOnly)
   const explanationRef = useRef<HTMLDivElement>(null)
   const locked = attempt.finishedAt !== null || (attempt.mode === 'practice' && item.answered)
   const save = useMutation({ mutationFn: () => learningApi.answer(attempt.id, item.questionId, selected), onSuccess: onUpdate })
@@ -66,7 +69,8 @@ function QuestionCard({ attempt, item, index, total, onUpdate, onGo, onFinish, e
   return <Panel className="grid gap-5">
     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground"><span className="rounded-full bg-primary/10 px-3 py-1 font-bold text-primary">سؤال {fa(index + 1)} از {fa(total)}</span><span>{subjectName(item.subjectId)} · {item.chapter}</span><span className="mr-auto">{difficultyNames[item.difficulty]}</span></div>
     <p dir={item.language === 'en' ? 'ltr' : 'rtl'} lang={item.language} className="text-base font-bold leading-9 sm:text-lg">{item.prompt}</p>
-    {item.images.length > 0 && <div className="grid gap-3">{item.images.map((src, imageIndex) => <figure key={src} className="overflow-hidden rounded-xl border border-border bg-white p-2 sm:p-4"><a href={src} target="_blank" rel="noreferrer" aria-label={`بزرگ‌نمایی تصویر ${fa(imageIndex + 1)} سؤال`}><img src={src} alt={`متن یا شکل اصلی سؤال، تصویر ${fa(imageIndex + 1)}؛ برای بزرگ‌نمایی باز کن`} className="mx-auto h-auto max-w-full" /></a><figcaption className="mt-2 text-center text-xs text-neutral-600">تصویر اصلی دفترچه · برای بزرگ‌نمایی لمس کن</figcaption></figure>)}</div>}
+    {item.images.length > 0 && textOnly && <button type="button" aria-expanded={showPaper} onClick={() => setShowPaper((value) => !value)} className="w-fit rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary">{showPaper ? 'پنهان کردن برگۀ اصلی' : `نمایش برگۀ اصلی${item.images.length > 1 ? ` (${fa(item.images.length)} تصویر)` : ''} · برای شکل و جدول`}</button>}
+    {item.images.length > 0 && showPaper && <div className="grid gap-3">{item.images.map((src, imageIndex) => <figure key={src} className="overflow-hidden rounded-xl border border-border bg-white p-2 sm:p-4"><a href={src} target="_blank" rel="noreferrer" aria-label={`بزرگ‌نمایی تصویر ${fa(imageIndex + 1)} سؤال`}><img src={src} alt={`متن یا شکل اصلی سؤال، تصویر ${fa(imageIndex + 1)}؛ برای بزرگ‌نمایی باز کن`} className="mx-auto h-auto max-w-full" /></a><figcaption className="mt-2 text-center text-xs text-neutral-600">تصویر اصلی دفترچه · برای بزرگ‌نمایی لمس کن</figcaption></figure>)}</div>}
     <div dir={item.language === 'en' ? 'ltr' : 'rtl'} lang={item.language} role="radiogroup" aria-label="گزینه‌های سؤال" className="grid gap-3">{item.options.map((option, i) => {
       const correct = item.feedback?.correctIndex === i
       const wrong = item.feedback && selected === i && !correct
@@ -75,17 +79,17 @@ function QuestionCard({ attempt, item, index, total, onUpdate, onGo, onFinish, e
     {!locked && <Button variant="ghost" size="sm" className="justify-self-start" onClick={() => setSelected(null)}>پاک‌کردن انتخاب / سفید</Button>}
     <div className="flex flex-wrap gap-2">
       {index > 0 && <Button variant="outline" disabled={save.isPending} onClick={async () => { if (!locked && selected !== item.selectedIndex) { try { await save.mutateAsync() } catch { return } } onGo(index - 1) }}><ArrowRight size={15} />قبلی</Button>}
-      {attempt.mode === 'practice' && !locked ? <Button onClick={submit} disabled={save.isPending}>{selected === null ? 'سفید و مشاهدهٔ پاسخ' : 'ثبت و مشاهدهٔ پاسخ'}</Button> : <Button onClick={() => { void next() }} disabled={save.isPending}>{index + 1 < total ? 'ذخیره و سؤال بعد' : attempt.finishedAt ? 'نتیجهٔ آزمون' : 'ذخیره و پایان آزمون'}</Button>}
+      {attempt.mode === 'practice' && !locked ? <Button onClick={submit} disabled={save.isPending}>{selected === null ? 'سفید و مشاهدۀ پاسخ' : 'ثبت و مشاهدۀ پاسخ'}</Button> : <Button onClick={() => { void next() }} disabled={save.isPending}>{index + 1 < total ? 'ذخیره و سؤال بعد' : attempt.finishedAt ? 'نتیجۀ آزمون' : 'ذخیره و پایان آزمون'}</Button>}
     </div>
     <QueryState error={save.error} />
-    <p className="text-xs text-muted-foreground">منبع: {item.packTitle}{item.isSample && ' · نمونهٔ آموزشی؛ سؤال رسمی نیست'}</p>
-    {item.source && <div className="flex flex-wrap items-center gap-3 rounded-xl bg-muted/40 p-3 text-[11px] leading-6 text-muted-foreground"><span dir="auto">{item.source.name}</span><a href={item.source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-bold text-primary"><ExternalLink size={12} />مشاهدهٔ منبع</a><a href="/licenses/learning-content-NOTICE.txt" target="_blank" rel="noreferrer" className="underline">{item.source.license} · انتساب</a><span>{item.language === 'en' ? 'متن اصلی انگلیسی' : 'فارسی'}</span></div>}
+    <p className="text-xs text-muted-foreground">منبع: {item.packTitle}{item.isSample && ' · نمونۀ آموزشی؛ سؤال رسمی نیست'}</p>
+    {item.source && <div className="flex flex-wrap items-center gap-3 rounded-xl bg-muted/40 p-3 text-[11px] leading-6 text-muted-foreground"><span dir="auto">{item.source.name}</span><a href={item.source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-bold text-primary"><ExternalLink size={12} />مشاهدۀ منبع</a><a href="/licenses/learning-content-NOTICE.txt" target="_blank" rel="noreferrer" className="underline">{item.source.license} · انتساب</a><span>{item.language === 'en' ? 'متن اصلی انگلیسی' : 'فارسی'}</span></div>}
     {item.feedback && <div className="grid gap-4 border-t border-border/60 pt-5">
-      <p className="text-sm font-bold text-[var(--success-text)]">پاسخ صحیح: گزینهٔ {item.language === 'en' ? String.fromCharCode(65 + item.feedback.correctIndex) : fa(item.feedback.correctIndex + 1)}</p>
+      <p className="text-sm font-bold text-[var(--success-text)]">پاسخ صحیح: گزینۀ {item.language === 'en' ? String.fromCharCode(65 + item.feedback.correctIndex) : fa(item.feedback.correctIndex + 1)}</p>
       <div className="flex flex-wrap gap-2">{([['explanation', 'توضیح پاسخ'], ['map', 'مایندمپ'], ['micro', 'میکرودرسنامه']] as const).map(([id, label]) => <Button key={id} variant={feedbackTab === id ? 'default' : 'secondary'} size="sm" onClick={() => setFeedbackTab(id)}>{label}</Button>)}</div>
       <div ref={explanationRef}>{feedbackTab === 'explanation' ? <p dir={item.language === 'en' ? 'ltr' : 'rtl'} lang={item.language} className="whitespace-pre-wrap text-sm leading-8">{item.feedback.explanation}</p> : item.feedback.topic ? <MindMap topic={item.feedback.topic} micro={feedbackTab === 'micro'} /> : <p className="text-sm text-muted-foreground">برای این سؤال هنوز محتوای مرتبط ثبت نشده است.</p>}</div>
-      <p className="text-xs leading-6 text-muted-foreground">پاسخ‌های ثبت‌شدهٔ شرکت‌کنندگان: {fa(item.feedback.stats.correct)} درست · {fa(item.feedback.stats.wrong)} غلط · {fa(item.feedback.stats.skipped)} سفید. هر نفر با آخرین آزمون پایان‌یافته‌اش شمرده می‌شود.</p>
-      <Button variant="outline" className="justify-self-start" size="sm" onClick={() => onAsk(item.questionId)}><MessageCircle size={16} />پرسش از دستیار دربارهٔ سؤال</Button>
+      <p className="text-xs leading-6 text-muted-foreground">پاسخ‌های ثبت‌شدۀ شرکت‌کنندگان: {fa(item.feedback.stats.correct)} درست · {fa(item.feedback.stats.wrong)} غلط · {fa(item.feedback.stats.skipped)} سفید. هر نفر با آخرین آزمون پایان‌یافته‌اش شمرده می‌شود.</p>
+      <Button variant="outline" className="justify-self-start" size="sm" onClick={() => onAsk(item.questionId)}><MessageCircle size={16} />پرسش از دستیار دربارۀ سؤال</Button>
     </div>}
     {notesReady && <AnnotationEditor question={item} entry={entry} explanationRef={explanationRef} />}
   </Panel>
@@ -113,12 +117,12 @@ export default function AttemptRunner({ id, initial, onBack, onAsk }: { id: stri
     <header className="flex flex-wrap items-center justify-between gap-3"><Button variant="ghost" onClick={onBack}><ArrowRight />بازگشت به یادگیری</Button>{attempt && <span className="text-sm font-bold text-muted-foreground">{attempt.mode === 'exam' ? 'آزمونی' : 'آموزشی'} · {formatClock(((attempt.finishedAt ?? now) - attempt.startedAt) / 1000)}</span>}</header>
     <QueryState pending={query.isPending} error={query.error} retry={query.refetch} />
     {attempt && <>
-      {showResult && attempt.result ? <Panel className="grid gap-5"><h2 className="text-2xl font-bold">نتیجهٔ آزمون</h2><p className="text-4xl font-bold text-primary">{fa(attempt.result.percent)}٪</p><p className="text-sm">{fa(attempt.result.correct)} درست · {fa(attempt.result.wrong)} غلط · {fa(attempt.result.skipped)} سفید</p><p className="text-xs text-muted-foreground">درصد با نمرهٔ منفی محاسبه شده است.</p><div className="flex flex-wrap gap-2"><Button onClick={() => { setIndex(0); setShowResult(false) }}>مرور پاسخ‌ها</Button><Button variant="secondary" onClick={() => onAsk(id)}>تحلیل با هوش مصنوعی</Button></div></Panel> : <>
+      {showResult && attempt.result ? <Panel className="grid gap-5"><h2 className="text-2xl font-bold">نتیجۀ آزمون</h2><p className="text-4xl font-bold text-primary">{fa(attempt.result.percent)}٪</p><p className="text-sm">{fa(attempt.result.correct)} درست · {fa(attempt.result.wrong)} غلط · {fa(attempt.result.skipped)} سفید</p><p className="text-xs text-muted-foreground">درصد با نمرۀ منفی محاسبه شده است.</p><div className="flex flex-wrap gap-2"><Button onClick={() => { setIndex(0); setShowResult(false) }}>مرور پاسخ‌ها</Button><Button variant="secondary" onClick={() => onAsk(id)}>تحلیل با هوش مصنوعی</Button></div></Panel> : <>
         <div className="flex items-center gap-3"><div className="h-2 flex-1 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${attempt.items.filter((q) => q.answered).length / attempt.items.length * 100}%` }} /></div><span className="text-xs text-muted-foreground">{fa(attempt.items.filter((q) => q.answered).length)} / {fa(attempt.items.length)} ثبت‌شده</span><Button size="sm" variant="outline" onClick={finishOrResult}>{attempt.finishedAt ? 'نتیجه' : 'پایان آزمون'}</Button></div>
         <QueryState error={notes.error} retry={notes.refetch} />
         {item && <QuestionCard key={`${item.questionId}-${item.answered}-${attempt.finishedAt}`} attempt={attempt} item={item} index={index} total={attempt.items.length} onUpdate={update} onGo={setIndex} onFinish={finishOrResult} entry={notes.data?.find((e) => e.questionId === item.questionId)} onAsk={(q) => onAsk(id, q)} notesReady={notes.isSuccess} />}
       </>}
     </>}
-    <Dialog open={confirm} onOpenChange={setConfirm}><DialogContent dir="rtl"><DialogTitle>پایان آزمون</DialogTitle><DialogDescription>پاسخ‌های ذخیره‌شده نهایی می‌شوند. سؤال‌های بدون پاسخ، سفید حساب می‌شوند و گزینه‌های تغییرکرده‌ای که ذخیره نکرده‌ای ثبت نمی‌شوند.</DialogDescription><div className="flex gap-2"><Button onClick={() => finish.mutate()} disabled={finish.isPending}>پایان و نمایش نتیجه</Button><Button variant="secondary" onClick={() => setConfirm(false)}>ادامهٔ حل</Button></div><QueryState error={finish.error} /></DialogContent></Dialog>
+    <Dialog open={confirm} onOpenChange={setConfirm}><DialogContent dir="rtl"><DialogTitle>پایان آزمون</DialogTitle><DialogDescription>پاسخ‌های ذخیره‌شده نهایی می‌شوند. سؤال‌های بدون پاسخ، سفید حساب می‌شوند و گزینه‌های تغییرکرده‌ای که ذخیره نکرده‌ای ثبت نمی‌شوند.</DialogDescription><div className="flex gap-2"><Button onClick={() => finish.mutate()} disabled={finish.isPending}>پایان و نمایش نتیجه</Button><Button variant="secondary" onClick={() => setConfirm(false)}>ادامۀ حل</Button></div><QueryState error={finish.error} /></DialogContent></Dialog>
   </div>
 }

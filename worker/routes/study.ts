@@ -65,6 +65,7 @@ export function studyRoutes(requireSession: MiddlewareHandler<WorkerEnvironment>
   app.get('/subjects', async (c) => c.json({ subjects: await settings.listSubjects(c.env.DB, userId(c)) }))
   app.post('/subjects', async (c) =>
     c.json({ subjects: await settings.createSubject(c.env.DB, userId(c), await readBody(c, upsertSubjectInputSchema)) }, 201))
+  app.post('/subjects/reset', async (c) => c.json({ subjects: await settings.resetSubjects(c.env.DB, userId(c)) }))
   app.put('/subjects/:id', async (c) =>
     c.json({
       subjects: await settings.updateSubject(c.env.DB, userId(c), c.req.param('id'), await readBody(c, upsertSubjectInputSchema)),

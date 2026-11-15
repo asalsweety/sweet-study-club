@@ -55,7 +55,7 @@ add(`INSERT INTO "user" (id, name, email, emailVerified, image, createdAt, updat
 add(`INSERT INTO account (id, issuer, accountId, providerId, userId, password, createdAt, updatedAt) VALUES ('demo-account', 'local:credential', ${sql(userId)}, 'credential', ${sql(userId)}, ${sql(await hashPassword(password))}, ${sql(iso)}, ${sql(iso)});`)
 
 const konkur = tehranDate(now + 196 * day)
-add(`INSERT INTO user_settings (user_id, friend_code, bio, daily_goal_minutes, konkur_date, timer_display, chibi_scene, updated_at) VALUES (${sql(userId)}, 'NILOO2026', 'پشت کنکوری تجربی؛ هر روز کمی بهتر 🌱', 240, ${sql(konkur)}, 'chibi', 'rainy-window', ${now});`)
+add(`INSERT INTO user_settings (user_id, friend_code, bio, daily_goal_minutes, konkur_date, timer_display, chibi_scene, education_group, education_stage, study_goals, music_links, updated_at) VALUES (${sql(userId)}, 'NILOO2026', 'پشت کنکوری تجربی؛ هر روز کمی بهتر 🌱', 240, ${sql(konkur)}, 'chibi', 'rainy-window', 'school', 'tajrobi', 'exam,habit,focus', ${sql(JSON.stringify([{ id: 'demo-lofi', url: 'https://www.youtube.com/watch?v=jfKfPfyJRdk', title: 'لوفای برای مطالعه' }]))}, ${now});`)
 subjects.forEach(([name, color, emoji], index) => add(`INSERT INTO user_subjects (id, user_id, name, color, emoji, position, created_at) VALUES ('demo-subject-${index}', ${sql(userId)}, ${sql(name)}, ${sql(color)}, ${sql(emoji)}, ${index}, ${now});`))
 
 let logIndex = 0

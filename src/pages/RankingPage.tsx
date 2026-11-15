@@ -43,7 +43,7 @@ export default function RankingPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <PageHeading eyebrow="انگیزهٔ بیشتر، کنار هم" title="لیگ مطالعه" description="رقابتی دوستانه؛ فقط کسانی اینجا هستند که خودشان انتخاب کرده‌اند." action={
+      <PageHeading eyebrow="انگیزۀ بیشتر، کنار هم" title="لیگ مطالعه" description="رقابتی دوستانه؛ فقط کسانی اینجا هستند که خودشان انتخاب کرده‌اند." action={
         <div className="flex flex-wrap gap-2">
           <div className="flex rounded-2xl bg-muted/70 p-1 text-sm font-bold">
             {([['day', 'امروز'], ['week', 'هفته'], ['month', 'ماه']] as const).map(([value, label]) => (

@@ -23,6 +23,9 @@ const basics = [
 const dentalIds: string[] = ['anatomy', 'embryology', 'histology', 'biochemistry', 'medical-physics', 'parasitology', 'mycology', 'bacteriology', 'virology', 'pathology', 'immunology', 'islamic']
 const dental = [...basics.filter(([id]) => dentalIds.includes(id)), ['clinical-psychology', 'روان‌شناسی بالینی', '💬'], ['oral-health', 'سلامت دهان و دندان', '🦷']] as const
 const konkur = [['biology', 'زیست‌شناسی', '🌿'], ['chemistry', 'شیمی', '🧪'], ['physics', 'فیزیک', '⚛️'], ['math', 'ریاضی', '📐'], ['geology', 'زمین‌شناسی', '🌍'], ['literature', 'ادبیات فارسی', '📚'], ['arabic', 'عربی', '📖'], ['religion', 'دین و زندگی', '🌱'], ['english', 'زبان انگلیسی', '🔤']] as const
+const konkurMath = [['math', 'ریاضی', '📐'], ['geometry', 'هندسه', '📏'], ['discrete', 'گسسته', '🔢'], ['physics', 'فیزیک', '⚛️'], ['chemistry', 'شیمی', '🧪'], ['literature', 'ادبیات فارسی', '📚'], ['arabic', 'عربی', '📖'], ['religion', 'دین و زندگی', '🌱'], ['english', 'زبان انگلیسی', '🔤']] as const
+const konkurHumanities = [['literature-special', 'ادبیات اختصاصی', '✒️'], ['arabic-special', 'عربی اختصاصی', '📖'], ['math-stats', 'ریاضی و آمار', '📊'], ['economics', 'اقتصاد', '💹'], ['history-geography', 'تاریخ و جغرافیا', '🗺️'], ['sociology', 'جامعه‌شناسی', '👥'], ['philosophy-logic', 'فلسفه و منطق', '💭'], ['psychology', 'روان‌شناسی', '🧠'], ['religion', 'دین و زندگی', '🌱'], ['english', 'زبان انگلیسی', '🔤']] as const
+const pharmacy = [['medicinal-chemistry', 'شیمی دارویی', '⚗️'], ['pharmaceutics', 'فارماسیوتیکس', '🧴'], ['pharmacognosy', 'فارماکوگنوزی', '🌿'], ['pharmacology', 'فارماکولوژی', '💊'], ['pharmacotherapy', 'فارماکوتراپی', '🩺'], ['toxicology', 'سم‌شناسی', '☠️'], ['biochemistry', 'بیوشیمی', '🧪'], ['microbiology', 'میکروب‌شناسی', '🦠'], ['clinical-pharmacy', 'داروسازی بالینی', '🏥']] as const
 type Subject = { id: string; name: string; emoji: string }
 const subjects = (items: readonly (readonly string[])[]): Subject[] => items.map(([id, name, emoji]) => ({ id: id!, name: name!, emoji: emoji! }))
 export const learningTracks: { id: Track; name: string; emoji: string; subjects: Subject[] }[] = [
@@ -31,7 +34,10 @@ export const learningTracks: { id: Track; name: string; emoji: string; subjects:
   { id: 'medical-basics', name: 'علوم پایه پزشکی', emoji: '🔬', subjects: subjects(basics) },
   { id: 'dental-basics', name: 'علوم پایه دندان‌پزشکی', emoji: '🦷', subjects: subjects(dental) },
   { id: 'bachelor-medicine', name: 'لیسانس به پزشکی', emoji: '🎓', subjects: subjects([...basics, ['reasoning', 'مهارت‌های استدلال و تفکر نقاد', '💡']]) },
-  { id: 'konkur', name: 'کنکور', emoji: '🎯', subjects: subjects(konkur) },
+  { id: 'konkur', name: 'کنکور تجربی', emoji: '🎯', subjects: subjects(konkur) },
+  { id: 'konkur-math', name: 'کنکور ریاضی', emoji: '📐', subjects: subjects(konkurMath) },
+  { id: 'konkur-humanities', name: 'کنکور انسانی', emoji: '📜', subjects: subjects(konkurHumanities) },
+  { id: 'pharmacy', name: 'داروسازی (۱۸۰ و پایان دوره)', emoji: '💊', subjects: subjects(pharmacy) },
 ]
 export const providerNames: Record<Provider, string> = { national: 'آزمون کشوری', authored: 'تألیفی', konkur: 'کنکور سراسری', maz: 'ماز', ghalamchi: 'قلم‌چی', gaj: 'گاج', 'konkuri-nerd': 'کنکوری نرد', medmcqa: 'MedMCQA', openstax: 'OpenStax', other: 'سایر' }
 export const difficultyNames = { easy: 'آسان', medium: 'متوسط', hard: 'سخت' }

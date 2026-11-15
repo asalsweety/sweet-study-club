@@ -4,6 +4,8 @@ import { errorMessage } from '../../shared/api/http'
 import { konkurPercent } from '../../shared/lib/analytics'
 import { fa, formatDuration } from '../../shared/lib/format'
 import { cn } from '../../shared/lib/utils'
+import AsalMood from '../../components/AsalMood'
+import { moodLabels } from '../../shared/lib/moods'
 import { Button } from '../../components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../components/ui/dialog'
 import { Textarea } from '../../components/ui/textarea'
@@ -43,7 +45,7 @@ function Counter({ label, value, onChange, tone }: { label: string; value: numbe
   )
 }
 
-const ratings = ['😵', '😕', '🙂', '😊', '🤩']
+const ratings = [1, 2, 3, 4, 5]
 
 export default function FinishSessionSheet({ open, onOpenChange, timer, onFinished }: FinishSessionSheetProps) {
   const [correct, setCorrect] = useState(0)
@@ -98,19 +100,20 @@ export default function FinishSessionSheet({ open, onOpenChange, timer, onFinish
         <div className="flex flex-col gap-2">
           <p className="text-sm font-bold">تمرکزت چطور بود؟</p>
           <div className="flex justify-between gap-2">
-            {ratings.map((emoji, index) => (
+            {ratings.map((value, index) => (
               <button
-                key={emoji}
+                key={value}
                 type="button"
-                aria-label={`امتیاز ${fa(index + 1)} از ۵`}
+                aria-label={`امتیاز ${fa(index + 1)} از ۵: ${moodLabels[index]}`}
                 aria-pressed={rating === index + 1}
                 onClick={() => setRating(index + 1)}
                 className={cn(
-                  'grid size-12 flex-1 place-items-center rounded-2xl text-2xl transition-[transform,background-color,box-shadow,filter] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-90',
-                  rating === index + 1 ? 'scale-110 bg-primary/15 shadow-md ring-2 ring-primary' : 'bg-muted/60 grayscale-[40%] hover:grayscale-0',
+                  'grid flex-1 place-items-center gap-1 rounded-2xl px-1 pb-1.5 pt-2 transition-[transform,background-color,box-shadow,filter] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-90',
+                  rating === index + 1 ? 'scale-105 bg-primary/15 shadow-md ring-2 ring-primary' : 'bg-muted/60 saturate-[0.55] hover:saturate-100',
                 )}
               >
-                {emoji}
+                <AsalMood rating={value} label={false} className="w-full max-w-14" />
+                <span className="text-[10px] font-bold text-muted-foreground">{moodLabels[index]}</span>
               </button>
             ))}
           </div>

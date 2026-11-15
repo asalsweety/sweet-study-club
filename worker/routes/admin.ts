@@ -89,6 +89,7 @@ export function adminRoutes(requireSession: MiddlewareHandler<WorkerEnvironment>
     return c.body(null, 204)
   })
 
+  app.get('/admin/delivery-orders', async (c) => c.json({ orders: await shop.listDeliveryOrders(c.env.DB) }))
   app.get('/admin/products', async (c) => c.json({ products: await shop.listProducts(c.env.DB, userId(c), true) }))
   app.post('/admin/products', async (c) =>
     c.json({ id: await shop.upsertProduct(c.env.DB, null, await readBody(c, upsertProductInputSchema)) }, 201))

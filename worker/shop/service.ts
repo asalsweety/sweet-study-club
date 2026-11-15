@@ -2,6 +2,7 @@ import {
   orderSchema,
   planRequestSchema,
   productSchema,
+  type Delivery,
   type Order,
   type PlanRequest,
   type Product,
@@ -11,7 +12,8 @@ import { ApiError, conflict, forbidden, notFound } from '../http/errors'
 
 const DAY_MS = 86_400_000
 
-type ProductRow = Omit<Product, 'isActive' | 'owned' | 'ownedUntil'> & {
+type ProductRow = Omit<Product, 'isActive' | 'owned' | 'ownedUntil' | 'requiresDelivery'> & {
+  requiresDelivery: number
   isActive: number
   ownedAt: number | null
   expiresAt: number | null
@@ -25,7 +27,8 @@ export async function listProducts(db: D1Database, me: string, includeInactive =
   const result = await db
     .prepare(
       `SELECT p.id, p.slug, p.kind, p.title, p.summary, p.description, p.price_toman AS priceToman,
-         p.duration_days AS durationDays, p.is_active AS isActive, e.granted_at AS ownedAt, e.expires_at AS expiresAt
+         p.duration_days AS durationDays, p.is_active AS isActive, p.requires_delivery AS requiresDelivery,
+         e.granted_at AS ownedAt, e.expires_at AS expiresAt
        FROM shop_products p
        LEFT JOIN entitlements e ON e.product_id = p.id AND e.user_id = ? AND (e.expires_at IS NULL OR e.expires_at > ?)
        ${includeInactive ? '' : 'WHERE p.is_active = 1'}
@@ -37,22 +40,24 @@ export async function listProducts(db: D1Database, me: string, includeInactive =
     productSchema.parse({
       ...row,
       isActive: row.isActive === 1,
+      requiresDelivery: row.requiresDelivery === 1,
       owned: ownedAt !== null,
       ownedUntil: expiresAt === null ? null : new Date(expiresAt).toISOString(),
     }),
   )
 }
 
-type OrderRow = Omit<Order, 'createdAt' | 'paidAt'> & { createdAt: number; paidAt: number | null }
+type OrderRow = Omit<Order, 'createdAt' | 'paidAt' | 'delivery'> & { createdAt: number; paidAt: number | null; delivery: string | null }
 
 const orderColumns = `o.id, o.product_id AS productId, p.title AS productTitle, o.status,
-  o.amount_toman AS amountToman, o.created_at AS createdAt, o.paid_at AS paidAt`
+  o.amount_toman AS amountToman, o.created_at AS createdAt, o.paid_at AS paidAt, o.delivery_details AS delivery`
 
 const toOrder = (row: OrderRow) =>
   orderSchema.parse({
     ...row,
     createdAt: new Date(row.createdAt).toISOString(),
     paidAt: row.paidAt === null ? null : new Date(row.paidAt).toISOString(),
+    delivery: row.delivery === null ? null : JSON.parse(row.delivery),
   })
 
 async function findOrder(db: D1Database, me: string, id: string) {
@@ -72,7 +77,7 @@ export async function listOrders(db: D1Database, me: string) {
   return result.results.map(toOrder)
 }
 
-export async function createOrder(db: D1Database, me: string, productId: string, idempotencyKey: string) {
+export async function createOrder(db: D1Database, me: string, productId: string, idempotencyKey: string, delivery?: Delivery) {
   const existing = await db
     .prepare('SELECT id FROM shop_orders WHERE user_id = ? AND idempotency_key = ?')
     .bind(me, idempotencyKey)
@@ -80,26 +85,27 @@ export async function createOrder(db: D1Database, me: string, productId: string,
   if (existing) return findOrder(db, me, existing.id)
 
   const product = await db
-    .prepare('SELECT id, price_toman AS price, duration_days AS days FROM shop_products WHERE id = ? AND is_active = 1')
+    .prepare('SELECT id, price_toman AS price, duration_days AS days, requires_delivery AS physical FROM shop_products WHERE id = ? AND is_active = 1')
     .bind(productId)
-    .first<{ id: string; price: number; days: number | null }>()
+    .first<{ id: string; price: number; days: number | null; physical: number }>()
   if (product === null) throw notFound('The product is not available.')
+  if (product.physical === 1 && !delivery) throw new ApiError(400, 'DELIVERY_REQUIRED', 'Choose pickup or shipping for this product.')
 
   const owned = await db
     .prepare('SELECT 1 AS hit FROM entitlements WHERE user_id = ? AND product_id = ? AND expires_at IS NULL')
     .bind(me, productId)
     .first()
-  if (owned) throw conflict('ALREADY_OWNED', 'You already own this product.')
+  if (owned && product.physical !== 1) throw conflict('ALREADY_OWNED', 'You already own this product.')
 
   const id = crypto.randomUUID()
   const now = Date.now()
   // The amount is copied from the catalog server-side; the client never sends a price.
   await db
     .prepare(
-      `INSERT OR IGNORE INTO shop_orders (id, user_id, product_id, status, amount_toman, provider, idempotency_key, created_at, updated_at)
-       VALUES (?, ?, ?, 'pending', ?, 'dev', ?, ?, ?)`,
+      `INSERT OR IGNORE INTO shop_orders (id, user_id, product_id, status, amount_toman, provider, idempotency_key, created_at, updated_at, delivery_method, delivery_details)
+       VALUES (?, ?, ?, 'pending', ?, 'dev', ?, ?, ?, ?, ?)`,
     )
-    .bind(id, me, productId, product.price, idempotencyKey, now, now)
+    .bind(id, me, productId, product.price, idempotencyKey, now, now, product.physical === 1 && delivery ? delivery.method : null, product.physical === 1 && delivery ? JSON.stringify(delivery) : null)
     .run()
   const stored = await db.prepare('SELECT id FROM shop_orders WHERE user_id = ? AND idempotency_key = ?').bind(me, idempotencyKey).first<{ id: string }>()
   return findOrder(db, me, stored?.id ?? id)
@@ -202,4 +208,14 @@ export async function upsertProduct(db: D1Database, id: string | null, input: Up
       throw conflict('SLUG_TAKEN', 'Another product already uses this slug.')
     })
   return productId
+}
+
+/** Orders that need handing over or posting, newest first, for the admin studio. */
+export async function listDeliveryOrders(db: D1Database) {
+  const result = await db
+    .prepare(`SELECT ${orderColumns}, u.name AS buyerName, u.email AS buyerEmail FROM shop_orders o
+       JOIN shop_products p ON p.id = o.product_id JOIN "user" u ON u.id = o.user_id
+       WHERE o.delivery_method IS NOT NULL ORDER BY o.created_at DESC LIMIT 100`)
+    .all<OrderRow & { buyerName: string; buyerEmail: string }>()
+  return result.results.map(({ buyerName, buyerEmail, ...row }) => ({ ...toOrder(row), buyerName, buyerEmail }))
 }

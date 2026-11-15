@@ -3,11 +3,13 @@ import { Button } from '../../components/ui/button'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Settings2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../../app/api'
 import { queryKeys, useSettings } from '../../app/session'
 import { errorMessage } from '../../shared/api/http'
 import type { UserProfile } from '../../shared/api/profile'
 import type { UpdateSettingsInput } from '../../shared/api/settings'
+import { examForProfile, profileLabel } from '../../shared/lib/education'
 import { daysUntil, fa, jalaliFullDate } from '../../shared/lib/format'
 import { cn } from '../../shared/lib/utils'
 import { Input } from '../../components/ui/input'
@@ -63,6 +65,14 @@ export default function SettingsPanel({ profile }: { profile: UserProfile }) {
     <section className="glass rise flex flex-col gap-3 rounded-2xl p-5 sm:p-6">
       <h2 className="mb-1 flex items-center gap-2 text-lg font-bold"><Settings2 size={19} className="text-primary" /> تنظیمات شخصی</h2>
 
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/15 bg-secondary/50 p-4">
+        <div>
+          <p className="text-xs text-muted-foreground">مسیر تحصیلی</p>
+          <p className="mt-1 text-sm font-bold">{profileLabel(s.educationGroup, s.educationStage) ?? 'هنوز انتخاب نشده'}</p>
+        </div>
+        <Button asChild variant="outline" size="sm" className="rounded-xl"><Link to="/welcome">تغییر مسیر</Link></Button>
+      </div>
+
       <form onSubmit={(event) => {
         event.preventDefault()
         const values = new FormData(event.currentTarget)
@@ -82,12 +92,12 @@ export default function SettingsPanel({ profile }: { profile: UserProfile }) {
           <Input name="dailyGoalMinutes" required step={1} id="me-goal" type="number" min={0} max={1440} defaultValue={s.dailyGoalMinutes} />
         </div>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="me-konkur">تاریخ کنکور</Label>
+          <Label htmlFor="me-konkur">تاریخ {examForProfile(s.educationGroup, s.educationStage) ?? 'آزمون'}</Label>
           <Input name="konkurDate" id="me-konkur" type="date" dir="ltr" defaultValue={s.konkurDate ?? ''} aria-describedby="me-konkur-jalali" onChange={(event) => setKonkurPreview(event.target.value)} />
-          <p id="me-konkur-jalali" className="text-xs text-muted-foreground" aria-live="polite">{konkurPreview && /^\d{4}-\d{2}-\d{2}$/.test(konkurPreview) ? `${jalaliFullDate(konkurPreview)} · ${daysUntil(konkurPreview) > 0 ? `${fa(daysUntil(konkurPreview))} روز مانده` : 'این تاریخ گذشته است'}` : 'روز کنکور را از تقویم انتخاب کن؛ معادل شمسی‌اش همین‌جا نشان داده می‌شود.'}</p>
+          <p id="me-konkur-jalali" className="text-xs text-muted-foreground" aria-live="polite">{konkurPreview && /^\d{4}-\d{2}-\d{2}$/.test(konkurPreview) ? `${jalaliFullDate(konkurPreview)} · ${daysUntil(konkurPreview) > 0 ? `${fa(daysUntil(konkurPreview))} روز مانده` : 'این تاریخ گذشته است'}` : 'روز آزمون را از تقویم انتخاب کن؛ معادل شمسی‌اش همین‌جا نشان داده می‌شود.'}</p>
         </div>
       </fieldset>
-      <div className="flex flex-wrap items-center gap-3"><Button type="submit" disabled={rename.isPending || name.trim().length < 2}>{rename.isPending ? 'در حال ذخیره…' : 'ذخیرهٔ تغییرات'}</Button>{rename.isSuccess && <p role="status" className="text-xs text-primary">تغییرات ذخیره شد.</p>}</div>
+      <div className="flex flex-wrap items-center gap-3"><Button type="submit" disabled={rename.isPending || name.trim().length < 2}>{rename.isPending ? 'در حال ذخیره…' : 'ذخیرۀ تغییرات'}</Button>{rename.isSuccess && <p role="status" className="text-xs text-primary">تغییرات ذخیره شد.</p>}</div>
       </form>
       <p className="text-xs leading-6 text-muted-foreground">تنظیمات زیر با تغییر، ذخیره می‌شوند.</p>
       <Row title="نمایش در جدول رتبه‌بندی" hint="اگر خاموش باشد، زمانت در لیگ دیده نمی‌شود.">

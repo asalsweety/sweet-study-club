@@ -7,6 +7,7 @@ import {
   type UpsertSubjectInput,
   type UserSettings,
 } from '../../src/shared/api/settings'
+import { subjectsForProfile } from '../../src/shared/lib/education'
 import { conflict, notFound } from '../http/errors'
 
 type SettingsRow = {
@@ -23,6 +24,10 @@ type SettingsRow = {
   dailyGoalMinutes: number
   notificationsEnabled: number
   konkurDate: string | null
+  educationGroup: string | null
+  educationStage: string | null
+  studyGoals: string | null
+  musicLinks: string | null
 }
 
 const settingsColumns = `friend_code AS friendCode, bio, show_on_leaderboard AS showOnLeaderboard,
@@ -30,7 +35,8 @@ const settingsColumns = `friend_code AS friendCode, bio, show_on_leaderboard AS 
   pomodoro_focus_minutes AS focusMinutes, pomodoro_break_minutes AS breakMinutes,
   pomodoro_long_break_minutes AS longBreakMinutes, pomodoro_rounds AS rounds,
   daily_goal_minutes AS dailyGoalMinutes, notifications_enabled AS notificationsEnabled,
-  konkur_date AS konkurDate`
+  konkur_date AS konkurDate, education_group AS educationGroup, education_stage AS educationStage,
+  study_goals AS studyGoals, music_links AS musicLinks`
 
 // No 0/O/1/I/L so a code read aloud or typed from a screenshot stays unambiguous.
 const codeAlphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
@@ -57,7 +63,21 @@ function toSettings(row: SettingsRow): UserSettings {
     dailyGoalMinutes: row.dailyGoalMinutes,
     notificationsEnabled: row.notificationsEnabled === 1,
     konkurDate: row.konkurDate,
+    educationGroup: row.educationGroup,
+    educationStage: row.educationStage,
+    studyGoals: row.studyGoals ? row.studyGoals.split(',').filter(Boolean) : [],
+    musicLinks: parseLinks(row.musicLinks),
   })
+}
+
+function parseLinks(raw: string | null) {
+  if (!raw) return []
+  try {
+    const value: unknown = JSON.parse(raw)
+    return Array.isArray(value) ? value : []
+  } catch {
+    return []
+  }
 }
 
 export async function getSettings(db: D1Database, userId: string): Promise<UserSettings> {
@@ -92,6 +112,10 @@ export async function updateSettings(db: D1Database, userId: string, input: Upda
     daily_goal_minutes: input.dailyGoalMinutes,
     notifications_enabled: input.notificationsEnabled === undefined ? undefined : Number(input.notificationsEnabled),
     konkur_date: input.konkurDate,
+    education_group: input.educationGroup,
+    education_stage: input.educationStage,
+    study_goals: input.studyGoals === undefined ? undefined : input.studyGoals.join(','),
+    music_links: input.musicLinks === undefined ? undefined : JSON.stringify(input.musicLinks),
   }
   // Column names come from the fixed map above, never from the request.
   const entries = Object.entries(columns).filter(([, value]) => value !== undefined)
@@ -111,17 +135,34 @@ export async function listSubjects(db: D1Database, userId: string): Promise<Subj
     db.prepare(`SELECT ${subjectColumns} FROM user_subjects WHERE user_id = ? ORDER BY position, name`).bind(userId).all()
   let result = await read()
   if (result.results.length === 0) {
-    const now = Date.now()
-    await db.batch(
-      defaultSubjects.map((subject, index) =>
+    await seedSubjects(db, userId)
+    result = await read()
+  }
+  return result.results.map((row) => subjectSchema.parse(row))
+}
+
+/** Default subjects for the person's field (Konkur experimental when unknown). */
+async function seedSubjects(db: D1Database, userId: string) {
+  const profile = await db
+    .prepare('SELECT education_group AS g, education_stage AS s FROM user_settings WHERE user_id = ?')
+    .bind(userId)
+    .first<{ g: string | null; s: string | null }>()
+  const seeds = profile?.g ? subjectsForProfile(profile.g, profile.s) : defaultSubjects
+  const now = Date.now()
+  await db.batch(
+      seeds.map((subject, index) =>
         db
           .prepare('INSERT OR IGNORE INTO user_subjects (id, user_id, name, color, emoji, position, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
           .bind(crypto.randomUUID(), userId, subject.name, subject.color, subject.emoji, index, now),
       ),
-    )
-    result = await read()
-  }
-  return result.results.map((row) => subjectSchema.parse(row))
+  )
+}
+
+/** Swaps the subject list for the defaults of the person's field. Study history keeps its subject names. */
+export async function resetSubjects(db: D1Database, userId: string) {
+  await db.prepare('DELETE FROM user_subjects WHERE user_id = ?').bind(userId).run()
+  await seedSubjects(db, userId)
+  return listSubjects(db, userId)
 }
 
 export async function createSubject(db: D1Database, userId: string, input: UpsertSubjectInput) {

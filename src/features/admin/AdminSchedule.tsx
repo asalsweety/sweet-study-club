@@ -76,7 +76,7 @@ export default function AdminSchedule() {
       {error && <p className="text-sm text-destructive">{errorMessage(error)}</p>}
       <ul className="flex flex-col gap-2">
         {parts.data?.map((part) => (
-          <PartRow key={`${part.id}-${part.position}-${part.startMinute}`} part={part} onSave={(next) => save.mutate(next)} onDelete={async () => { if (await confirmAction({ title: 'حذف پارت', description: `«${part.title}» از برنامهٔ روزانهٔ باشگاه حذف شود؟` })) remove.mutate(part.id) }} />
+          <PartRow key={`${part.id}-${part.position}-${part.startMinute}`} part={part} onSave={(next) => save.mutate(next)} onDelete={async () => { if (await confirmAction({ title: 'حذف پارت', description: `«${part.title}» از برنامۀ روزانۀ باشگاه حذف شود؟` })) remove.mutate(part.id) }} />
         ))}
       </ul>
 

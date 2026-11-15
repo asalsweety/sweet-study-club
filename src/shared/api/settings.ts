@@ -11,6 +11,24 @@ export const chibiSceneSchema = z.enum([
   'sunny-library',
 ])
 
+export const educationGroupSchema = z.enum(['school', 'medicine', 'dentistry', 'bachelor-medicine', 'pharmacy', 'other'])
+export const studyGoalSchema = z.enum(['exam', 'habit', 'focus', 'grades', 'planning', 'friends'])
+
+const musicHosts = ['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtu.be', 'soundcloud.com', 'www.soundcloud.com', 'm.soundcloud.com', 'on.soundcloud.com', 'open.spotify.com']
+/** A YouTube, SoundCloud or Spotify link saved for the focus room. */
+export const musicLinkSchema = z.object({
+  id: z.string().min(1).max(40),
+  url: z.string().trim().max(500).url().refine((value) => {
+    try {
+      const url = new URL(value)
+      return url.protocol === 'https:' && musicHosts.includes(url.hostname.toLowerCase())
+    } catch {
+      return false
+    }
+  }, 'Only YouTube, SoundCloud and Spotify links are supported.'),
+  title: z.string().trim().min(1).max(60),
+})
+
 export const userSettingsSchema = z.object({
   friendCode: z.string().min(6).max(12),
   bio: z.string().nullable(),
@@ -22,6 +40,10 @@ export const userSettingsSchema = z.object({
   dailyGoalMinutes: z.number().int().min(0).max(1440),
   notificationsEnabled: z.boolean(),
   konkurDate: isoDateSchema.nullable(),
+  educationGroup: educationGroupSchema.nullable(),
+  educationStage: z.string().max(40).nullable(),
+  studyGoals: z.array(studyGoalSchema),
+  musicLinks: z.array(musicLinkSchema),
 })
 
 export const settingsResponseSchema = z.object({
@@ -39,6 +61,10 @@ export const updateSettingsInputSchema = z
     dailyGoalMinutes: z.number().int().min(0).max(1440),
     notificationsEnabled: z.boolean(),
     konkurDate: isoDateSchema.nullable(),
+    educationGroup: educationGroupSchema,
+    educationStage: z.string().trim().min(1).max(40),
+    studyGoals: z.array(studyGoalSchema).max(6),
+    musicLinks: z.array(musicLinkSchema).max(8),
   })
   .partial()
 
@@ -73,6 +99,8 @@ export const defaultSubjects = [
 ] as const
 
 export type UserSettings = z.infer<typeof userSettingsSchema>
+export type MusicLink = z.infer<typeof musicLinkSchema>
+export type EducationGroupId = z.infer<typeof educationGroupSchema>
 export type UpdateSettingsInput = z.infer<typeof updateSettingsInputSchema>
 export type Subject = z.infer<typeof subjectSchema>
 export type UpsertSubjectInput = z.infer<typeof upsertSubjectInputSchema>

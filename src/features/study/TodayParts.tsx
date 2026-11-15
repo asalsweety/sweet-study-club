@@ -18,7 +18,7 @@ export default function TodayParts({ schedule, now, activeSessionId, onStart }: 
     <section className="glass rise rounded-2xl p-5 sm:p-6">
       <header className="mb-4 flex items-center gap-2">
         <CalendarClock size={19} className="text-primary" />
-        <h2 className="text-lg font-bold">برنامهٔ باشگاه امروز</h2>
+        <h2 className="text-lg font-bold">برنامۀ باشگاه امروز</h2>
       </header>
 
       {schedule.isHoliday ? (
@@ -28,7 +28,7 @@ export default function TodayParts({ schedule, now, activeSessionId, onStart }: 
           {schedule.holidayNote && <p className="text-sm text-muted-foreground">{schedule.holidayNote}</p>}
         </div>
       ) : schedule.sessions.length === 0 ? (
-        <div className="rounded-xl bg-muted/40 px-5 py-8 text-center"><p className="text-sm font-bold">امروز با ریتم خودت پیش برو.</p><p className="mt-2 text-xs leading-7 text-muted-foreground">جلسهٔ گروهی نداریم؛ می‌توانی مطالعهٔ آزاد یا پومودورو را شروع کنی.</p>{onStart && <Button variant="outline" className="mt-4" onClick={onStart}>شروع یک جلسه</Button>}</div>
+        <div className="rounded-xl bg-muted/40 px-5 py-8 text-center"><p className="text-sm font-bold">امروز با ریتم خودت پیش برو.</p><p className="mt-2 text-xs leading-7 text-muted-foreground">جلسۀ گروهی نداریم؛ می‌توانی مطالعۀ آزاد یا پومودورو را شروع کنی.</p>{onStart && <Button variant="outline" className="mt-4" onClick={onStart}>شروع یک جلسه</Button>}</div>
       ) : (
         <ol className="relative flex flex-col gap-2 before:absolute before:inset-y-3 before:right-[0.9rem] before:w-px before:bg-border">
           {schedule.sessions.map((session) => {

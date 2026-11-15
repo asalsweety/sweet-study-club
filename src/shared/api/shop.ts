@@ -21,7 +21,21 @@ export const productSchema = z.object({
   isActive: z.boolean(),
   owned: z.boolean(),
   ownedUntil: z.iso.datetime().nullable(),
+  requiresDelivery: z.boolean(),
 })
+
+const persianDigits = (value: string) => value.replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+const phoneSchema = z.string().trim().transform(persianDigits).pipe(z.string().regex(/^09\d{9}$/, 'شمارۀ موبایل را به شکل ۰۹۱۲۳۴۵۶۷۸۹ بنویس.'))
+/** How a physical product reaches the buyer: picked up in person or posted. */
+export const deliverySchema = z.discriminatedUnion('method', [
+  z.object({ method: z.literal('pickup'), name: z.string().trim().min(2).max(60), phone: phoneSchema, note: z.string().trim().max(200).optional() }),
+  z.object({
+    method: z.literal('shipping'), name: z.string().trim().min(2).max(60), phone: phoneSchema,
+    city: z.string().trim().min(2).max(60), address: z.string().trim().min(10).max(400),
+    postalCode: z.string().trim().transform(persianDigits).pipe(z.string().regex(/^\d{10}$/, 'کد پستی ۱۰ رقمی است.')),
+    note: z.string().trim().max(200).optional(),
+  }),
+])
 
 export const productsResponseSchema = z.object({
   products: z.array(productSchema),
@@ -31,6 +45,7 @@ export const productsResponseSchema = z.object({
 export const createOrderInputSchema = z.object({
   productId: z.string().min(1).max(64),
   idempotencyKey: z.string().min(8).max(80),
+  delivery: deliverySchema.optional(),
 })
 
 export const orderSchema = z.object({
@@ -41,9 +56,11 @@ export const orderSchema = z.object({
   amountToman: z.number().int(),
   createdAt: z.iso.datetime(),
   paidAt: z.iso.datetime().nullable(),
+  delivery: deliverySchema.nullable(),
 })
 
 export const orderResponseSchema = z.object({ order: orderSchema })
+export const deliveryOrdersResponseSchema = z.object({ orders: z.array(orderSchema.extend({ buyerName: z.string(), buyerEmail: z.string() })) })
 export const ordersResponseSchema = z.object({ orders: z.array(orderSchema) })
 
 export const entitlementsResponseSchema = z.object({
@@ -90,6 +107,7 @@ export const upsertProductInputSchema = z.object({
   position: z.number().int().min(0).max(1000),
 })
 
+export type Delivery = z.infer<typeof deliverySchema>
 export type Product = z.infer<typeof productSchema>
 export type ProductKind = z.infer<typeof productKindSchema>
 export type Order = z.infer<typeof orderSchema>

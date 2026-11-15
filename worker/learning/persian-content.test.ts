@@ -16,7 +16,7 @@ beforeAll(() => {
 afterAll(() => db.close())
 describe('published Persian content', () => {
   it('runs the complete migration chain and publishes only valid Persian questions', () => {
-    expect(db.prepare("SELECT value FROM system_metadata WHERE key='schema_version'").get()?.value).toBe('11')
+    expect(db.prepare("SELECT value FROM system_metadata WHERE key='schema_version'").get()?.value).toBe('12')
     const rows = db.prepare('SELECT p.track,q.content FROM learning_questions q JOIN learning_packs p ON p.id=q.pack_id WHERE p.is_active=1 AND p.is_sample=0').all()
     const manifest = JSON.parse(readFileSync(new NodeURL('content/learning/manifest.json', root), 'utf8'))
     expect(rows).toHaveLength(manifest.questionPlacements)

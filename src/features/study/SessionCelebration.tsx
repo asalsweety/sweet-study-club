@@ -4,14 +4,14 @@ import { useEffect } from 'react'
 import { api } from '../../app/api'
 import { queryKeys } from '../../app/session'
 import AnimatedNumber from '../../components/AnimatedNumber'
+import AsalMood from '../../components/AsalMood'
 import { Button } from '../../components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../../components/ui/dialog'
 import { celebrate, haptic } from '../../shared/lib/confetti'
 import { fa } from '../../shared/lib/format'
 import { closeSessionCelebration, useSessionCelebration } from './sessionCelebrationStore'
 
-const ratingEmoji = ['😵', '😕', '🙂', '😊', '🤩']
-const cheers = ['آفرین! یک قدم محکم دیگر.', 'عالی بود! ذهنت ازت ممنونه.', 'همین‌طور ادامه بده، داری می‌سازی.', 'یک جلسهٔ دیگر، یک عادت قوی‌تر.']
+const cheers = ['آفرین! یک قدم محکم دیگر.', 'عالی بود! ذهنت ازت ممنونه.', 'همین‌طور ادامه بده، داری می‌سازی.', 'یک جلسۀ دیگر، یک عادت قوی‌تر.']
 
 export default function SessionCelebration() {
   const session = useSessionCelebration()
@@ -37,7 +37,7 @@ export default function SessionCelebration() {
           <span className="celebrate-badge grid size-20 place-items-center rounded-[1.8rem] bg-primary text-primary-foreground shadow-[var(--glow-primary)]"><Trophy size={38} strokeWidth={1.8} /></span>
         </div>
         <DialogTitle className="mt-2 text-2xl font-extrabold">{session ? cheers[session.durationSeconds % cheers.length] : ''}</DialogTitle>
-        <DialogDescription className="-mt-1">{session?.subjectName} ثبت شد{session?.rating ? ` · تمرکز ${ratingEmoji[session.rating - 1]}` : ''}</DialogDescription>
+        <DialogDescription className="-mt-1">{session?.subjectName} ثبت شد{session?.rating ? <> · تمرکز <AsalMood rating={session.rating} className="inline-block w-7 align-middle" /></> : ''}</DialogDescription>
 
         <div className="stagger grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-secondary/70 p-4">

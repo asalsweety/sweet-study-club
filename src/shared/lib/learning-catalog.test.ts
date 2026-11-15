@@ -4,7 +4,7 @@ import { examResult, learningTracks, reviewInterval, validSubjects } from './lea
 
 describe('learning domain', () => {
   it('covers all medical paths without duplicate subjects, including critical reasoning', () => {
-    expect(learningTracks).toHaveLength(6)
+    expect(learningTracks).toHaveLength(9)
     for (const track of learningTracks) expect(new Set(track.subjects.map((s) => s.id)).size).toBe(track.subjects.length)
     expect(validSubjects('bachelor-medicine', ['reasoning', 'biochemistry'])).toBe(true)
     expect(validSubjects('dental-basics', ['oral-health', 'clinical-psychology'])).toBe(true)

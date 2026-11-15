@@ -70,6 +70,7 @@ export default function AdminContent() {
   const client = useQueryClient()
   const plans = useQuery({ queryKey: ['admin', 'plans'], queryFn: api.admin.planRequests })
   const products = useQuery({ queryKey: ['admin', 'products'], queryFn: api.admin.products })
+  const deliveries = useQuery({ queryKey: ['admin', 'deliveries'], queryFn: api.admin.deliveryOrders })
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const broadcast = useMutation({
@@ -83,6 +84,18 @@ export default function AdminContent() {
 
   return (
     <div className="flex flex-col gap-5">
+      <section className="glass flex flex-col gap-3 rounded-2xl p-5">
+        <h2 className="flex items-center gap-2 text-lg font-bold"><Package size={18} className="text-primary" /> سفارش‌های تحویلی (پلنر چاپی)</h2>
+        {deliveries.data?.length === 0 && <p className="text-sm text-muted-foreground">سفارش تحویلی‌ای ثبت نشده.</p>}
+        <ul className="grid gap-2">{deliveries.data?.map((order) => (
+          <li key={order.id} className="rounded-2xl border border-border bg-card p-4 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-bold">{order.productTitle} · {order.delivery?.method === 'pickup' ? 'تحویل حضوری' : 'ارسال پستی'}</span><span className="text-xs text-muted-foreground">{jalaliShort(order.createdAt.slice(0, 10))} · {order.status === 'paid' ? 'پرداخت شد' : 'در انتظار پرداخت'}</span></div>
+            {order.delivery && <p className="mt-2 leading-7 text-muted-foreground"><span className="font-bold text-foreground">{order.delivery.name}</span> · <span dir="ltr">{order.delivery.phone}</span>{order.delivery.method === 'shipping' && <> · {order.delivery.city}، {order.delivery.address} · کد پستی <span dir="ltr">{order.delivery.postalCode}</span></>}{order.delivery.note && <> · {order.delivery.note}</>}</p>}
+            <p className="mt-1 text-xs text-muted-foreground">{order.buyerName} · <span dir="ltr">{order.buyerEmail}</span></p>
+          </li>
+        ))}</ul>
+      </section>
+
       <section className="glass flex flex-col gap-3 rounded-2xl p-5">
         <h2 className="text-lg font-bold">💌 درخواست‌های Plan by Asal</h2>
         {plans.data?.length === 0 && <p className="text-sm text-muted-foreground">درخواستی نیست.</p>}

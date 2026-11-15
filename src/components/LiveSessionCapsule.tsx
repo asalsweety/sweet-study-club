@@ -22,7 +22,7 @@ export default function LiveSessionCapsule({ className }: { className?: string }
       to={appRoutes.focus}
       viewTransition
       className={cn('live-capsule', !running && 'is-paused', className)}
-      aria-label={`جلسهٔ ${timer.subjectName}${running ? ' در جریان است' : ' متوقف است'}؛ رفتن به اتاق تمرکز`}
+      aria-label={`جلسۀ ${timer.subjectName}${running ? ' در جریان است' : ' متوقف است'}؛ رفتن به اتاق تمرکز`}
     >
       <span aria-hidden className="live-dot" />
       <span className="max-w-[7rem] truncate">{timer.subjectName}</span>

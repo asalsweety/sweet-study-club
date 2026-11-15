@@ -18,7 +18,7 @@ export function shopRoutes(requireSession: MiddlewareHandler<WorkerEnvironment>)
 
   app.post('/shop/orders', async (c) => {
     const input = await readBody(c, createOrderInputSchema)
-    return c.json({ order: await shop.createOrder(c.env.DB, userId(c), input.productId, input.idempotencyKey) }, 201)
+    return c.json({ order: await shop.createOrder(c.env.DB, userId(c), input.productId, input.idempotencyKey, input.delivery) }, 201)
   })
 
   // Local-only stand-in for a gateway callback; refuses outside the local environment.

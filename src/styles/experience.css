@@ -1282,7 +1282,7 @@ h2,
   gap: 1.25rem;
   align-items: start;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "hero" "goal" "metrics" "parts" "week" "links";
+  grid-template-areas: "hero" "live" "goal" "metrics" "parts" "week" "links";
 }
 
 .today-grid > [class*="grid-area:goal"],
@@ -1295,6 +1295,7 @@ h2,
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas:
       "hero hero"
+      "live live"
       "goal week"
       "metrics metrics"
       "parts links";
@@ -1314,6 +1315,7 @@ h2,
     grid-template-columns: minmax(0, 1fr) 20rem;
     grid-template-areas:
       "hero goal"
+      "live live"
       "metrics metrics"
       "parts week"
       "parts links";
@@ -1373,4 +1375,139 @@ h2,
     justify-content: center;
     border-top: 0 !important;
   }
+}
+
+/* ---- Onboarding ---- */
+.onboarding {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: max(1.25rem, env(safe-area-inset-top, 0px)) 1rem max(1.25rem, env(safe-area-inset-bottom, 0px));
+}
+
+.onboarding-card {
+  width: min(44rem, 100%);
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  border: 1px solid var(--border);
+  border-radius: 2rem;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--elev-3), var(--hairline);
+  animation: rise-in 640ms var(--ease-spring) backwards;
+}
+
+.onboarding-card > section {
+  animation: rise-in 520ms var(--ease-spring) backwards;
+}
+
+.onboarding-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 4.25rem;
+  padding: 0.85rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: 1.25rem;
+  background: var(--card);
+  transition: border-color var(--dur-quick) ease, box-shadow var(--dur-quick) ease, transform var(--dur-press) var(--ease-out);
+}
+
+.onboarding-choice:active {
+  transform: scale(0.98);
+}
+
+.onboarding-choice.is-selected {
+  border-color: var(--primary);
+  background: color-mix(in oklab, var(--primary) 7%, var(--card));
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 18%, transparent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .onboarding-choice:hover {
+    border-color: color-mix(in oklab, var(--primary) 40%, var(--border));
+  }
+}
+
+/* ---- Draggable focus dock ---- */
+.draggable-dock {
+  position: relative;
+  transform-origin: center;
+  touch-action: auto;
+}
+
+.dock-grip {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 1.6rem;
+  margin: -0.35rem auto -0.4rem;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: grab;
+  touch-action: none;
+  transition: color var(--dur-quick) ease, background-color var(--dur-quick) ease;
+}
+
+.dock-grip:active {
+  cursor: grabbing;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dock-resize {
+  position: absolute;
+  bottom: 0.45rem;
+  left: 0.45rem;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.6rem;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: nesw-resize;
+  touch-action: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dock-grip:hover,
+  .dock-resize:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* ---- Music player ---- */
+.music-player {
+  position: fixed;
+  z-index: 30;
+  right: max(1rem, env(safe-area-inset-right, 0px));
+  bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  width: min(20rem, calc(100vw - 2rem));
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 1.25rem;
+  color: #fff;
+  background: rgba(14, 12, 32, 0.78);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 24px 50px -20px rgba(0, 0, 0, 0.7);
+  animation: rise-in 520ms var(--ease-spring) backwards;
+}
+
+@media (orientation: portrait) and (max-width: 1100px) {
+  .music-player {
+    left: 50%;
+    right: auto;
+    translate: -50% 0;
+  }
+}
+
+/* Asal's pixel mood faces (five frames side by side, 69×54 each). */
+.asal-mood {
+  display: block;
+  aspect-ratio: 69 / 54;
+  background-image: url("/images/pixel/asal-moods.png");
+  background-size: 500% 100%;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
 }

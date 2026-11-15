@@ -28,6 +28,7 @@ function normalize(text: string) {
     .toLowerCase()
     .replace(/[يى]/g, 'ی')
     .replace(/ك/g, 'ک')
+    .replace(/ۀ/g, 'ه')
     .replace(/[ً-ٟ‌]/g, '')
     .replace(/[۰-۹]/g, (digit) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit)))
     .trim()
@@ -74,7 +75,7 @@ export default function CommandPalette({ open, onOpenChange, isAdmin }: { open: 
     const go = (path: string) => () => navigate(path, { viewTransition: true })
     const pages = [...primaryNavigation, ...secondaryNavigation, accountNavigation, ...(isAdmin ? [adminNavigation] : [])]
     return [
-      { id: 'start', group: 'کارهای سریع', label: 'شروع جلسهٔ مطالعه', hint: 'آزاد، پومودورو یا همراه باشگاه', keywords: 'start study timer pomodoro شروع تایمر مطالعه', icon: Play, run: () => navigate(`${appRoutes.home}?start=1`, { viewTransition: true }) },
+      { id: 'start', group: 'کارهای سریع', label: 'شروع جلسۀ مطالعه', hint: 'آزاد، پومودورو یا پارت‌های روزانه', keywords: 'start study timer pomodoro شروع تایمر مطالعه', icon: Play, run: () => navigate(`${appRoutes.home}?start=1`, { viewTransition: true }) },
       { id: 'focus', group: 'کارهای سریع', label: 'رفتن به اتاق تمرکز', hint: hasTimer ? 'تمام‌صفحه، با صدای محیطی' : 'اول یک جلسه شروع کن', keywords: 'focus room fullscreen تمرکز اتاق', icon: Maximize2, run: go(hasTimer ? appRoutes.focus : `${appRoutes.home}?start=1`) },
       { id: 'invite', group: 'کارهای سریع', label: 'دعوت یک دوست', keywords: 'invite friend code دعوت دوست', icon: UserPlus, run: go(appRoutes.friends) },
       { id: 'settings', group: 'کارهای سریع', label: 'تنظیمات و هدف روزانه', keywords: 'settings goal konkur تنظیمات هدف کنکور', icon: Settings2, run: go(`${appRoutes.profile}?section=settings`) },
@@ -84,8 +85,8 @@ export default function CommandPalette({ open, onOpenChange, isAdmin }: { open: 
         run: () => { theme.setMode(theme.mode === 'dark' ? 'light' : 'dark'); toast(theme.mode === 'dark' ? 'حالت روشن فعال شد' : 'حالت تاریک فعال شد', { icon: theme.mode === 'dark' ? '☀️' : '🌙', duration: 2400 }) },
       },
       ...themePresetOptions.map((option) => ({
-        id: `theme-${option.value}`, group: 'ظاهر', label: `پوستهٔ ${option.label}`, hint: option.description, keywords: `theme palette color پوسته رنگ ${option.value}`, icon: Palette,
-        run: () => { theme.setPreset(option.value); toast(`پوستهٔ ${option.label} انتخاب شد`, { icon: '🎨', duration: 2400 }) },
+        id: `theme-${option.value}`, group: 'ظاهر', label: `پوستۀ ${option.label}`, hint: option.description, keywords: `theme palette color پوسته رنگ ${option.value}`, icon: Palette,
+        run: () => { theme.setPreset(option.value); toast(`پوستۀ ${option.label} انتخاب شد`, { icon: '🎨', duration: 2400 }) },
       })),
     ]
   }, [navigate, isAdmin, theme, hasTimer])
@@ -147,7 +148,7 @@ export default function CommandPalette({ open, onOpenChange, isAdmin }: { open: 
             <span className="hidden sm:inline-flex"><span className="kbd">Esc</span></span>
           </div>
           <div ref={listRef} id="palette-results" role="listbox" aria-label="نتیجه‌ها" className="palette-list">
-            {results.length === 0 && <p className="px-4 py-10 text-center text-sm text-muted-foreground">چیزی پیدا نشد. واژهٔ دیگری امتحان کن.</p>}
+            {results.length === 0 && <p className="px-4 py-10 text-center text-sm text-muted-foreground">چیزی پیدا نشد. واژۀ دیگری امتحان کن.</p>}
             {results.map((command, index) => {
               const header = command.group !== lastGroup ? command.group : null
               lastGroup = command.group

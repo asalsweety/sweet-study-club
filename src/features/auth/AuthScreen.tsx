@@ -25,10 +25,10 @@ function passwordStrength(password: string) {
 const strengthLabels = ['خیلی کوتاه', 'قابل قبول', 'خوب', 'قوی', 'عالی']
 
 const features = [
-  { icon: Timer, title: 'تمرکز، با ریتم خودت', detail: 'مطالعهٔ آزاد، پومودورو و اتاق تمرکز' },
+  { icon: Timer, title: 'تمرکز، با ریتم خودت', detail: 'مطالعۀ آزاد، پومودورو و اتاق تمرکز' },
   { icon: CalendarDays, title: 'یک روز قابل انجام', detail: 'برنامه‌ریزی و یادآوری کارها' },
   { icon: BookOpen, title: 'یادگیری ماندگار', detail: 'بانک سؤال، مرور و دیدن پیشرفت' },
-  { icon: UsersRound, title: 'کنار هم، بهتر', detail: 'مطالعهٔ زنده و لیگ هفتگی دوستان' },
+  { icon: UsersRound, title: 'کنار هم، بهتر', detail: 'مطالعۀ زنده و لیگ هفتگی دوستان' },
 ]
 
 export default function AuthScreen() {
@@ -51,7 +51,7 @@ export default function AuthScreen() {
         await auth.signIn(email.trim(), password)
       }
       const session = await auth.session()
-      if (!session) throw new ApiClientError('ورود تأیید نشد. اجازهٔ ذخیرهٔ کوکی را بررسی کن و دوباره وارد شو.', { code: 'SESSION_MISSING' })
+      if (!session) throw new ApiClientError('ورود تأیید نشد. اجازۀ ذخیرۀ کوکی را بررسی کن و دوباره وارد شو.', { code: 'SESSION_MISSING' })
       return session
     },
     onSuccess: (session) => replaceSession(client, session),
@@ -110,12 +110,12 @@ export default function AuthScreen() {
       </div>
       <p className="mt-10 text-xs text-muted-foreground">هر روز، کمی بهتر از دیروز.</p>
     </section>
-    <aside className="auth-story" aria-label="دربارهٔ فضای مطالعه">
-      <div className="auth-art-frame"><img src="/images/onboarding-study-room.webp" alt="یک میز مطالعهٔ آرام کنار پنجره" className="auth-art" fetchPriority="high" /></div>
+    <aside className="auth-story" aria-label="دربارۀ فضای مطالعه">
+      <div className="auth-art-frame"><img src="/images/onboarding-study-room.webp" alt="یک میز مطالعۀ آرام کنار پنجره" className="auth-art" fetchPriority="high" /></div>
       <div className="auth-story-content">
         <span className="eyebrow">SWEET STUDY CLUB</span>
         <h2 className="mt-4 text-3xl font-extrabold leading-relaxed tracking-tight xl:text-4xl">برای رؤیاهات،<br />هر روز جا باز کن.</h2>
-        <p className="mt-4 max-w-sm text-sm leading-8 text-muted-foreground">یک گوشهٔ آرام برای تمرکز. یک برنامهٔ روشن برای امروز. و همراه‌هایی برای ادامهٔ راه.</p>
+        <p className="mt-4 max-w-sm text-sm leading-8 text-muted-foreground">یک گوشۀ آرام برای تمرکز. یک برنامۀ روشن برای امروز. و همراه‌هایی برای ادامۀ راه.</p>
         <div className="stagger mt-8 grid gap-3 xl:grid-cols-2">{features.map(({ icon: Icon, title, detail }) => <div key={title} className="auth-feature"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-[var(--glow-primary)]"><Icon size={19} /></span><div><p className="text-sm font-bold">{title}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{detail}</p></div></div>)}</div>
       </div>
     </aside>

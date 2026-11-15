@@ -4,7 +4,8 @@ import { MemoryRouter } from 'react-router-dom'
 import { ApiClientError } from '../shared/api/api-client-error'
 import App from '../App'
 const state = vi.hoisted(() => ({ session: {} as Record<string, unknown>, profile: {} as Record<string, unknown> }))
-vi.mock('./session', () => ({ useSession: () => state.session, useProfile: () => state.profile }))
+// A completed education profile, so the workspace opens without first-run onboarding.
+vi.mock('./session', () => ({ useSession: () => state.session, useProfile: () => state.profile, useSettings: () => ({ isPending: false, data: { educationGroup: 'school', educationStage: 'tajrobi' } }) }))
 vi.mock('../components/AppShell', () => ({ default: ({ children }: { children: React.ReactNode }) => <div data-testid="workspace">{children}</div> }))
 vi.mock('../features/auth/AuthScreen', () => ({ default: () => <h1>Account entry</h1> }))
 vi.mock('../features/presence/BackgroundServices', () => ({ default: () => null }))

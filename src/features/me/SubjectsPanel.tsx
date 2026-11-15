@@ -4,7 +4,8 @@ import { BookOpen, Check, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { api } from '../../app/api'
 import { confirmAction } from '../../shared/lib/confirm'
-import { queryKeys, useSubjects } from '../../app/session'
+import { queryKeys, useSettings, useSubjects } from '../../app/session'
+import { profileLabel } from '../../shared/lib/education'
 import { errorMessage } from '../../shared/api/http'
 import type { Subject } from '../../shared/api/settings'
 import { Button } from '../../components/ui/button'
@@ -33,11 +34,20 @@ export default function SubjectsPanel() {
     onSuccess: apply,
   })
   const remove = useMutation({ mutationFn: (id: string) => api.subjects.remove(id), onSuccess: apply })
-  const error = create.error ?? recolor.error ?? remove.error
+  const reset = useMutation({ mutationFn: () => api.subjects.resetForProfile(), onSuccess: apply })
+  const settings = useSettings()
+  const field = profileLabel(settings.data?.educationGroup, settings.data?.educationStage)
+  const error = create.error ?? recolor.error ?? remove.error ?? reset.error
 
   return (
     <section className="glass rise flex flex-col gap-4 rounded-2xl p-5 sm:p-6">
-      <h2 className="flex items-center gap-2 text-lg font-bold"><BookOpen size={19} className="text-primary" /> درس‌های من</h2>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="flex items-center gap-2 text-lg font-bold"><BookOpen size={19} className="text-primary" /> درس‌های من</h2>
+          {field && <p className="mt-1 text-xs text-muted-foreground">مسیر تو: {field}</p>}
+        </div>
+        {field && <Button variant="outline" size="sm" className="rounded-xl" disabled={reset.isPending} onClick={async () => { if (await confirmAction({ title: 'درس‌های رشتۀ من', description: `فهرست درس‌ها با درس‌های پیشنهادی «${field}» جایگزین شود؟ سابقۀ مطالعه‌ات حفظ می‌شود.`, confirmLabel: 'جایگزین کن' })) reset.mutate() }}>درس‌های رشته‌ام</Button>}
+      </div>
 
       {subjects.isError && <QueryError error={subjects.error} retry={() => void subjects.refetch()} />}
       {subjects.isPending && <div className="skeleton h-14 rounded-xl" />}

@@ -1,8 +1,8 @@
 import QueryError from '../components/QueryError'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowRight, Image, Maximize, Minimize, Pause, Play, Square, Timer as TimerIcon, Volume2 } from 'lucide-react'
+import { ArrowRight, Image, Lock, Maximize, Minimize, Pause, Play, Square, Timer as TimerIcon, Volume2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { api } from '../app/api'
 import { appRoutes } from '../app/navigation/routes'
 import { queryKeys, useSettings } from '../app/session'
@@ -15,6 +15,12 @@ import ClockText from '../components/ClockText'
 import GoalRing from '../components/GoalRing'
 import { ambientLabels, useAmbientSound, type AmbientSound } from '../features/focus/ambient'
 import PixelStudyScene from '../features/focus/PixelStudyScene'
+import DraggableDock from '../features/focus/DraggableDock'
+import { MusicButton, MusicPlayer } from '../features/focus/MusicPanel'
+import { useFocusLock } from '../features/focus/useFocusLock'
+import { LiveNowPill } from '../features/social/LiveNow'
+import type { MusicLink } from '../shared/api/settings'
+import { confirmAction } from '../shared/lib/confirm'
 import { sceneThemes, type ChibiScene as SceneId } from '../features/focus/scenes'
 import FinishSessionSheet from '../features/study/FinishSessionSheet'
 import { elapsedSecondsOf, pomodoroRemaining, useNow, useStudyTimer } from '../features/study/useStudyTimer'
@@ -66,7 +72,15 @@ export default function FocusPage() {
   })
 
   const [fullscreen, setFullscreen] = useState(() => Boolean(document.fullscreenElement))
+  const [music, setMusic] = useState<MusicLink | null>(null)
+  const navigate = useNavigate()
   const running = timer.timer?.timerStatus === 'running'
+  const locked = Boolean(timer.timer?.focusLockEnabled)
+  const { distractions } = useFocusLock({ enabled: locked, running, logId: timer.timer?.logId })
+  const leave = async () => {
+    if (locked && running && !(await confirmAction({ title: 'خروج از تمرکز کامل؟', description: 'تایمر ادامه پیدا می‌کند، ولی اتاق تمرکز را ترک می‌کنی.', confirmLabel: 'خروج' }))) return
+    navigate(appRoutes.home, { viewTransition: true })
+  }
 
   // Keep the screen awake while a session runs; the browser drops the lock
   // when the tab is hidden, so take it again on return.
@@ -124,12 +138,15 @@ export default function FocusPage() {
 
       <header className="relative z-10 flex flex-wrap items-center justify-between gap-2 p-4 pt-[max(1rem,env(safe-area-inset-top))] sm:p-6">
         <div className="flex gap-2">
-          <Link to={appRoutes.home} viewTransition className={pill}>
+          <button type="button" onClick={() => void leave()} className={pill}>
             <ArrowRight size={16} /> خانه
-          </Link>
+          </button>
+          {locked && <span className={cn(pill, 'bg-[#f2c94c]/20 text-[#ffe7a3]')}><Lock size={14} />تمرکز کامل</span>}
           {document.fullscreenEnabled && <button type="button" className={pill} onClick={toggleFullscreen} aria-label={fullscreen ? 'خروج از تمام‌صفحه' : 'تمام‌صفحه'} aria-keyshortcuts="F">{fullscreen ? <Minimize size={16} /> : <Maximize size={16} />}</button>}
         </div>
         <div className="flex max-w-full gap-2 overflow-x-auto [scrollbar-width:none] max-sm:snap-x">
+          <LiveNowPill className={pill} />
+          <MusicButton className={pill} onPlay={(link) => { ambient.setSound('off'); setMusic(link) }} />
           <button type="button" className={pill} onClick={() => saveDisplay.mutate({ timerDisplay: display === 'chibi' ? 'digital' : 'chibi' })}>
             {display === 'chibi' ? <TimerIcon size={16} /> : <Image size={16} />}
             {display === 'chibi' ? 'تایمر ساده' : 'اتاق پیکسلی'}
@@ -165,7 +182,7 @@ export default function FocusPage() {
         {timer.error && <QueryError error={timer.error} retry={() => void timer.refetch()} />}
         {(timer.pause.isError || timer.resume.isError || saveDisplay.isError) && <QueryError error={timer.pause.error ?? timer.resume.error ?? saveDisplay.error} />}
         {state && (
-          <div className={cn('flex flex-col items-center gap-5', display === 'chibi' && 'pixel-dock')}>
+          <DraggableDock enabled={display === 'chibi'} className={cn('flex flex-col items-center gap-5', display === 'chibi' && 'pixel-dock')}>
             <div className="flex flex-col items-center gap-1 text-center">
               <p className="rounded-full bg-white/15 px-4 py-1 text-sm font-bold backdrop-blur-md">
                 {state.subjectName}
@@ -182,11 +199,13 @@ export default function FocusPage() {
                 <Square /> پایان
               </button>
             </div>
+            {locked && <p className="flex items-center gap-1.5 text-xs text-white/70"><Lock size={13} />حواس‌پرتی این جلسه: {fa(distractions)} بار</p>}
             <p className="focus-keys hidden text-xs text-white/55 sm:flex"><span dir="ltr">Space</span> توقف و ادامه · <span dir="ltr">F</span> تمام‌صفحه</p>
-          </div>
+          </DraggableDock>
         )}
       </section>
 
+      {music && <MusicPlayer link={music} onClose={() => setMusic(null)} />}
       <FinishSessionSheet open={finishing} onOpenChange={setFinishing} timer={timer} onFinished={() => setFinishing(false)} />
     </main>
   )

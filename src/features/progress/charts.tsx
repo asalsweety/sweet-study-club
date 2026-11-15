@@ -5,19 +5,22 @@ type Day = { date: string; seconds: number }
 
 export function DayBars({ days, compact = false }: { days: Day[]; compact?: boolean }) {
   const max = Math.max(3600, ...days.map((day) => day.seconds))
+  // A month has ~30 bars: let them shrink and label every fifth day, so the
+  // chart always fits a phone.
+  const dense = days.length > 14
   return (
-    <div className="flex h-44 items-end gap-1.5" role="img" aria-label="نمودار مطالعه‌ی روزانه">
+    <div className={cn('flex h-44 min-w-0 items-end', dense ? 'gap-[3px] sm:gap-1' : 'gap-1.5')} role="img" aria-label="نمودار مطالعه‌ی روزانه">
       {days.map((day, index) => {
         const height = Math.round((day.seconds / max) * 100)
         return (
-          <div key={day.date} className="group flex h-full flex-1 flex-col items-center justify-end gap-1">
-            <span className="text-[10px] font-bold text-muted-foreground opacity-0 transition group-hover:opacity-100">{formatHours(day.seconds)}</span>
+          <div key={day.date} className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
+            {!dense && <span className="text-[10px] font-bold text-muted-foreground opacity-0 transition group-hover:opacity-100">{formatHours(day.seconds)}</span>}
             <div
-              className={cn('grow-bar w-full rounded-t-xl bg-[image:var(--primary-gradient-vertical)] transition-[height,filter] duration-700 hover:brightness-110', day.seconds === 0 && 'bg-none bg-muted')}
+              className={cn('grow-bar w-full bg-[image:var(--primary-gradient-vertical)] transition-[height,filter] duration-700 hover:brightness-110', dense ? 'rounded-t-[3px] sm:rounded-t-md' : 'rounded-t-xl', day.seconds === 0 && 'bg-none bg-muted')}
               style={{ height: `${Math.max(day.seconds === 0 ? 4 : 8, height)}%`, animationDelay: `${Math.min(index, 30) * 25}ms` }}
               title={`${jalaliShort(day.date)}: ${formatHours(day.seconds)}`}
             />
-            {!compact && <span className="truncate text-[10px] text-muted-foreground">{jalaliShort(day.date).split(' ')[0]}</span>}
+            {!compact && <span className={cn('h-3.5 max-w-full overflow-visible whitespace-nowrap text-[10px] text-muted-foreground', dense && index % 5 !== 0 && 'invisible')}>{jalaliShort(day.date).split(' ')[0]}</span>}
           </div>
         )
       })}

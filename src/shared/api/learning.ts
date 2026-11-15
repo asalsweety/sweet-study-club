@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const trackSchema = z.enum(['preinternship', 'residency', 'medical-basics', 'dental-basics', 'bachelor-medicine', 'konkur'])
+export const trackSchema = z.enum(['preinternship', 'residency', 'medical-basics', 'dental-basics', 'bachelor-medicine', 'konkur', 'konkur-math', 'konkur-humanities', 'pharmacy'])
 export const providerSchema = z.enum(['national', 'authored', 'konkur', 'maz', 'ghalamchi', 'gaj', 'konkuri-nerd', 'medmcqa', 'openstax', 'other'])
 export const bankSchema = z.enum(['national', 'authored', 'weekly', 'reference'])
 export const difficultySchema = z.enum(['easy', 'medium', 'hard'])

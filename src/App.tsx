@@ -1,8 +1,8 @@
 import { lazy, Suspense } from 'react'
 import { Flower2, RefreshCw } from 'lucide-react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { appRoutes } from './app/navigation/routes'
-import { useProfile, useSession } from './app/session'
+import { useProfile, useSession, useSettings } from './app/session'
 import { ApiClientError } from './shared/api/api-client-error'
 import { Button } from './components/ui/button'
 import Toaster from './components/Toaster'
@@ -25,6 +25,7 @@ const ShopPage = lazy(() => import('./pages/ShopPage'))
 const MePage = lazy(() => import('./pages/MePage'))
 const AdminPage = lazy(() => import('./pages/AdminPage'))
 const InvitePage = lazy(() => import('./pages/InvitePage'))
+const OnboardingFlow = lazy(() => import('./features/onboarding/OnboardingFlow'))
 
 function FullScreenLoader({ label }: { label: string }) {
   return (
@@ -71,17 +72,25 @@ function AppContent() {
   const session = useSession()
   const signedIn = Boolean(session.data)
   const profile = useProfile(signedIn)
+  const settings = useSettings(Boolean(profile.data))
+  const location = useLocation()
   if (session.isPending) return <FullScreenLoader label="در حال آماده‌سازی اتاق مطالعه..." />
   if (session.isError && !signedIn) return <ConnectionProblem retry={() => void session.refetch()} pending={session.isFetching} />
   const expired = profile.error instanceof ApiClientError && profile.error.status === 401
   if (!signedIn || expired) return <AuthScreen />
   if (profile.isError && !profile.data) return <ConnectionProblem profile retry={() => void profile.refetch()} pending={profile.isFetching} />
   if (!profile.data) return <FullScreenLoader label="در حال آماده‌کردن پروفایل..." />
+  if (settings.isPending) return <FullScreenLoader label="در حال آماده‌کردن پروفایل..." />
+  // First run (or an account from before profiles existed): ask who the learner is.
+  if (settings.data && !settings.data.educationGroup && location.pathname !== '/welcome') {
+    return <Suspense fallback={<FullScreenLoader label="در حال بارگذاری..." />}><OnboardingFlow settings={settings.data} /></Suspense>
+  }
 
   return (
     <Suspense fallback={<FullScreenLoader label="در حال بارگذاری..." />}>
       <Routes>
         <Route path={appRoutes.focus} element={<FocusPage />} />
+        {settings.data && <Route path="/welcome" element={<OnboardingFlow settings={settings.data} editing={Boolean(settings.data.educationGroup)} />} />}
         <Route
           path="*"
           element={

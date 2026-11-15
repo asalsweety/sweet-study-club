@@ -27,6 +27,8 @@ import {
   entitlementsResponseSchema,
   orderResponseSchema,
   ordersResponseSchema,
+  deliveryOrdersResponseSchema,
+  type Delivery,
   planRequestsResponseSchema,
   productsResponseSchema,
   type UpsertProductInput,
@@ -104,6 +106,7 @@ export const api = {
     create: (input: UpsertSubjectInput) => post('/api/subjects', subjectsResponseSchema, input).then((r) => r.subjects),
     update: (id: string, input: UpsertSubjectInput) => put(`/api/subjects/${encodeURIComponent(id)}`, subjectsResponseSchema, input).then((r) => r.subjects),
     remove: (id: string) => del(`/api/subjects/${encodeURIComponent(id)}`, subjectsResponseSchema).then((r) => r.subjects),
+    resetForProfile: () => post('/api/subjects/reset', subjectsResponseSchema, {}).then((r) => r.subjects),
   },
   planner: {
     list: (from: string, to: string) => get(`/api/planner${query({ from, to })}`, plannerItemsResponseSchema).then((r) => r.items),
@@ -141,8 +144,8 @@ export const api = {
   shop: {
     products: () => get('/api/shop/products', productsResponseSchema),
     orders: () => get('/api/shop/orders', ordersResponseSchema).then((r) => r.orders),
-    order: (productId: string, idempotencyKey: string) =>
-      post('/api/shop/orders', orderResponseSchema, { productId, idempotencyKey }).then((r) => r.order),
+    order: (productId: string, idempotencyKey: string, delivery?: Delivery) =>
+      post('/api/shop/orders', orderResponseSchema, { productId, idempotencyKey, ...(delivery ? { delivery } : {}) }).then((r) => r.order),
     devPay: (orderId: string) => post(`/api/shop/orders/${encodeURIComponent(orderId)}/dev-pay`, orderResponseSchema).then((r) => r.order),
     entitlements: () => get('/api/shop/entitlements', entitlementsResponseSchema),
     planRequests: () => get('/api/shop/plan-requests', planRequestsResponseSchema).then((r) => r.requests),
@@ -166,6 +169,7 @@ export const api = {
     saveProduct: (id: string | null, input: UpsertProductInput) =>
       id ? put(`/api/admin/products/${encodeURIComponent(id)}`, idSchema, input) : post('/api/admin/products', idSchema, input),
     planRequests: () => get('/api/admin/plan-requests', planRequestsResponseSchema).then((r) => r.requests),
+    deliveryOrders: () => get('/api/admin/delivery-orders', deliveryOrdersResponseSchema).then((r) => r.orders),
     answerPlan: (id: string, status: 'in_progress' | 'delivered', response: string | null) =>
       post(`/api/admin/plan-requests/${encodeURIComponent(id)}`, planRequestsResponseSchema, { status, response }).then((r) => r.requests),
     broadcast: (title: string, body: string, expiresInDays: number | null) =>
