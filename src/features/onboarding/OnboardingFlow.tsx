@@ -13,6 +13,8 @@ import { educationGroups, examForProfile, findGroup, profileLabel, studyGoals, t
 import { daysUntil, fa, jalaliFullDate } from '../../shared/lib/format'
 import { cn } from '../../shared/lib/utils'
 import HelperCharacter from '../helper/HelperCharacter'
+// The sprite-sheet framing lives with the helper; onboarding renders outside the app shell that normally loads it.
+import '../helper/study-helper.css'
 
 const intro = [
   { icon: Timer, title: 'تمرکز، با ریتم خودت', body: 'یک جلسه شروع کن تا عسل کنارت در اتاق پیکسلی‌اش درس بخواند. مطالعۀ آزاد، پومودورو یا پارت‌های روزانۀ باشگاه.' },
