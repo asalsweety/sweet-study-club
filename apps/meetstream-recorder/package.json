@@ -1,0 +1,42 @@
+{
+  "name": "meetstream-recorder",
+  "version": "0.1.1",
+  "private": true,
+  "description": "A local desktop recording library for Google Meet with separate participant tracks.",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "engines": { "node": ">=22.12" },
+  "scripts": {
+    "start": "node scripts/launch.mjs",
+    "start:web": "node src/entry.mjs",
+    "test": "node --test test/*.test.mjs",
+    "test:ui": "node scripts/run-ui-smoke.mjs",
+    "test:live": "node scripts/live-test.mjs",
+    "check": "node scripts/check.mjs",
+    "prepare:desktop": "node scripts/prepare-desktop.mjs",
+    "dist:mac": "npm run prepare:desktop && electron-builder --mac dmg zip --publish never",
+    "pack": "electron-builder --dir --publish never"
+  },
+  "dependencies": { "cloudflared": "0.7.3" },
+  "devDependencies": { "electron": "45.3.1", "electron-builder": "26.18.0" },
+  "build": {
+    "appId": "local.meetstream.recorder",
+    "productName": "MeetStream Recorder",
+    "asar": true,
+    "files": ["electron/**/*", "src/**/*", "ui/**/*", "package.json"],
+    "directories": { "output": "release" },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "build-resources/icon.icns",
+      "identity": "-",
+      "notarize": false,
+      "entitlements": "build-resources/entitlements.mac.plist",
+      "entitlementsInherit": "build-resources/entitlements.mac.plist",
+      "extraResources": [{ "from": "build-resources/cloudflared/${arch}/cloudflared", "to": "cloudflared/${arch}/cloudflared" }],
+      "extendInfo": {
+        "NSDocumentsFolderUsageDescription": "Save individual participant recordings and transcripts in your recording library."
+      },
+      "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }, { "target": "zip", "arch": ["arm64", "x64"] }]
+    }
+  }
+}

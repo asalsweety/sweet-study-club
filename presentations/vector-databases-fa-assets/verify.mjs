@@ -1,0 +1,52 @@
+import {chromium} from 'file:///H:/car/landing-front/node_modules/playwright/index.mjs';
+import {mkdir,writeFile} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+const base=new URL('./',import.meta.url),qa=new URL('qa/',base);
+await mkdir(qa,{recursive:true});
+const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
+const page=await browser.newPage({viewport:{width:1440,height:950},reducedMotion:'reduce'});
+const errors=[],requests=[];
+page.on('pageerror',e=>errors.push(e.message));
+page.on('request',r=>{if(r.url().startsWith('http'))requests.push(r.url())});
+await page.goto(new URL('../vector-databases-fa.html',base).href);
+await page.evaluate(()=>document.fonts.ready);
+const checks=[];
+for(let i=0;i<16;i++){
+  await page.evaluate(n=>go(n),i);
+  await page.locator('#deck').screenshot({path:fileURLToPath(new URL('slide-'+String(i+1).padStart(2,'0')+'.png',qa))});
+  const layout=await page.locator('.slide.active').evaluate(el=>({title:el.dataset.title,overflowX:el.scrollWidth-el.clientWidth,overflowY:el.scrollHeight-el.clientHeight,sourceCollision:(()=>{const s=el.querySelector('.source'),f=el.querySelector('.footnote');return s&&f?s.getBoundingClientRect().top<f.getBoundingClientRect().bottom:false})()}));
+  checks.push({slide:i+1,...layout});
+}
+await page.evaluate(()=>go(0));
+await page.keyboard.press('ArrowLeft');
+if(await page.evaluate(()=>current)!==1)throw Error('RTL next key failed');
+await page.keyboard.press('ArrowRight');
+if(await page.evaluate(()=>current)!==0)throw Error('RTL previous key failed');
+await page.keyboard.press('o');
+if(!await page.locator('#overviewDialog').evaluate(e=>e.open))throw Error('Overview failed');
+await page.locator('#slideIndex button').nth(11).click();
+if(await page.evaluate(()=>current)!==11)throw Error('Slide selection failed');
+await page.locator('#querySelect').selectOption('agent');
+if(!(await page.locator('#demoResults li').first().textContent()).includes('فراخوانی ابزار'))throw Error('Cosine ranking failed');
+await page.locator('#teamAccess').uncheck();
+await page.locator('#topK').fill('4');
+if(await page.locator('#demoResults li').count()!==3)throw Error('Permission filtering failed');
+if((await page.locator('#demoResults').textContent()).includes('تیمی'))throw Error('Team content leaked');
+await page.locator('#notesBtn').click();
+if(!await page.locator('#notesPanel').isVisible())throw Error('Notes failed');
+await page.locator('#closeNotes').click();
+await page.goto(new URL('../vector-databases-fa.html#slide-8',base).href);
+if(await page.evaluate(()=>current)!==7)throw Error('Deep link failed');
+await page.pdf({path:fileURLToPath(new URL('print-check.pdf',qa)),preferCSSPageSize:true,printBackground:true});
+const mobile=[];
+await page.setViewportSize({width:390,height:844});
+for(let i=0;i<16;i++){
+  await page.evaluate(n=>go(n),i);
+  mobile.push(await page.locator('.slide.active').evaluate(el=>({title:el.dataset.title,overflowX:el.scrollWidth-el.clientWidth,scrollable:el.scrollHeight>el.clientHeight,pageOverflow:document.documentElement.scrollWidth>innerWidth})));
+  if([0,7,11,15].includes(i))await page.screenshot({path:fileURLToPath(new URL('mobile-'+(i+1)+'.png',qa))});
+}
+const report={fontLoaded:await page.evaluate(()=>document.fonts.check('16px Vazirmatn')),errors,requests,desktop:checks,mobile,passedInteractions:['RTL navigation','overview selection','cosine ranking','permission filter','notes','deep link','print rendering']};
+await writeFile(new URL('report.json',qa),JSON.stringify(report,null,2));
+console.log(JSON.stringify(report,null,2));
+await browser.close();
+if(errors.length||requests.length||checks.some(c=>c.overflowX>1||c.overflowY>1||c.sourceCollision)||mobile.some(c=>c.overflowX>1||c.pageOverflow))process.exitCode=1;

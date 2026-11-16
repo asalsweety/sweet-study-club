@@ -1,0 +1,226 @@
+{
+  "fontLoaded": true,
+  "errors": [],
+  "requests": [],
+  "desktop": [
+    {
+      "slide": 1,
+      "title": "پایگاه‌های دادهٔ برداری",
+      "overflowX": 0,
+      "overflowY": 0,
+      "sourceCollision": false
+    },
+    {
+      "slide": 2,
+      "title": "جست‌وجوی کلمه و معنا",
+      "overflowX": 0,
+      "overflowY": 0,
+      "sourceCollision": false
+    },
+    {
+      "slide": 3,
+      "title": "امبدینگ چیست؟",
+      "overflowX": 0,
+      "overflowY": 0,
+      "sourceCollision": false
+    },
+    {
+      "slide": 4,
+      "title": "داخل یک رکورد برداری",
+      "overflowX": 0,
+      "overflowY": 0,
+      "sourceCollision": false
+    },
+    {
+      "slide": 5,
+      "title": "شباهت و همسایه‌ها",
+      "overflowX": 0,
+      "overflowY": 0,
+      "sourceCollision": false
+    },
+    {
+      "slide": 6,
+      "title": "کاربردها",
+      "overflowX": 0,
+      "overflowY": 0,
+      "sourceCollision": false
+    },
+    {
+      "slide": 7,
+      "title": "آماده‌سازی دانش",
+      "overflowX": 0,
+      "overflowY": 0,
+      "sourceCollision": false
+    },
+    {
+      "slide": 8,
+      "title": "تعامل مدل زبانی و پایگاه برداری",
+      "overflowX": 0,
+      "overflowY": 0,
+      "sourceCollision": false
+    },
+    {
+      "slide": 9,
+      "title": "یک مثال از دستیار مطالعه",
+      "overflowX": 0,
+      "overflowY": 0,
+      "sourceCollision": false
+    },
+    {
+      "slide": 10,
+      "title": "ایجنت چگونه جست‌وجو می‌کند؟",
+      "overflowX": 0,
+      "overflowY": 0,
+      "sourceCollision": false
+    },
+    {
+      "slide": 11,
+      "title": "زمینه، دانش و حافظه",
+      "overflowX": 0,
+      "overflowY": 0,
+      "sourceCollision": false
+    },
+    {
+      "slide": 12,
+      "title": "آزمایش تعاملی شباهت",
+      "overflowX": 0,
+      "overflowY": 0,
+      "sourceCollision": false
+    },
+    {
+      "slide": 13,
+      "title": "جست‌وجوی ترکیبی و بازرتبه‌بندی",
+      "overflowX": 0,
+      "overflowY": 0,
+      "sourceCollision": false
+    },
+    {
+      "slide": 14,
+      "title": "ساخت یک سامانهٔ قابل اعتماد",
+      "overflowX": 0,
+      "overflowY": 0,
+      "sourceCollision": false
+    },
+    {
+      "slide": 15,
+      "title": "سه نقش، یک همکاری",
+      "overflowX": 0,
+      "overflowY": 0,
+      "sourceCollision": false
+    },
+    {
+      "slide": 16,
+      "title": "منابع و راهنمای ارائه",
+      "overflowX": 0,
+      "overflowY": 0,
+      "sourceCollision": false
+    }
+  ],
+  "mobile": [
+    {
+      "title": "پایگاه‌های دادهٔ برداری",
+      "overflowX": 0,
+      "scrollable": false,
+      "pageOverflow": false
+    },
+    {
+      "title": "جست‌وجوی کلمه و معنا",
+      "overflowX": 0,
+      "scrollable": true,
+      "pageOverflow": false
+    },
+    {
+      "title": "امبدینگ چیست؟",
+      "overflowX": 0,
+      "scrollable": false,
+      "pageOverflow": false
+    },
+    {
+      "title": "داخل یک رکورد برداری",
+      "overflowX": 0,
+      "scrollable": true,
+      "pageOverflow": false
+    },
+    {
+      "title": "شباهت و همسایه‌ها",
+      "overflowX": 0,
+      "scrollable": false,
+      "pageOverflow": false
+    },
+    {
+      "title": "کاربردها",
+      "overflowX": 0,
+      "scrollable": true,
+      "pageOverflow": false
+    },
+    {
+      "title": "آماده‌سازی دانش",
+      "overflowX": 0,
+      "scrollable": true,
+      "pageOverflow": false
+    },
+    {
+      "title": "تعامل مدل زبانی و پایگاه برداری",
+      "overflowX": 0,
+      "scrollable": true,
+      "pageOverflow": false
+    },
+    {
+      "title": "یک مثال از دستیار مطالعه",
+      "overflowX": 0,
+      "scrollable": true,
+      "pageOverflow": false
+    },
+    {
+      "title": "ایجنت چگونه جست‌وجو می‌کند؟",
+      "overflowX": 0,
+      "scrollable": true,
+      "pageOverflow": false
+    },
+    {
+      "title": "زمینه، دانش و حافظه",
+      "overflowX": 0,
+      "scrollable": true,
+      "pageOverflow": false
+    },
+    {
+      "title": "آزمایش تعاملی شباهت",
+      "overflowX": 0,
+      "scrollable": true,
+      "pageOverflow": false
+    },
+    {
+      "title": "جست‌وجوی ترکیبی و بازرتبه‌بندی",
+      "overflowX": 0,
+      "scrollable": true,
+      "pageOverflow": false
+    },
+    {
+      "title": "ساخت یک سامانهٔ قابل اعتماد",
+      "overflowX": 0,
+      "scrollable": true,
+      "pageOverflow": false
+    },
+    {
+      "title": "سه نقش، یک همکاری",
+      "overflowX": 0,
+      "scrollable": true,
+      "pageOverflow": false
+    },
+    {
+      "title": "منابع و راهنمای ارائه",
+      "overflowX": 0,
+      "scrollable": true,
+      "pageOverflow": false
+    }
+  ],
+  "passedInteractions": [
+    "RTL navigation",
+    "overview selection",
+    "cosine ranking",
+    "permission filter",
+    "notes",
+    "deep link",
+    "print rendering"
+  ]
+}

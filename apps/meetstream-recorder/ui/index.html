@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>MeetStream Recorder</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand"><img src="/icon.svg" alt="" width="34" height="34"><div>MeetStream<span>RECORDING STUDIO</span></div></div>
+      <button class="button primary sidebar-record" data-action="new"><span aria-hidden="true">＋</span> New recording</button>
+      <p class="nav-label">WORKSPACE</p>
+      <nav aria-label="Recording library">
+        <button class="nav-item selected" data-filter="all"><span data-icon="library"></span>All recordings<span class="nav-count" id="all-count">0</span></button>
+        <button class="nav-item" data-filter="live"><span data-icon="radio"></span>Live meetings<span class="nav-count" id="live-count">0</span></button>
+        <button class="nav-item" data-filter="processing"><span data-icon="download"></span>Processing<span class="nav-count" id="processing-count">0</span></button>
+        <button class="nav-item" data-filter="archived"><span data-icon="archive"></span>Archived</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="storage-note"><span data-icon="shield"></span><div>Saved on your device<small>Original tracks. Your own library.</small></div></div>
+        <button class="nav-item" data-action="settings"><span data-icon="settings"></span>Settings</button>
+        <div class="connection"><span class="connection-dot" id="connection-dot"></span><span id="connection-label">Connecting…</span></div>
+      </div>
+    </aside>
+    <main>
+      <div class="titlebar"><span>YOUR MEETINGS, READY TO REVISIT</span><span class="local-badge">LOCAL LIBRARY</span></div>
+      <div id="connection-banner" class="banner" hidden></div>
+      <section id="library-view">
+        <header class="page-heading"><div><p class="eyebrow">RECORDING LIBRARY</p><h1 id="page-title">All recordings</h1><p class="subtitle">Every conversation. Every participant. Individually saved.</p></div><button class="button primary" data-action="new"><span class="record-dot"></span> Record a meeting</button></header>
+        <div class="overview"><div><span class="stat-label">Recordings</span><strong id="stat-total">0</strong></div><div><span class="stat-label">Participant tracks</span><strong id="stat-tracks">0</strong></div><div><span class="stat-label">Saved locally</span><strong id="stat-size">0 B</strong></div><div class="capture-note"><span data-icon="layers"></span><span>One person.<br><b>One set of tracks.</b></span></div></div>
+        <div class="library-toolbar"><div class="segmented" role="group" aria-label="Recording type"><button class="active" data-status="all">All</button><button data-status="ready">Ready</button><button data-status="active">In progress</button><button data-status="attention">Needs attention</button></div><label class="search"><span data-icon="search"></span><input id="search" type="search" placeholder="Search recordings or participants" aria-label="Search recordings"></label></div>
+        <div id="recordings" aria-live="polite"></div>
+      </section>
+      <section id="detail-view" hidden></section>
+      <section id="settings-view" hidden>
+        <button class="back-link" data-action="library">← Back to recordings</button>
+        <header class="page-heading"><div><p class="eyebrow">YOUR WORKSPACE</p><h1>Settings</h1><p class="subtitle">Connection and local storage.</p></div></header>
+        <div class="settings-card"><div class="settings-title"><span data-icon="key"></span><div><h2>MeetStream connection</h2><p id="key-status">Checking your API key…</p></div></div><form id="key-form"><label for="api-key">API key</label><div class="input-action"><input id="api-key" type="password" autocomplete="off" placeholder="ms_…" required><button class="button" type="submit">Save key</button></div><small>Stored using the operating system’s encrypted credential storage in the desktop app. Browser mode keeps changes for this session.</small></form></div>
+        <div class="settings-card"><div class="settings-title"><span data-icon="folder"></span><div><h2>Recording storage</h2><p>Audio, webcam video and screen shares stay in separate files.</p></div></div><code id="storage-path"></code><p class="help-text">Each meeting includes a manifest with participant identities and timing offsets, plus the post-call transcript. Set MEETSTREAM_DATA_DIR before starting to choose another location.</p></div>
+        <div class="settings-card"><div class="settings-title"><span data-icon="radio"></span><div><h2>Webhook connection</h2><p id="tunnel-status">Connecting…</p></div></div><button class="button" data-action="reconnect">Reconnect</button><p class="help-text">Only authenticated recording callbacks pass through the temporary HTTPS tunnel. The library interface remains local. Keep the app running during a meeting and while files are being saved.</p></div>
+        <p class="settings-footer">Google Meet supports up to 16 participant audio streams and 16 video streams, including screen shares. <a href="https://docs.meetstream.ai/guides/platforms/google-meet" target="_blank" rel="noreferrer">MeetStream documentation ↗</a></p>
+      </section>
+    </main>
+  </div>
+  <dialog id="new-dialog" class="meeting-dialog">
+    <form id="recording-form">
+      <div class="dialog-heading"><div class="dialog-icon" data-icon="video"></div><button type="button" class="icon-button" data-action="close-dialog" aria-label="Close">×</button></div>
+      <p class="eyebrow">CAPTURE THE CONVERSATION</p><h2>Record a meeting</h2><p class="subtitle">Send a bot to Google Meet. We’ll save each person’s tracks for you.</p>
+      <label for="meeting-link">Google Meet link</label><input id="meeting-link" name="meetingLink" type="text" placeholder="https://meet.google.com/abc-defg-hij" required autocomplete="off" spellcheck="false">
+      <label for="meeting-title">Meeting title <span class="optional">optional</span></label><input id="meeting-title" name="title" placeholder="e.g. Product team catch-up" maxlength="140">
+      <label for="bot-name">Bot name</label><input id="bot-name" name="botName" value="MeetStream Recorder" maxlength="80" required>
+      <div class="recording-options"><span data-icon="layers"></span><div><strong>Individual audio + video tracks</strong><small>Webcams and screen shares saved separately by participant.</small></div><span class="checkmark">✓</span></div>
+      <label class="toggle-row"><span><strong>Live speaker captions</strong><small>A post-call transcript is included either way.</small></span><input id="live-captions" name="live" type="checkbox" checked></label>
+      <div class="form-message" id="form-error" role="alert" hidden></div>
+      <p class="billing-note">Uses your MeetStream credits. The bot will ask to join when the meeting requires admission.</p>
+      <button id="send-bot" type="submit" class="button primary full-width">Send recording bot <span aria-hidden="true">↗</span></button>
+    </form>
+  </dialog>
+  <dialog id="rename-dialog" class="small-dialog"><form id="rename-form"><h2>Rename recording</h2><label for="rename-title">Meeting title</label><input id="rename-title" maxlength="140" required><div class="dialog-actions"><button type="button" class="button" data-action="cancel-rename">Cancel</button><button type="submit" class="button primary">Save</button></div></form></dialog>
+  <div id="toast" role="status" hidden></div>
+</body>
+</html>
