@@ -16,10 +16,10 @@ beforeAll(() => {
 afterAll(() => db.close())
 describe('published Persian content', () => {
   it('runs the complete migration chain and publishes only valid Persian questions', () => {
-    expect(db.prepare("SELECT value FROM system_metadata WHERE key='schema_version'").get()?.value).toBe('12')
-    const rows = db.prepare('SELECT p.track,q.content FROM learning_questions q JOIN learning_packs p ON p.id=q.pack_id WHERE p.is_active=1 AND p.is_sample=0').all()
+    expect(db.prepare("SELECT value FROM system_metadata WHERE key='schema_version'").get()?.value).toBe('14')
+    const rows = db.prepare('SELECT p.id AS packId,p.track,q.content FROM learning_questions q JOIN learning_packs p ON p.id=q.pack_id WHERE p.is_active=1 AND p.is_sample=0').all()
     const manifest = JSON.parse(readFileSync(new NodeURL('content/learning/manifest.json', root), 'utf8'))
-    expect(rows).toHaveLength(manifest.questionPlacements)
+    expect(rows.filter((row) => !String(row.packId).startsWith('authored-statistics-'))).toHaveLength(manifest.questionPlacements)
     for (const row of rows) {
       const question = questionInputSchema.parse(JSON.parse(String(row.content)))
       expect(question.language).toBe('fa')
@@ -28,6 +28,16 @@ describe('published Persian content', () => {
     }
     expect(db.prepare("SELECT COUNT(*) AS total FROM learning_packs WHERE id LIKE 'reference-%' AND is_active=1").get()?.total).toBe(0)
     expect(db.prepare("SELECT COUNT(*) AS total FROM learning_questions WHERE pack_id LIKE 'reference-%'").get()?.total).toBeGreaterThan(0)
+  })
+  it('publishes original statistics and probability exercises across all school tracks and grades', () => {
+    const packs = db.prepare(`SELECT p.track,p.grade,COUNT(*) AS count FROM learning_packs p
+      JOIN learning_questions q ON q.pack_id = p.id
+      WHERE p.id LIKE 'authored-statistics-%' AND p.is_active = 1 AND p.bank = 'authored'
+      GROUP BY p.track,p.grade`).all()
+    expect(packs).toHaveLength(12)
+    expect(packs.reduce((sum, pack) => sum + Number(pack.count), 0)).toBe(57)
+    expect(packs.every((pack) => Number(pack.count) >= 4)).toBe(true)
+    expect(db.prepare("SELECT COUNT(*) AS count FROM learning_packs WHERE provider = 'konkur' AND grade IS NULL").get()?.count).toBe(0)
   })
   it('preserves every native answer key and the original paper images', () => {
     const source = JSON.parse(readFileSync(new NodeURL('content/learning/persian-exams.json', root), 'utf8')) as { key: string; correctIndex: number; images: string[] }[]

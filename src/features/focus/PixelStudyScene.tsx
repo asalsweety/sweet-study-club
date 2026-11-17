@@ -1,4 +1,6 @@
 import { memo, useEffect, useRef } from 'react'
+import { chibiItems, defaultChibi, type ChibiAppearance } from '../../shared/api/chibi'
+import { chibiSkin, drawCustomChibi, drawDeskDecor } from './customChibi'
 import { sceneThemes, type ChibiScene as SceneId } from './scenes'
 
 /**
@@ -14,6 +16,7 @@ type Props = {
   scene: SceneId
   isNight: boolean
   state: PixelSceneState
+  appearance?: ChibiAppearance | undefined
   className?: string
 }
 
@@ -21,9 +24,9 @@ const W = 256
 const H = 144
 const FRAME_MS = 1000 / 12
 const DESK_Y = 112
-const SPRITE_URL = '/images/pixel/asal-desk.png'
-// Frame size of public/images/pixel/asal-desk.png (three frames side by side);
-// the desk hides everything below her collar (89% of the height).
+const SPRITE_URL = '/images/pixel/asal-desk.png?v=2'
+// Display size of each frame. Measure the loaded sheet independently in case
+// an older asset is cached. The sheet always has three equal frames.
 const SPRITE_W = 86
 const SPRITE_H = 80
 const SPRITE_X = 128 - SPRITE_W / 2
@@ -348,7 +351,7 @@ function samplePalette(sprite: HTMLImageElement): Palette {
     canvas.height = SPRITE_H
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
     if (!ctx) return fallbackPalette
-    ctx.drawImage(sprite, 0, 0, SPRITE_W, SPRITE_H, 0, 0, SPRITE_W, SPRITE_H)
+    ctx.drawImage(sprite, 0, 0, sprite.naturalWidth / 3, sprite.naturalHeight, 0, 0, SPRITE_W, SPRITE_H)
     const data = ctx.getImageData(0, 0, SPRITE_W, SPRITE_H).data
     const at = (x: number, y: number) => { const i = (y * SPRITE_W + x) * 4; return `#${[data[i], data[i + 1], data[i + 2]].map((c) => (c ?? 0).toString(16).padStart(2, '0')).join('')}` }
     const sleeve = at(Math.round(SPRITE_W * 0.36), Math.round(SPRITE_H * 0.94))
@@ -359,10 +362,10 @@ function samplePalette(sprite: HTMLImageElement): Palette {
   }
 }
 
-function PixelStudyScene({ scene, isNight, state, className }: Props) {
+function PixelStudyScene({ scene, isNight, state, appearance = defaultChibi, className }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const props = useRef({ scene, isNight, state })
-  props.current = { scene, isNight, state }
+  const props = useRef({ scene, isNight, state, appearance })
+  props.current = { scene, isNight, state, appearance }
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -385,24 +388,31 @@ function PixelStudyScene({ scene, isNight, state, className }: Props) {
 
     const render = (t: number) => {
       lastTime = t
-      const { scene: id, isNight: night, state: mood } = props.current
+      const { scene: id, isNight: night, state: mood, appearance: look } = props.current
+      const isAsal = look.companion === 'asal'
+      const base = isAsal ? palette : { ...fallbackPalette, ...chibiSkin[look.skin] }
+      const sleeve = look.outfit ? chibiItems[look.outfit].color : null
+      const colors = sleeve ? { ...base, sleeve, sleeveShade: mix(sleeve, -0.22), sleeveLight: mix(sleeve, 0.18) } : base
+      const bob = mood === 'studying' ? Math.floor(t / 0.75) % 2 : mood === 'paused' && Math.sin(t * 1.3) > 0.5 ? 1 : 0
+      const frame = mood === 'break' ? 2 : mood === 'paused' || t % 3.6 < 0.16 ? 1 : 0
       ctx.globalAlpha = 1
       ctx.globalCompositeOperation = 'source-over'
       drawRoom(ctx, t, id, night, layoutFor(id), r)
       drawLamp(r)
-      if (spriteReady) {
-        const bob = mood === 'studying' ? (Math.floor(t / 0.75) % 2) : mood === 'paused' ? (Math.sin(t * 1.3) > 0.5 ? 1 : 0) : 0
-        const blinking = (t % 3.6) < 0.16
-        const frame = mood === 'paused' ? 1 : mood === 'break' ? 2 : blinking ? 1 : 0
-        ctx.drawImage(sprite, frame * SPRITE_W, 0, SPRITE_W, SPRITE_H, SPRITE_X, SPRITE_Y + bob, SPRITE_W, SPRITE_H)
+      if (!isAsal) {
+        drawCustomChibi(look, colors.sleeve, frame, bob, r)
+      } else if (spriteReady) {
+        const frameWidth = sprite.naturalWidth / 3
+        ctx.drawImage(sprite, frame * frameWidth, 0, frameWidth, sprite.naturalHeight, SPRITE_X, SPRITE_Y + bob, SPRITE_W, SPRITE_H)
       }
       drawDesk(ctx, id, night, r)
       const progress = drawNotebook(t, mood, r)
-      drawArms(t, mood, progress, palette, r)
+      drawArms(t, mood, progress, colors, r)
       // Book stack, pencil cup and the cat share the right side of the desk.
       r(150, DESK_Y - 4, 18, 4, '#7398c4'); r(151, DESK_Y - 8, 16, 4, '#d4776a'); r(151, DESK_Y - 6, 16, 1, '#ecaa9d'); r(152, DESK_Y - 11, 14, 3, '#efdcb4')
       r(64, DESK_Y - 9, 7, 9, '#9a7cc2'); r(64, DESK_Y - 9, 7, 1, '#b79ddb'); r(65, DESK_Y - 13, 1, 4, '#f2c94c'); r(67, DESK_Y - 14, 1, 5, '#e66d6d'); r(69, DESK_Y - 12, 1, 3, '#6aa889')
-      drawMug(t, mood, palette, ctx, r)
+      drawDeskDecor(look.decor, r)
+      drawMug(t, mood, colors, ctx, r)
       drawCat(t, r)
       drawLight(ctx, t, night)
       if (mood === 'paused') drawSleepZ(ctx, t, r)
@@ -432,7 +442,8 @@ function PixelStudyScene({ scene, isNight, state, className }: Props) {
     return () => { cancelAnimationFrame(frame); observer.disconnect() }
   }, [])
 
-  const label = state === 'studying' ? 'عسل پشت میزش مشغول مطالعه است' : state === 'break' ? 'عسل در استراحت چای می‌نوشد' : 'عسل کمی چرت می‌زند'
+  const name = appearance.companion === 'asal' ? 'عسل' : 'چیبی تو'
+  const label = name + (state === 'studying' ? ' پشت میزش مشغول مطالعه است' : state === 'break' ? ' در استراحت چای می‌نوشد' : ' کمی چرت می‌زند')
   return <canvas ref={canvasRef} width={W} height={H} className={className} role="img" aria-label={label} style={{ imageRendering: 'pixelated' }} />
 }
 

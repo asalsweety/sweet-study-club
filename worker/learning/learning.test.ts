@@ -51,6 +51,7 @@ beforeEach(() => {
   // Keep command/ownership fixtures small. The sourced-content suite applies
   // the complete migration chain and verifies the published library.
   for (const filename of readdirSync(migrations).filter((p) => p.endsWith('.sql') && !/^(0009|0010)_/.test(p)).sort()) sqlite.exec(readFileSync(new NodeURL(filename, migrations), 'utf8'))
+  sqlite.exec("UPDATE learning_packs SET is_active = 0 WHERE id LIKE 'authored-statistics-%'")
   for (const [id, role] of [['learner', 'member'], ['other', 'member'], ['admin', 'admin']]) {
     sqlite.prepare('INSERT INTO user (id,name,email,createdAt,updatedAt,role) VALUES (?,?,?,?,?,?)').run(id!, id!, `${id}@example.test`, now, now, role!)
   }
@@ -86,7 +87,8 @@ describe('learning content and publication', () => {
     const pack = { ...importFixture(), key: 'weekly-maz', isSample: false, bank: 'weekly', provider: 'maz', availableAt: new Date(now + 86400000).toISOString() }
     expect((await request('/admin/learning/import', { user: 'admin', method: 'POST', body: pack })).status).toBe(201)
     expect((await json('/learning/count', { method: 'POST', body: filter({ includeSamples: false }) })).count).toBe(0)
-    expect((await json('/admin/learning/packs?track=konkur', { user: 'admin' })).packs).toHaveLength(2)
+    const catalog = catalogResponseSchema.parse(await json('/admin/learning/packs?track=konkur', { user: 'admin' }))
+    expect(catalog.packs.find((item) => item.id === pack.key)).toMatchObject({ questionCount: 5, availableAt: pack.availableAt })
     expect((await request('/admin/learning/import', { user: 'admin', method: 'POST', body: pack })).status).toBe(409)
     expect(sqlite.prepare('SELECT COUNT(*) AS count FROM learning_questions WHERE pack_id = ?').get(pack.key)?.count).toBe(5)
     expect((await request(`/admin/learning/packs/${pack.key}`, { user: 'admin', method: 'PATCH', body: { isActive: true, availableAt: new Date(now - 1000).toISOString() } })).status).toBe(204)
@@ -102,6 +104,25 @@ describe('learning content and publication', () => {
     pack.questions[1]!.key = pack.questions[0]!.key
     expect((await request('/admin/learning/import', { user: 'admin', method: 'POST', body: pack })).status).toBe(400)
     expect((await request('/learning/attempts', { method: 'POST', body: { ...filter(), id: crypto.randomUUID(), mode: 'exam', count: 5, subjectIds: ['cardiology'] } })).status).toBe(400)
+  })
+  it('agrees on grade and usable questions across the catalog, count, and attempt', async () => {
+    sqlite.exec("UPDATE learning_packs SET is_active = 1 WHERE id LIKE 'authored-statistics-sci-%'")
+    sqlite.exec(`UPDATE learning_questions SET content = json_set(content, '$.prompt', char(10,32))
+      WHERE id IN ('statistics-sci-10-1', 'statistics-sci-10-2')`)
+    sqlite.exec(`UPDATE learning_questions SET content = json_set(content, '$.images', json('["/question-media/scan.jpg"]'))
+      WHERE id = 'statistics-sci-10-2'`)
+    sqlite.exec(`UPDATE learning_questions SET content = json_set(content, '$.options[0]', ' ')
+      WHERE id = 'statistics-sci-10-3'`)
+    const input = filter({ includeSamples: false, grade: 'grade-10' })
+    const catalog = catalogResponseSchema.parse(await json('/learning/catalog?track=konkur'))
+    const pack = catalog.packs.find((p) => p.grade === 'grade-10')!
+    expect(pack.questionCount).toBe(4)
+    expect(catalog.chapters.filter((row) => row.packId === pack.id).reduce((sum, row) => sum + row.count, 0)).toBe(4)
+    expect((await json('/learning/count', { method: 'POST', body: input })).count).toBe(4)
+    const attempt = await start(input)
+    expect(attempt.items).toHaveLength(4)
+    expect(attempt.items.every((q) => q.grade === 'grade-10')).toBe(true)
+    expect(attempt.items.find((q) => q.questionId === 'statistics-sci-10-2')?.images).toEqual(['/question-media/scan.jpg'])
   })
 })
 

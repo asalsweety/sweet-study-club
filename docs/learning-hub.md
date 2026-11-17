@@ -4,8 +4,8 @@ The authenticated `/learn` route adds question practice to the existing study tr
 
 ## Delivered features
 
-- Six separate study tracks: preinternship, residency, medical basic sciences, dental basic sciences, bachelor-to-medicine, and Konkur. Medical tracks have their own subject catalogs, including oral health and clinical psychology for dentistry and critical reasoning for bachelor-to-medicine.
-- National, authored, and weekly banks; source, Persian exam year, period, booklet, subject, chapter, difficulty, saved-question, latest-mistake, and due-review filters. An empty subject/chapter selection means comprehensive practice. Filters can combine multiple subjects and chapters.
+- Nine study tracks, including separate experimental sciences, mathematics, and humanities Konkur tracks. Medical and pharmacy tracks have their own subject catalogs.
+- National, authored, open-reference, and weekly banks with filters for subject, chapter, difficulty, source, Persian exam year, period, booklet, and personal question pools. School tracks also offer 10th, 11th, 12th, and Konkur filters. An empty subject or chapter selection includes everything within the other active filters.
 - Educational practice reveals feedback after submitting each answer and then locks it. Exam mode allows changes and withholds answer keys, explanations, and statistics until completion. Server-owned scoring uses `(3 × correct − wrong) / (3 × total) × 100`. Unanswered questions count as blanks.
 - Attempts persist on the server and have deep links. The review/history page offers recovery of unfinished attempts and the 50 most recent attempts. Completing an attempt is idempotent and schedules its questions for review.
 - Review starts with a one-day interval, doubles subsequent correct intervals to a maximum of 60 days, and resets a wrong or blank answer to one day. The due queue uses server time. Latest mistakes use each question's latest completed response.
@@ -19,13 +19,9 @@ The authenticated `/learn` route adds question practice to the existing study tr
 
 ## Database and samples
 
-The production library now has **445 native Persian exam questions** and **24
-Persian textbook adaptations**, across 33 collections (525 track placements).
-Migration `0010_persian_learning_content.sql` archives the earlier English packs
-while preserving previous attempts. Native questions retain their source answer
-keys and medical-paper images; the UI explicitly states when no verified
-explanatory solution is available. Not every medical track has a native paper yet.
-Rebuild with `npm run content:build:persian`; see the [production guide](cloudflare-production.md).
+Migration `0010_persian_learning_content.sql` publishes 445 native Persian exam questions and 24 Persian textbook adaptations across 33 collections. It archives the earlier English packs and preserves previous attempts. National questions keep their answer keys and original figures or scans, which appear inline. Rebuild that snapshot with `npm run content:build:persian`.
+
+Migration `0013_learning_grades_statistics.sql` adds 46 original Persian statistics, probability, and counting exercises with worked solutions. Some exercises are shared across school tracks, for 57 placements in 12 collections. The curriculum topics follow the Iranian school syllabi, including [10th-grade mathematics](https://www.roshd.ir/riazi/Content/%DA%A9%D8%AA%D8%A7%D8%A8-%D8%B1%DB%8C%D8%A7%D8%B6%DB%8C-1-%D9%BE%D8%A7%DB%8C%D9%87-%D8%AF%D9%87%D9%85), [11th-grade statistics and probability](https://www.roshd.ir/riazi/Content/%DA%A9%D8%AA%D8%A7%D8%A8-%D8%A2%D9%85%D8%A7%D8%B1-%D9%88-%D8%A7%D8%AD%D8%AA%D9%85%D8%A7%D9%84-%D9%BE%D8%A7%DB%8C%D9%87-%DB%8C%D8%A7%D8%B2%D8%AF%D9%87%D9%85-%D8%B1%D8%B4%D8%AA%D9%87-%D8%B1%DB%8C%D8%A7%D8%B6%DB%8C-%D9%88-%D9%81%DB%8C%D8%B2%DB%8C%DA%A9), and [12th-grade humanities mathematics](https://www.roshd.ir/riazi/Content/%DA%A9%D8%AA%D8%A7%D8%A8-%D8%B1%DB%8C%D8%A7%D8%B6%DB%8C-%D9%88-%D8%A2%D9%85%D8%A7%D8%B1-3-%D9%BE%D8%A7%DB%8C%D9%87-%D8%AF%D9%88%D8%A7%D8%B2%D8%AF%D9%87%D9%85).
 
 Apply `npm run db:migrate:local` for local development. Migration `0008_learning_hub.sql` adds the learning tables, account-deletion cascades, query indexes, and schema version 8. Apply the same migration through the existing deployment workflow before deploying the new Worker remotely.
 
@@ -35,7 +31,7 @@ Migration 8 includes ten original, explicitly labelled sample questions: five Ko
 
 Use **Studio → مدیریت محتوای یادگیری → ورود و پیش‌نمایش بستهٔ سؤال**. A downloadable, validated example is available at `/examples/learning-pack.json`. Each import accepts up to 200 questions and 3 MB; split larger exams into multiple booklets. IDs in `key` must be unique. The subject IDs are defined in `src/shared/lib/learning-catalog.ts`.
 
-Every question requires four options, a zero-based `correctIndex`, an explanation, a subject, a chapter, and a difficulty. A `topic` may contain a title, important points, a short lesson, and mind-map branches, or be `null`. This supports adding the owner's own maps and notes with their associated questions.
+Every question requires four options, a zero-based `correctIndex`, an explanation, a subject, a chapter, and a difficulty. A `topic` may contain a title, important points, a short lesson, and mind-map branches, or be `null`. School packs can specify `grade` as `grade-10`, `grade-11`, `grade-12`, or `konkur`; omit it when a pack spans topics without a grade label.
 
 For weekly releases use `bank: "weekly"`, a provider such as `maz`, `ghalamchi`, or `gaj`, and a future UTC ISO `availableAt`. Several future weeks can be imported in advance. The server exposes a pack only once its publication time arrives and it is active; no cron is needed for this visibility rule. Studio scheduling controls display Tehran time. `year` denotes the Persian exam year, while date input fields explicitly use Gregorian dates and display Persian calendar summaries.
 

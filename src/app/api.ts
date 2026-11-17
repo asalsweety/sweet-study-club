@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { chibiResponseSchema, type ChibiItemId, type ChibiUpdate } from '../shared/api/chibi'
 import { del, get, patch, post, put } from '../shared/api/http'
 import {
   createPlannerItemInputSchema,
@@ -142,6 +143,9 @@ export const api = {
     cheersSeen: () => post('/api/cheers/seen', null),
   },
   shop: {
+    chibi: () => get('/api/shop/chibi', chibiResponseSchema),
+    updateChibi: (input: ChibiUpdate) => patch('/api/shop/chibi', chibiResponseSchema, input),
+    buyChibiItem: (item: ChibiItemId) => post('/api/shop/chibi/purchases', chibiResponseSchema, { item }),
     products: () => get('/api/shop/products', productsResponseSchema),
     orders: () => get('/api/shop/orders', ordersResponseSchema).then((r) => r.orders),
     order: (productId: string, idempotencyKey: string, delivery?: Delivery) =>

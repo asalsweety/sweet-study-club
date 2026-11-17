@@ -1,0 +1,47 @@
+.date-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-inline-size: 0;
+  padding-inline: .75rem;
+  border: 1px solid var(--input);
+  border-radius: .75rem;
+}
+
+.date-input:focus-within {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 30%, transparent);
+}
+
+/* Keep padding on the frame. WebKit on iOS adds input padding to its 100% width. */
+.date-input-native {
+  inline-size: 100%;
+  min-inline-size: 0;
+  min-block-size: 2.875rem;
+  padding: 0;
+  outline: none;
+  background: transparent;
+  font-size: 1rem;
+}
+
+.date-input-hint {
+  display: none;
+}
+
+@supports (-webkit-touch-callout: none) {
+  .date-input-native::-webkit-date-and-time-value {
+    min-block-size: 1.5em;
+    text-align: left;
+  }
+
+  .date-input-hint {
+    position: absolute;
+    inset-inline-start: .75rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    pointer-events: none;
+    color: var(--muted-foreground);
+    font-size: .875rem;
+  }
+}

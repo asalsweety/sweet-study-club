@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../../components/ui/dialog'
 import { Textarea } from '../../components/ui/textarea'
 import type { Attempt, AttemptItem, notebookSchema } from '../../shared/api/learning'
-import { difficultyNames, subjectName } from '../../shared/lib/learning-catalog'
+import { difficultyNames, learningGradeNames, subjectName } from '../../shared/lib/learning-catalog'
 import { fa, formatClock } from '../../shared/lib/format'
 import { cn } from '../../shared/lib/utils'
 import { useNow } from '../study/useStudyTimer'
@@ -14,6 +14,17 @@ import { learningApi } from './api'
 import { MindMap, Panel, QueryState } from './components'
 
 type Entry = z.infer<typeof notebookSchema>['entries'][number]
+function QuestionImage({ src, index }: { src: string; index: number }) {
+  const [failed, setFailed] = useState(false)
+  return <figure className="overflow-hidden rounded-xl border border-border bg-white p-2 sm:p-4">
+    <a href={src} target="_blank" rel="noreferrer" aria-label={`باز کردن تصویر ${fa(index + 1)} سؤال در صفحۀ جدید`}>
+      {failed ? <p role="status" className="p-3 text-center text-sm text-neutral-800">تصویر بارگذاری نشد. برای باز کردن مستقیم تصویر، لمس کن.</p>
+        : <img src={src} alt={`تصویر دفترچۀ اصلی سؤال، شمارۀ ${fa(index + 1)}`} onError={() => setFailed(true)} className="mx-auto h-auto max-w-full" />}
+    </a>
+    {!failed && <figcaption className="mt-2 text-center text-xs text-neutral-600">تصویر دفترچۀ اصلی · برای بزرگ‌نمایی لمس کن</figcaption>}
+  </figure>
+}
+
 function AnnotationEditor({ question, entry, explanationRef }: { question: AttemptItem; entry: Entry | undefined; explanationRef: React.RefObject<HTMLDivElement | null> }) {
   const client = useQueryClient()
   const [saved, setSaved] = useState(entry?.saved ?? false)
@@ -52,9 +63,7 @@ function QuestionCard({ attempt, item, index, total, onUpdate, onGo, onFinish, e
 }) {
   const [selected, setSelected] = useState<number | null>(item.selectedIndex)
   const [feedbackTab, setFeedbackTab] = useState<'explanation' | 'map' | 'micro'>('explanation')
-  // Typed text first; the scanned paper stays one tap away for figures and tables.
-  const textOnly = item.prompt.trim().length > 0
-  const [showPaper, setShowPaper] = useState(!textOnly)
+  const prompt = item.prompt.trim()
   const explanationRef = useRef<HTMLDivElement>(null)
   const locked = attempt.finishedAt !== null || (attempt.mode === 'practice' && item.answered)
   const save = useMutation({ mutationFn: () => learningApi.answer(attempt.id, item.questionId, selected), onSuccess: onUpdate })
@@ -67,10 +76,10 @@ function QuestionCard({ attempt, item, index, total, onUpdate, onGo, onFinish, e
   }
   const submit = () => save.mutate()
   return <Panel className="grid gap-5">
-    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground"><span className="rounded-full bg-primary/10 px-3 py-1 font-bold text-primary">سؤال {fa(index + 1)} از {fa(total)}</span><span>{subjectName(item.subjectId)} · {item.chapter}</span><span className="mr-auto">{difficultyNames[item.difficulty]}</span></div>
-    <p dir={item.language === 'en' ? 'ltr' : 'rtl'} lang={item.language} className="text-base font-bold leading-9 sm:text-lg">{item.prompt}</p>
-    {item.images.length > 0 && textOnly && <button type="button" aria-expanded={showPaper} onClick={() => setShowPaper((value) => !value)} className="w-fit rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary">{showPaper ? 'پنهان کردن برگۀ اصلی' : `نمایش برگۀ اصلی${item.images.length > 1 ? ` (${fa(item.images.length)} تصویر)` : ''} · برای شکل و جدول`}</button>}
-    {item.images.length > 0 && showPaper && <div className="grid gap-3">{item.images.map((src, imageIndex) => <figure key={src} className="overflow-hidden rounded-xl border border-border bg-white p-2 sm:p-4"><a href={src} target="_blank" rel="noreferrer" aria-label={`بزرگ‌نمایی تصویر ${fa(imageIndex + 1)} سؤال`}><img src={src} alt={`متن یا شکل اصلی سؤال، تصویر ${fa(imageIndex + 1)}؛ برای بزرگ‌نمایی باز کن`} className="mx-auto h-auto max-w-full" /></a><figcaption className="mt-2 text-center text-xs text-neutral-600">تصویر اصلی دفترچه · برای بزرگ‌نمایی لمس کن</figcaption></figure>)}</div>}
+    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground"><span className="rounded-full bg-primary/10 px-3 py-1 font-bold text-primary">سؤال {fa(index + 1)} از {fa(total)}</span><span>{subjectName(item.subjectId)} · {item.chapter}{item.grade && ` · ${learningGradeNames[item.grade]}`}</span><span className="mr-auto">{difficultyNames[item.difficulty]}</span></div>
+    {prompt && <p dir={item.language === 'en' ? 'ltr' : 'rtl'} lang={item.language} className="whitespace-pre-line break-words text-base font-bold leading-9 sm:text-lg">{prompt}</p>}
+    {item.images.length > 0 && <div className="grid gap-3">{item.images.map((src, imageIndex) => <QuestionImage key={src} src={src} index={imageIndex} />)}</div>}
+    {!prompt && !item.images.length && <p role="status" className="text-sm text-muted-foreground">متن این سؤال در نسخهٔ ذخیره‌شده موجود نیست.</p>}
     <div dir={item.language === 'en' ? 'ltr' : 'rtl'} lang={item.language} role="radiogroup" aria-label="گزینه‌های سؤال" className="grid gap-3">{item.options.map((option, i) => {
       const correct = item.feedback?.correctIndex === i
       const wrong = item.feedback && selected === i && !correct

@@ -37,9 +37,9 @@ export async function loadAttempt(db: D1Database, user: string, id: string): Pro
       const content = contentOf(row)
       const reveal = attempt.finishedAt !== null || (attempt.mode === 'practice' && row.answeredAt !== null)
       return {
-        questionId: row.id, ordinal: row.ordinal, prompt: content.prompt, options: content.options,
+        questionId: row.id, ordinal: row.ordinal, prompt: content.prompt ?? '', options: content.options,
         subjectId: row.subjectId, chapter: row.chapter, difficulty: row.difficulty, packTitle: row.packTitle,
-        isSample: Boolean(row.isSample), selectedIndex: row.selectedIndex, answered: row.answeredAt !== null,
+        isSample: Boolean(row.isSample), grade: row.grade, selectedIndex: row.selectedIndex, answered: row.answeredAt !== null,
         language: content.language ?? 'fa', source: content.source ?? null,
         images: content.images ?? [],
         feedback: reveal ? { correctIndex: content.correctIndex, explanation: content.explanation, topic: content.topic,

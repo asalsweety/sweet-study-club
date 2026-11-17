@@ -21,8 +21,8 @@ export default function GoalRing({ value, size = 152, stroke = 12, children, lab
   }, [progress])
 
   return (
-    <div className={`relative grid place-items-center ${progress >= 1 ? 'goal-complete' : ''}`} style={{ width: size, height: size }} role="img" aria-label={label}>
-      <svg width={size} height={size} className="-rotate-90">
+    <div className={`relative grid aspect-square max-w-full place-items-center ${progress >= 1 ? 'goal-complete' : ''}`} style={{ width: size }} role="img" aria-label={label}>
+      <svg viewBox={`0 0 ${size} ${size}`} className="size-full -rotate-90">
         <defs>
           <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="var(--primary)" />

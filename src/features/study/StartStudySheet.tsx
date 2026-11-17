@@ -169,7 +169,7 @@ export default function StartStudySheet({ open, onOpenChange, openPart, timer, o
         <label className="flex items-center justify-between gap-3 rounded-2xl bg-muted/60 p-3.5">
           <span className="grid gap-0.5">
             <span className="flex items-center gap-2 text-sm font-bold"><Lock size={16} className="text-primary" /> حالت تمرکز کامل</span>
-            <span className="text-xs font-normal text-muted-foreground">تمام‌صفحه در اتاق تمرکز، شمارش حواس‌پرتی‌ها و هشدار هنگام خروج</span>
+            <span className="text-xs font-normal text-muted-foreground">قبل از خروج از اتاق تمرکز تأیید می‌خواهد. با خاموش شدن صفحه، تایمر ادامه دارد.</span>
           </span>
           <Switch checked={focusLock} onCheckedChange={setFocusLock} aria-label="حالت تمرکز کامل" />
         </label>

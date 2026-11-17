@@ -42,6 +42,7 @@ export const learningTracks: { id: Track; name: string; emoji: string; subjects:
 export const providerNames: Record<Provider, string> = { national: 'آزمون کشوری', authored: 'تألیفی', konkur: 'کنکور سراسری', maz: 'ماز', ghalamchi: 'قلم‌چی', gaj: 'گاج', 'konkuri-nerd': 'کنکوری نرد', medmcqa: 'MedMCQA', openstax: 'OpenStax', other: 'سایر' }
 export const difficultyNames = { easy: 'آسان', medium: 'متوسط', hard: 'سخت' }
 export const bankNames = { national: 'کشوری', authored: 'تألیفی', weekly: 'آزمون‌های هفتگی', reference: 'منابع باز' }
+export const learningGradeNames = { 'grade-10': 'دهم', 'grade-11': 'یازدهم', 'grade-12': 'دوازدهم', konkur: 'کنکوری' }
 export const subjectName = (id: string) => learningTracks.flatMap((t) => t.subjects).find((s) => s.id === id)?.name ?? id
 export const validSubjects = (track: Track, ids: string[]) => ids.every((id) => learningTracks.find((t) => t.id === track)?.subjects.some((s) => s.id === id))
 

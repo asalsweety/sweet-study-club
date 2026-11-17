@@ -21,6 +21,7 @@ export const queryKeys = {
   leaderboard: (period: string, scope: string) => ['leaderboard', period, scope] as const,
   cheers: ['cheers'] as const,
   shop: ['shop'] as const,
+  chibi: ['chibi'] as const,
   orders: ['orders'] as const,
   entitlements: ['entitlements'] as const,
   planRequests: ['plan-requests'] as const,
@@ -47,6 +48,10 @@ export function useEntitlements(enabled = true) {
   return useQuery({ queryKey: queryKeys.entitlements, queryFn: async () => (await loadApi()).shop.entitlements(), enabled })
 }
 
+export function useChibi(enabled = true) {
+  return useQuery({ queryKey: queryKeys.chibi, queryFn: async () => (await loadApi()).shop.chibi(), enabled })
+}
+
 export function useSignOut() {
   const client = useQueryClient()
   return useMutation({
@@ -69,7 +74,7 @@ export async function replaceSession(client: QueryClient, session: AuthSession |
 
 /** Refresh everything that a finished or changed study session affects. */
 export function invalidateStudyData(client: ReturnType<typeof useQueryClient>) {
-  for (const key of [['timer'], ['progress'], ['heatmap'], ['gamification'], ['dna'], ['leaderboard'], ['live'], ['friends']]) {
+  for (const key of [['timer'], ['progress'], ['heatmap'], ['gamification'], ['dna'], ['leaderboard'], ['live'], ['friends'], queryKeys.chibi]) {
     void client.invalidateQueries({ queryKey: key })
   }
 }

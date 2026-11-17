@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../../app/api'
 import { queryKeys } from '../../app/session'
 import { Button } from '../../components/ui/button'
-import { Input } from '../../components/ui/input'
+import { DateInput } from '../../components/ui/date-input'
 import { errorMessage } from '../../shared/api/http'
 import type { EducationGroupId, UserSettings } from '../../shared/api/settings'
 import { celebrate } from '../../shared/lib/confetti'
@@ -115,7 +115,11 @@ export default function OnboardingFlow({ settings, editing = false }: { settings
         {step === 3 && <section key="goals" className="grid gap-6">
           <div><p className="eyebrow">{profileLabel(group, stage)}</p><h1 className="mt-1 text-2xl sm:text-3xl">برای چه آمده‌ای؟</h1><p className="mt-2 text-sm leading-7 text-muted-foreground">هرچند تا که می‌خواهی انتخاب کن؛ دستیار هوشمند با همین بهتر کمکت می‌کند.</p></div>
           <div className="flex flex-wrap gap-2" role="group" aria-label="هدف‌های تو">{studyGoals.map(([id, label]) => { const on = goals.includes(id); return <button key={id} type="button" aria-pressed={on} onClick={() => setGoals(on ? goals.filter((g) => g !== id) : [...goals, id])} className={cn('rounded-full border px-4 py-2 text-sm font-bold transition-all active:scale-95', on ? 'border-primary bg-primary text-primary-foreground shadow-[var(--glow-primary)]' : 'border-border bg-card hover:border-primary/40')}>{label}</button> })}</div>
-          {exam && <label className="grid gap-2"><span className="text-sm font-bold">تاریخ {exam} <span className="font-normal text-muted-foreground">(اختیاری)</span></span><Input type="date" dir="ltr" value={examDate} onChange={(e) => setExamDate(e.target.value)} /><span className="text-xs text-muted-foreground" aria-live="polite">{examDate && /^\d{4}-\d{2}-\d{2}$/.test(examDate) ? `${jalaliFullDate(examDate)} · ${daysUntil(examDate) > 0 ? `${fa(daysUntil(examDate))} روز مانده` : 'این تاریخ گذشته است'}` : 'اگر تاریخ را بدانی، شمارش معکوس روی صفحۀ امروز نشان داده می‌شود.'}</span></label>}
+          {exam && <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2">
+            <label htmlFor="onboarding-exam-date" className="text-sm font-bold">تاریخ {exam} <span className="font-normal text-muted-foreground">(اختیاری)</span></label>
+            <DateInput id="onboarding-exam-date" value={examDate} aria-describedby="onboarding-exam-date-hint" onChange={(e) => setExamDate(e.target.value)} />
+            <p id="onboarding-exam-date-hint" className="text-xs text-muted-foreground" aria-live="polite">{examDate && /^\d{4}-\d{2}-\d{2}$/.test(examDate) ? `${jalaliFullDate(examDate)} · ${daysUntil(examDate) > 0 ? `${fa(daysUntil(examDate))} روز مانده` : 'این تاریخ گذشته است'}` : 'اگر تاریخ را بدانی، شمارش معکوس روی صفحۀ امروز نشان داده می‌شود.'}</p>
+          </div>}
           <div className="grid gap-2"><span className="text-sm font-bold">هدف مطالعۀ روزانه</span><div className="flex flex-wrap gap-2" role="radiogroup" aria-label="هدف روزانه">{dailyGoals.map((minutes) => <button key={minutes} type="button" role="radio" aria-checked={dailyGoal === minutes} onClick={() => setDailyGoal(minutes)} className={cn('rounded-xl border px-3.5 py-2 text-sm font-bold transition-all active:scale-95', dailyGoal === minutes ? 'border-primary bg-secondary text-primary' : 'border-border bg-card')}>{fa(minutes / 60)} ساعت</button>)}</div></div>
           <label className="flex items-start gap-3 rounded-2xl bg-muted/60 p-3.5 text-sm"><input type="checkbox" className="mt-1 size-4 accent-[var(--primary)]" checked={replaceSubjects} onChange={(e) => setReplaceSubjects(e.target.checked)} /><span><span className="font-bold">درس‌هایم را برای این مسیر بچین</span><span className="mt-0.5 block text-xs text-muted-foreground">درس‌های پیشنهادی رشته‌ات جایگزین فهرست فعلی می‌شوند؛ سابقۀ مطالعه‌ات دست‌نخورده می‌ماند.</span></span></label>
           {save.isError && <p role="alert" className="rounded-xl bg-[var(--destructive-soft)] p-3 text-sm text-[var(--destructive-text)]">{errorMessage(save.error)}</p>}

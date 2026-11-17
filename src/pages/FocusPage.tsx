@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { api } from '../app/api'
 import { appRoutes } from '../app/navigation/routes'
-import { queryKeys, useSettings } from '../app/session'
+import { queryKeys, useChibi, useSettings } from '../app/session'
 import type { StudyTimerState } from '../shared/api/study-timer'
 import { fa, formatClock } from '../shared/lib/format'
 import { tehranClock } from '../shared/lib/tehran'
@@ -37,12 +37,12 @@ function FocusClock({ state, display }: { state: StudyTimerState; display: 'digi
     <>
       {pomodoro && display === 'digital' ? (
         <GoalRing value={1 - Math.max(0, pomodoro.remaining) / pomodoro.length} size={280} stroke={14} label="زمان باقی‌مانده‌ی این مرحله">
-          <ClockText value={formatClock(seconds)} ticking={state.timerStatus === 'running'} className="text-7xl" />
+          <ClockText value={formatClock(seconds)} ticking={state.timerStatus === 'running'} className="text-[length:min(4.5rem,17cqi)]" />
         </GoalRing>
       ) : (
         <div className="relative grid place-items-center">
           {display === 'digital' && <span aria-hidden className={cn('focus-halo', state.timerStatus !== 'running' && 'is-paused')} />}
-          <ClockText value={formatClock(seconds)} ticking={state.timerStatus === 'running'} className={cn('relative drop-shadow-[0_6px_24px_rgba(0,0,0,0.45)]', display === 'chibi' ? 'text-5xl' : 'text-7xl sm:text-8xl lg:text-9xl', state.timerStatus !== 'running' && 'opacity-70')} />
+          <ClockText value={formatClock(seconds)} ticking={state.timerStatus === 'running'} className={cn('relative drop-shadow-[0_6px_24px_rgba(0,0,0,0.45)]', display === 'chibi' ? 'text-[length:min(3rem,13vw)]' : 'text-[length:min(8rem,16cqi)]', state.timerStatus !== 'running' && 'opacity-70')} />
         </div>
       )}
       {pomodoro && pomodoro.remaining <= 0 && (
@@ -63,6 +63,8 @@ export default function FocusPage() {
   const now = useNow(60_000)
   const timer = useStudyTimer()
   const settings = useSettings()
+  const display = settings.data?.timerDisplay ?? 'digital'
+  const chibi = useChibi(display === 'chibi')
   const client = useQueryClient()
   const ambient = useAmbientSound()
   const [finishing, setFinishing] = useState(false)
@@ -76,7 +78,7 @@ export default function FocusPage() {
   const navigate = useNavigate()
   const running = timer.timer?.timerStatus === 'running'
   const locked = Boolean(timer.timer?.focusLockEnabled)
-  const { distractions } = useFocusLock({ enabled: locked, running, logId: timer.timer?.logId })
+  useFocusLock(locked && running)
   const leave = async () => {
     if (locked && running && !(await confirmAction({ title: 'خروج از تمرکز کامل؟', description: 'تایمر ادامه پیدا می‌کند، ولی اتاق تمرکز را ترک می‌کنی.', confirmLabel: 'خروج' }))) return
     navigate(appRoutes.home, { viewTransition: true })
@@ -122,7 +124,6 @@ export default function FocusPage() {
 
   if (!timer.isLoading && !timer.error && !timer.timer && !finishing) return <Navigate to={appRoutes.home} replace />
   const state = timer.timer
-  const display = settings.data?.timerDisplay ?? 'digital'
   const scene = settings.data?.chibiScene ?? 'night-desk'
   const hour = Math.floor(tehranClock(now).minuteOfDay / 60)
   const isNight = hour >= 19 || hour < 6
@@ -132,19 +133,19 @@ export default function FocusPage() {
     <main dir="rtl" className={cn('relative flex min-h-dvh flex-col overflow-hidden text-white [animation:fade-in_700ms_ease-out_backwards]', display === 'digital' ? 'focus-aurora' : 'bg-[#141228]')}>
       {display === 'digital' && <div aria-hidden className="focus-particles" />}
       {display === 'chibi' && (
-        <PixelStudyScene scene={scene} isNight={isNight} state={running ? 'studying' : pomodoro?.phase === 'break' ? 'break' : 'paused'} className="pixel-backdrop" />
+        <PixelStudyScene scene={scene} isNight={isNight} appearance={chibi.data?.appearance} state={running ? 'studying' : pomodoro?.phase === 'break' ? 'break' : 'paused'} className="pixel-backdrop" />
       )}
       {display === 'chibi' && <div aria-hidden className="pixel-backdrop-shade absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-black/45" />}
 
-      <header className="relative z-10 flex flex-wrap items-center justify-between gap-2 p-4 pt-[max(1rem,env(safe-area-inset-top))] sm:p-6">
-        <div className="flex gap-2">
+      <header className="relative z-10 flex flex-wrap items-center justify-between gap-2 px-[max(1rem,env(safe-area-inset-left),env(safe-area-inset-right))] pt-[max(1rem,env(safe-area-inset-top))] pb-4">
+        <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => void leave()} className={pill}>
             <ArrowRight size={16} /> خانه
           </button>
           {locked && <span className={cn(pill, 'bg-[#f2c94c]/20 text-[#ffe7a3]')}><Lock size={14} />تمرکز کامل</span>}
           {document.fullscreenEnabled && <button type="button" className={pill} onClick={toggleFullscreen} aria-label={fullscreen ? 'خروج از تمام‌صفحه' : 'تمام‌صفحه'} aria-keyshortcuts="F">{fullscreen ? <Minimize size={16} /> : <Maximize size={16} />}</button>}
         </div>
-        <div className="flex max-w-full gap-2 overflow-x-auto [scrollbar-width:none] max-sm:snap-x">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <LiveNowPill className={pill} />
           <MusicButton className={pill} onPlay={(link) => { ambient.setSound('off'); setMusic(link) }} />
           <button type="button" className={pill} onClick={() => saveDisplay.mutate({ timerDisplay: display === 'chibi' ? 'digital' : 'chibi' })}>
@@ -177,30 +178,29 @@ export default function FocusPage() {
         </div>
       </header>
 
-      <section className={cn('focus-stage relative z-10 flex flex-1 flex-col items-center gap-6 px-4 pb-[max(2.5rem,calc(env(safe-area-inset-bottom)+1.5rem))]', display === 'chibi' ? 'justify-end' : 'justify-center')}>
+      <section className={cn('focus-stage relative z-10 flex flex-1 flex-col items-center gap-6 px-[max(1rem,env(safe-area-inset-left),env(safe-area-inset-right))] pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]', display === 'chibi' ? 'justify-end' : 'justify-center')}>
         {timer.isLoading && <p role="status" className="text-sm">در حال آماده‌سازی جلسه…</p>}
         {timer.error && <QueryError error={timer.error} retry={() => void timer.refetch()} />}
         {(timer.pause.isError || timer.resume.isError || saveDisplay.isError) && <QueryError error={timer.pause.error ?? timer.resume.error ?? saveDisplay.error} />}
         {state && (
-          <DraggableDock enabled={display === 'chibi'} className={cn('flex flex-col items-center gap-5', display === 'chibi' && 'pixel-dock')}>
-            <div className="flex flex-col items-center gap-1 text-center">
-              <p className="rounded-full bg-white/15 px-4 py-1 text-sm font-bold backdrop-blur-md">
+          <DraggableDock enabled={display === 'chibi'} className={cn('flex min-w-0 max-w-full flex-col items-center gap-5', display === 'chibi' ? 'pixel-dock' : '@container w-full max-w-4xl')}>
+            <div className="flex min-w-0 max-w-full flex-col items-center gap-1 text-center">
+              <p className="rounded-full bg-white/15 px-4 py-1 text-sm font-bold [overflow-wrap:anywhere] backdrop-blur-md">
                 {state.subjectName}
                 {pomodoro && ` · ${pomodoro.phase === 'focus' ? 'تمرکز' : pomodoro.isLongBreak ? 'استراحت بلند' : 'استراحت'} · دور ${fa(pomodoro.round)}/${fa(pomodoro.rounds)}`}
               </p>
             </div>
             <FocusClock state={state} display={display} />
-            <div className="flex flex-wrap justify-center gap-3">
-              <button type="button" disabled={timer.busy} onClick={() => (running ? timer.pause.mutate() : timer.resume.mutate())} aria-keyshortcuts="Space" className="flex h-14 items-center gap-2 rounded-2xl bg-white px-7 text-base font-bold text-[#17392f] shadow-[0_18px_40px_-12px_rgba(0,0,0,0.5)] transition hover:scale-[1.03] active:scale-95 disabled:opacity-60">
+            <div className="flex max-w-full flex-wrap justify-center gap-2 sm:gap-3">
+              <button type="button" disabled={timer.busy} onClick={() => (running ? timer.pause.mutate() : timer.resume.mutate())} aria-keyshortcuts="Space" className="flex min-h-12 items-center gap-2 rounded-2xl bg-white px-4 py-2 text-base font-bold text-[#17392f] shadow-[0_18px_40px_-12px_rgba(0,0,0,0.5)] transition hover:scale-[1.03] active:scale-95 disabled:opacity-60 sm:px-6">
                 {running ? <Pause /> : <Play />}
                 {running ? (state.mode === 'pomodoro' ? 'استراحت' : 'توقف') : state.mode === 'pomodoro' ? 'دور بعدی' : 'ادامه'}
               </button>
-              <button type="button" disabled={timer.busy} onClick={() => setFinishing(true)} className="flex h-14 items-center gap-2 rounded-2xl border border-white/15 bg-white/15 px-6 text-base font-bold backdrop-blur-md transition hover:bg-white/25 active:scale-95">
+              <button type="button" disabled={timer.busy} onClick={() => setFinishing(true)} className="flex min-h-12 items-center gap-2 rounded-2xl border border-white/15 bg-white/15 px-4 py-2 text-base font-bold backdrop-blur-md transition hover:bg-white/25 active:scale-95 sm:px-6">
                 <Square /> پایان
               </button>
             </div>
-            {locked && <p className="flex items-center gap-1.5 text-xs text-white/70"><Lock size={13} />حواس‌پرتی این جلسه: {fa(distractions)} بار</p>}
-            <p className="focus-keys hidden text-xs text-white/55 sm:flex"><span dir="ltr">Space</span> توقف و ادامه · <span dir="ltr">F</span> تمام‌صفحه</p>
+            <p className="focus-keys hidden text-xs text-white/55 [@media(pointer:fine)]:flex"><span dir="ltr">Space</span> توقف و ادامه · <span dir="ltr">F</span> تمام‌صفحه</p>
           </DraggableDock>
         )}
       </section>

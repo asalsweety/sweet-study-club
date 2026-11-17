@@ -1,7 +1,7 @@
 import type { PrepInput, PrepPack, ScoreInput, Track } from '../../src/shared/api/learning'
 import { validSubjects } from '../../src/shared/lib/learning-catalog'
 import { conflict, invalidInput, notFound } from '../http/errors'
-import { availableQuestion, contentOf, visibility } from './content'
+import { availableQuestion, contentOf, usableQuestion, visibility } from './content'
 
 export async function saveAnnotation(db: D1Database, user: string, questionId: string, input: { saved: boolean; note: string; highlight: string }) {
   const row = await availableQuestion(db, questionId)
@@ -12,9 +12,10 @@ export async function saveAnnotation(db: D1Database, user: string, questionId: s
 }
 export async function notebook(db: D1Database, user: string, track: Track) {
   const rows = await db.prepare(`SELECT n.question_id AS questionId, n.saved, n.note, n.highlight, n.updated_at AS updatedAt,
-    json_extract(q.content, '$.prompt') AS prompt, p.track, q.subject_id AS subjectId, q.chapter
+    COALESCE(json_extract(q.content, '$.prompt'), '') AS prompt, p.track, q.subject_id AS subjectId, q.chapter
     FROM learning_annotations n JOIN learning_questions q ON q.id = n.question_id JOIN learning_packs p ON p.id = q.pack_id
-    WHERE n.user_id = ? AND p.track = ? AND ${visibility} AND (n.saved = 1 OR n.note != '' OR n.highlight != '') ORDER BY n.updated_at DESC`)
+    WHERE n.user_id = ? AND p.track = ? AND ${visibility} AND ${usableQuestion}
+      AND (n.saved = 1 OR n.note != '' OR n.highlight != '') ORDER BY n.updated_at DESC`)
     .bind(user, track, Date.now()).all<{ questionId: string; saved: number; note: string; highlight: string; updatedAt: number; prompt: string; track: Track; subjectId: string; chapter: string }>()
   return { entries: rows.results.map((r) => ({ ...r, saved: Boolean(r.saved) })) }
 }
@@ -33,10 +34,10 @@ export async function learningSummary(db: D1Database, user: string, track: Track
       JOIN learning_answers a ON a.attempt_id = t.id JOIN learning_questions q ON q.id = a.question_id
       WHERE t.user_id = ? AND t.track = ? AND t.finished_at IS NOT NULL GROUP BY q.subject_id`).bind(user, track).all(),
     db.prepare(`SELECT COUNT(*) AS count FROM learning_reviews r JOIN learning_questions q ON q.id = r.question_id
-      JOIN learning_packs p ON p.id = q.pack_id WHERE r.user_id = ? AND p.track = ? AND r.due_at <= ? AND ${visibility}`)
+      JOIN learning_packs p ON p.id = q.pack_id WHERE r.user_id = ? AND p.track = ? AND r.due_at <= ? AND ${visibility} AND ${usableQuestion}`)
       .bind(user, track, Date.now(), Date.now()).first<{ count: number }>(),
     db.prepare(`SELECT COUNT(*) AS count FROM learning_annotations n JOIN learning_questions q ON q.id = n.question_id
-      JOIN learning_packs p ON p.id = q.pack_id WHERE n.user_id = ? AND p.track = ? AND n.saved = 1 AND ${visibility}`)
+      JOIN learning_packs p ON p.id = q.pack_id WHERE n.user_id = ? AND p.track = ? AND n.saved = 1 AND ${visibility} AND ${usableQuestion}`)
       .bind(user, track, Date.now()).first<{ count: number }>(),
   ])
   return { ...totals, subjects: subjects.results, due: due?.count ?? 0, saved: saved?.count ?? 0 }

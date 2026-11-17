@@ -1,8 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { Dna, Sparkles } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Dna } from 'lucide-react'
 import { api } from '../../app/api'
-import { appRoutes } from '../../app/navigation/routes'
 import { queryKeys } from '../../app/session'
 import { fa } from '../../shared/lib/format'
 
@@ -49,9 +47,6 @@ export default function DnaPanel() {
         <div className="rounded-2xl bg-muted/50 p-2"><dt className="text-muted-foreground">جلسه‌ها</dt><dd className="text-base font-bold">{fa(dna.sessionsAnalyzed)}</dd></div>
         <div className="rounded-2xl bg-muted/50 p-2"><dt className="text-muted-foreground">میانگین</dt><dd className="text-base font-bold">{fa(dna.averageSessionMinutes)} د</dd></div>
       </dl>
-      <Link to={appRoutes.shop} className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-primary/50 bg-primary/5 p-3 text-sm font-bold text-primary transition hover:bg-primary/10">
-        <Sparkles size={16} /> برنامه‌ی اختصاصی بر اساس DNA مطالعه‌ات
-      </Link>
     </section>
   )
 }

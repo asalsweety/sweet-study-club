@@ -1,51 +1,79 @@
 import { GripHorizontal, Scaling } from 'lucide-react'
-import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
 import { cn } from '../../shared/lib/utils'
 
 type Placement = { x: number; y: number; scale: number }
 const storageKey = 'sweet-study-focus-dock'
 const resting: Placement = { x: 0, y: 0, scale: 1 }
+const interactiveDock = '(min-width: 1101px) and (min-height: 560px) and (pointer: fine)'
 
 function readPlacement(): Placement {
   try {
     const value = JSON.parse(localStorage.getItem(storageKey) ?? 'null') as Placement | null
-    if (value && Number.isFinite(value.x) && Number.isFinite(value.y) && Number.isFinite(value.scale)) return value
+    if (value && Number.isFinite(value.x) && Number.isFinite(value.y) && Number.isFinite(value.scale) && value.scale > 0) return value
   } catch { /* storage unavailable */ }
   return resting
 }
 
+function keepInStage(box: HTMLDivElement | null, placement: Placement): Placement {
+  const stage = box?.offsetParent
+  if (!box || !(stage instanceof HTMLElement) || !box.offsetWidth || !box.offsetHeight) return placement
+  const inset = 8
+  const width = box.offsetWidth
+  const height = box.offsetHeight
+  const centerX = box.offsetLeft + width / 2
+  const centerY = box.offsetTop + height / 2
+  const scale = Math.min(placement.scale, (stage.clientWidth - inset * 2) / width, (stage.clientHeight - inset * 2) / height)
+  const halfWidth = width * scale / 2
+  const halfHeight = height * scale / 2
+  return {
+    x: Math.max(inset + halfWidth - centerX, Math.min(placement.x, stage.clientWidth - inset - halfWidth - centerX)),
+    y: Math.max(inset + halfHeight - centerY, Math.min(placement.y, stage.clientHeight - inset - halfHeight - centerY)),
+    scale,
+  }
+}
+
 /**
- * The focus-room timer dock can be dragged anywhere by its handle and
- * resized from its corner; the placement is remembered on this device.
+ * The desktop timer dock can be moved and resized within the stage.
+ * Compact screens keep the controls in the page flow.
  * Double-tapping the handle puts it back. Keyboard users get the same
  * controls through the arrow keys and +/- on the handle.
  */
 export default function DraggableDock({ enabled, className, children }: { enabled: boolean; className?: string; children: ReactNode }) {
-  const [placement, setPlacement] = useState<Placement>(() => (enabled ? readPlacement() : resting))
+  const [supportsDragging, setSupportsDragging] = useState(() => matchMedia(interactiveDock).matches)
+  const [placement, setPlacement] = useState(readPlacement)
+  const canDrag = enabled && supportsDragging
   const box = useRef<HTMLDivElement>(null)
   const gesture = useRef<{ kind: 'move' | 'resize'; startX: number; startY: number; from: Placement } | null>(null)
 
   useEffect(() => {
-    if (!enabled) return
-    try { localStorage.setItem(storageKey, JSON.stringify(placement)) } catch { /* storage unavailable */ }
-  }, [enabled, placement])
+    const query = matchMedia(interactiveDock)
+    const sync = () => setSupportsDragging(query.matches)
+    query.addEventListener('change', sync)
+    return () => query.removeEventListener('change', sync)
+  }, [])
 
-  // Keep the dock reachable when the window shrinks or rotates.
   useEffect(() => {
-    if (!enabled) return
-    const clampIntoView = () => {
-      const rect = box.current?.getBoundingClientRect()
-      if (!rect) return
-      const dx = rect.left < 8 ? 8 - rect.left : rect.right > innerWidth - 8 ? innerWidth - 8 - rect.right : 0
-      const dy = rect.top < 8 ? 8 - rect.top : rect.bottom > innerHeight - 8 ? innerHeight - 8 - rect.bottom : 0
-      if (dx || dy) setPlacement((current) => ({ ...current, x: current.x + dx, y: current.y + dy }))
-    }
+    if (!canDrag) return
+    try { localStorage.setItem(storageKey, JSON.stringify(placement)) } catch { /* storage unavailable */ }
+  }, [canDrag, placement])
+
+  useLayoutEffect(() => {
+    const dock = box.current
+    if (!canDrag || !dock || !dock.parentElement) return
+    const clampIntoView = () => setPlacement((current) => {
+      const next = keepInStage(dock, current)
+      return next.x === current.x && next.y === current.y && next.scale === current.scale ? current : next
+    })
     clampIntoView()
-    window.addEventListener('resize', clampIntoView)
-    return () => window.removeEventListener('resize', clampIntoView)
-  }, [enabled])
+    const observer = new ResizeObserver(clampIntoView)
+    observer.observe(dock)
+    observer.observe(dock.parentElement)
+    return () => { observer.disconnect(); gesture.current = null }
+  }, [canDrag])
 
   const start = (kind: 'move' | 'resize') => (event: PointerEvent<HTMLElement>) => {
+    if (event.button !== 0 || !event.isPrimary) return
     event.currentTarget.setPointerCapture(event.pointerId)
     gesture.current = { kind, startX: event.clientX, startY: event.clientY, from: placement }
   }
@@ -55,11 +83,11 @@ export default function DraggableDock({ enabled, className, children }: { enable
     const dx = event.clientX - current.startX
     const dy = event.clientY - current.startY
     if (current.kind === 'move') {
-      setPlacement({ ...current.from, x: current.from.x + dx, y: current.from.y + dy })
+      setPlacement(keepInStage(box.current, { ...current.from, x: current.from.x + dx, y: current.from.y + dy }))
     } else {
       // Dragging the corner outward (left/down in this layout) grows the dock.
       const delta = (-dx + dy) / 260
-      setPlacement({ ...current.from, scale: Math.min(1.7, Math.max(0.65, current.from.scale + delta)) })
+      setPlacement(keepInStage(box.current, { ...current.from, scale: Math.min(1.7, Math.max(0.65, current.from.scale + delta)) }))
     }
   }
   const end = () => { gesture.current = null }
@@ -72,10 +100,10 @@ export default function DraggableDock({ enabled, className, children }: { enable
     const change = changes[event.key]
     if (!change) return
     event.preventDefault()
-    setPlacement({ ...placement, ...change })
+    setPlacement(keepInStage(box.current, { ...placement, ...change }))
   }
 
-  if (!enabled) return <div className={className}>{children}</div>
+  if (!canDrag) return <div className={className}>{children}</div>
   return (
     <div ref={box} className={cn(className, 'draggable-dock')} style={{ translate: `${placement.x}px ${placement.y}px`, scale: String(placement.scale) }}>
       <button
@@ -87,7 +115,8 @@ export default function DraggableDock({ enabled, className, children }: { enable
         onPointerMove={move}
         onPointerUp={end}
         onPointerCancel={end}
-        onDoubleClick={() => setPlacement(resting)}
+        onLostPointerCapture={end}
+        onDoubleClick={() => setPlacement(keepInStage(box.current, resting))}
         onKeyDown={nudge}
       >
         <GripHorizontal size={18} />
@@ -101,6 +130,7 @@ export default function DraggableDock({ enabled, className, children }: { enable
         onPointerMove={move}
         onPointerUp={end}
         onPointerCancel={end}
+        onLostPointerCapture={end}
       >
         <Scaling size={14} />
       </span>

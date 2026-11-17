@@ -12,6 +12,7 @@ import type { UpdateSettingsInput } from '../../shared/api/settings'
 import { examForProfile, profileLabel } from '../../shared/lib/education'
 import { daysUntil, fa, jalaliFullDate } from '../../shared/lib/format'
 import { cn } from '../../shared/lib/utils'
+import { DateInput } from '../../components/ui/date-input'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { Switch } from '../../components/ui/switch'
@@ -93,7 +94,7 @@ export default function SettingsPanel({ profile }: { profile: UserProfile }) {
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="me-konkur">تاریخ {examForProfile(s.educationGroup, s.educationStage) ?? 'آزمون'}</Label>
-          <Input name="konkurDate" id="me-konkur" type="date" dir="ltr" defaultValue={s.konkurDate ?? ''} aria-describedby="me-konkur-jalali" onChange={(event) => setKonkurPreview(event.target.value)} />
+          <DateInput name="konkurDate" id="me-konkur" value={konkurPreview} aria-describedby="me-konkur-jalali" onChange={(event) => setKonkurPreview(event.target.value)} />
           <p id="me-konkur-jalali" className="text-xs text-muted-foreground" aria-live="polite">{konkurPreview && /^\d{4}-\d{2}-\d{2}$/.test(konkurPreview) ? `${jalaliFullDate(konkurPreview)} · ${daysUntil(konkurPreview) > 0 ? `${fa(daysUntil(konkurPreview))} روز مانده` : 'این تاریخ گذشته است'}` : 'روز آزمون را از تقویم انتخاب کن؛ معادل شمسی‌اش همین‌جا نشان داده می‌شود.'}</p>
         </div>
       </fieldset>

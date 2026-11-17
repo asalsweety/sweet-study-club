@@ -4,6 +4,8 @@ export const trackSchema = z.enum(['preinternship', 'residency', 'medical-basics
 export const providerSchema = z.enum(['national', 'authored', 'konkur', 'maz', 'ghalamchi', 'gaj', 'konkuri-nerd', 'medmcqa', 'openstax', 'other'])
 export const bankSchema = z.enum(['national', 'authored', 'weekly', 'reference'])
 export const difficultySchema = z.enum(['easy', 'medium', 'hard'])
+export const learningGradeSchema = z.enum(['grade-10', 'grade-11', 'grade-12', 'konkur'])
+export type LearningGrade = z.infer<typeof learningGradeSchema>
 const identifier = z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/)
 const text = (max: number) => z.string().trim().min(1).max(max)
 export const questionSourceSchema = z.object({
@@ -37,6 +39,7 @@ const packInputObject = z.object({
   track: trackSchema,
   bank: bankSchema,
   provider: providerSchema,
+  grade: learningGradeSchema.nullable().optional(),
   year: z.number().int().min(1300).max(1600).nullable(),
   period: z.string().trim().max(100),
   availableAt: z.iso.datetime(),
@@ -45,6 +48,7 @@ const packInputObject = z.object({
   questions: z.array(questionInputSchema).min(1).max(200),
 }).strict()
 export const importPackSchema = packInputObject.superRefine((pack, ctx) => {
+  if (pack.grade && !pack.track.startsWith('konkur')) ctx.addIssue({ code: 'custom', message: 'پایه برای مسیرهای دبیرستان و کنکور است.', path: ['grade'] })
   if (new Set(pack.questions.map((q) => q.key)).size !== pack.questions.length) ctx.addIssue({ code: 'custom', message: 'کلید سؤال‌ها باید یکتا باشد.', path: ['questions'] })
   if (pack.bank === 'national' && !['national', 'konkur'].includes(pack.provider)) ctx.addIssue({ code: 'custom', message: 'منبع بانک کشوری باید آزمون رسمی باشد.', path: ['provider'] })
   if (pack.bank === 'authored' && pack.provider !== 'authored') ctx.addIssue({ code: 'custom', message: 'منبع سؤال تألیفی را تألیفی انتخاب کنید.', path: ['provider'] })
@@ -56,17 +60,19 @@ export type Provider = z.infer<typeof providerSchema>
 
 export const packSchema = packInputObject.omit({ questions: true }).extend({
   id: z.string(), questionCount: z.number().int(), isActive: z.boolean(),
+  grade: learningGradeSchema.nullable().default(null),
   language: z.enum(['fa', 'en']).default('fa'), sourceUrl: z.url().nullable().default(null),
 })
 export type LearningPack = z.infer<typeof packSchema>
 export const catalogResponseSchema = z.object({
   packs: z.array(packSchema),
-  chapters: z.array(z.object({ packId: z.string(), track: trackSchema, subjectId: z.string(), chapter: z.string(), count: z.number().int() })),
+  chapters: z.array(z.object({ packId: z.string(), track: trackSchema, subjectId: z.string(), chapter: z.string(), difficulty: difficultySchema.optional(), count: z.number().int() })),
 })
 export const practiceFilterSchema = z.object({
   track: trackSchema,
   bank: bankSchema.optional(),
   provider: providerSchema.optional(),
+  grade: learningGradeSchema.optional(),
   packIds: z.array(identifier).max(20).default([]),
   questionIds: z.array(identifier).max(100).default([]),
   subjectIds: z.array(identifier).max(50).default([]),
@@ -92,6 +98,7 @@ export const attemptItemSchema = z.object({
   questionId: z.string(), ordinal: z.number().int(), prompt: z.string(), options: z.array(z.string()).length(4),
   subjectId: z.string(), chapter: z.string(), difficulty: difficultySchema,
   packTitle: z.string(), isSample: z.boolean(),
+  grade: learningGradeSchema.nullable().optional(),
   language: z.enum(['fa', 'en']).default('fa'), source: questionSourceSchema.nullable().default(null),
   images: questionImagesSchema,
   selectedIndex: z.number().int().nullable(), answered: z.boolean(),

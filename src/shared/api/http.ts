@@ -78,6 +78,7 @@ const persianMessages: Record<string, string> = {
   TOO_MANY_REQUESTS: 'درخواست‌های در انتظار زیاد شده است.',
   CHEER_LIMIT: 'یه کم صبر کن؛ این ساعت خیلی تشویق فرستادی.',
   ALREADY_OWNED: 'این محصول را قبلاً خریده‌ای.',
+  CHIBI_INSUFFICIENT_COINS: 'برای گرفتن این وسیله به سکه‌ی بیشتری نیاز داری.',
   PAYMENTS_UNAVAILABLE: 'پرداخت آنلاین هنوز فعال نشده است.',
   ORDER_CLOSED: 'این سفارش دیگر قابل پرداخت نیست.',
   SUBJECT_EXISTS: 'درسی با این نام داری.',
