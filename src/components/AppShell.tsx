@@ -29,7 +29,8 @@ export default function AppShell({ profile, children }: { profile: UserProfile; 
   const [paletteOpen, setPaletteOpen] = useState(false)
   const destinations = [...primaryNavigation, ...secondaryNavigation, accountNavigation, ...(profile.role === 'admin' ? [adminNavigation] : [])]
   const current = destinations.find((item) => item.path === location.pathname)?.label ?? 'باشگاه مطالعه'
-  return <div className="app-workspace" dir="rtl">
+  const hasFloatingHelper = location.pathname !== appRoutes.home
+  return <div className="app-workspace" dir="rtl" data-floating-helper={hasFloatingHelper || undefined}>
     <a className="skip-link" href="#main-content">رفتن به محتوای صفحه</a>
     <Sidebar profile={profile} />
     <div className="min-w-0 flex-1">
@@ -59,7 +60,7 @@ export default function AppShell({ profile, children }: { profile: UserProfile; 
     {/* Today already shows the full timer card. */}
     {location.pathname !== appRoutes.home && <LiveSessionCapsule className="mobile-live-capsule" />}
     <BottomNavigation onMore={() => setMenuOpen(true)} expanded={menuOpen} />
-    {!(location.pathname === appRoutes.home && timer) && (
+    {hasFloatingHelper && (
       <div className={location.pathname === appRoutes.shop ? 'contents max-sm:hidden' : 'contents'}>
         <StudyHelper key={location.pathname} />
       </div>

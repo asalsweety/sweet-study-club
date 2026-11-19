@@ -1,0 +1,47 @@
+.today-grid.today-dashboard {
+  gap: 1rem;
+}
+
+.today-page > .page-heading > :first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Clip the timer's decorative background without creating a scroll container. */
+.today-active-timer > section {
+  overflow: clip;
+}
+
+@media (width < 640px) {
+  .today-page > .page-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: .25rem .75rem;
+  }
+
+  .today-page > .page-heading > :first-child {
+    display: contents;
+  }
+
+  .today-page > .page-heading > :nth-child(2) {
+    grid-area: 1 / 2;
+  }
+
+  .today-page > .page-heading :is(h1, .page-description) {
+    grid-column: 1 / -1;
+    margin-top: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (min-width: 1280px) {
+  .today-grid.today-dashboard {
+    grid-template-areas:
+      "hero goal"
+      "metrics metrics"
+      "week parts"
+      "live parts"
+      "links parts";
+  }
+}

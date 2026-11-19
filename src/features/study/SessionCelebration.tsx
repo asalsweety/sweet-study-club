@@ -5,6 +5,7 @@ import { api } from '../../app/api'
 import { queryKeys } from '../../app/session'
 import AnimatedNumber from '../../components/AnimatedNumber'
 import AsalMood from '../../components/AsalMood'
+import StudySticker from '../../components/StudySticker'
 import { Button } from '../../components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../../components/ui/dialog'
 import { celebrate, haptic } from '../../shared/lib/confetti'
@@ -35,6 +36,7 @@ export default function SessionCelebration() {
         <div className="relative mx-auto mt-2 grid size-28 place-items-center">
           <svg aria-hidden viewBox="0 0 112 112" className="celebrate-ring absolute inset-0 text-primary/40"><circle cx="56" cy="56" r="52" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="2 9" strokeLinecap="round" /></svg>
           <span className="celebrate-badge grid size-20 place-items-center rounded-[1.8rem] bg-primary text-primary-foreground shadow-[var(--glow-primary)]"><Trophy size={38} strokeWidth={1.8} /></span>
+          <StudySticker kind="bee" className="pointer-events-none absolute -end-5 bottom-0 size-14" />
         </div>
         <DialogTitle className="mt-2 text-2xl font-extrabold">{session ? cheers[session.durationSeconds % cheers.length] : ''}</DialogTitle>
         <DialogDescription className="-mt-1">{session?.subjectName} ثبت شد{session?.rating ? <> · تمرکز <AsalMood rating={session.rating} className="inline-block w-7 align-middle" /></> : ''}</DialogDescription>

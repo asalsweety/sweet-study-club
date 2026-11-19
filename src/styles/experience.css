@@ -697,7 +697,7 @@ body::after {
   height: 2.1rem;
   border-radius: 0.8rem;
   background: var(--secondary);
-  color: var(--primary);
+  color: var(--secondary-foreground);
   font-size: 1.05rem;
 }
 
@@ -750,7 +750,7 @@ body::after {
 
 .palette-item[aria-selected="true"] {
   background: var(--secondary);
-  color: var(--primary);
+  color: var(--secondary-foreground);
 }
 
 .palette-item .palette-icon {

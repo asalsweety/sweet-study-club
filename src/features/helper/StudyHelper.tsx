@@ -14,7 +14,7 @@ function readCompact() {
   try { return localStorage.getItem(compactKey) === 'true' } catch { return false }
 }
 
-export default function StudyHelper() {
+export default function StudyHelper({ inline = false }: { inline?: boolean }) {
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
   const [compact, setCompact] = useState(readCompact)
@@ -31,7 +31,12 @@ export default function StudyHelper() {
   return (
     <Dialog.Root open={open} onOpenChange={setOpen} modal={false}>
       <Dialog.Trigger asChild>
-        <button
+        {inline ? (
+          <Button type="button" variant="outline" className="min-h-11 gap-1.5 rounded-full bg-card px-3 text-xs" aria-label="باز کردن راهنمای عسل">
+            <MessageCircle className="size-4 text-primary" aria-hidden="true" />
+            راهنمای عسل
+          </Button>
+        ) : <button
           type="button"
           className={`study-helper-position z-40 flex cursor-pointer flex-col items-center rounded-2xl focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:invisible ${compact ? 'size-12 justify-center border border-border bg-card text-primary shadow-lg' : 'w-20 sm:w-24'} transition-transform active:scale-95`}
           aria-label="باز کردن راهنمای عسل"
@@ -43,7 +48,7 @@ export default function StudyHelper() {
               <span className="rounded-full border border-border bg-card px-2 py-1 text-[10px] font-bold text-foreground shadow-sm">راهنمای عسل</span>
             </>
           )}
-        </button>
+        </button>}
       </Dialog.Trigger>
 
       <Dialog.Portal>
@@ -51,7 +56,7 @@ export default function StudyHelper() {
           <div className="flex items-center justify-between border-b border-border px-4 py-2">
             <span className="text-xs font-bold text-muted-foreground">همراه کوچیکِ مطالعه‌ات</span>
             <div className="flex items-center">
-              {!compact && (
+              {!inline && !compact && (
                 <button type="button" className="grid size-11 place-items-center rounded-xl text-muted-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring" aria-label="کوچک کردن راهنما" title="کوچک کردن راهنما" onClick={() => { changeCompact(true); setOpen(false) }}>
                   <Minimize2 size={17} aria-hidden="true" />
                 </button>
@@ -104,7 +109,7 @@ export default function StudyHelper() {
             <button type="button" className="mt-3 flex min-h-11 w-full items-center justify-between rounded-xl px-2 text-sm text-muted-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring" onClick={() => setTipIndex((current) => current === null ? 0 : (current + 1) % studyTips.length)}>
               {tip ? 'یک نکته‌ی دیگه' : 'یک نکته برای بهتر درس خوندن'}<ChevronLeft size={16} aria-hidden="true" />
             </button>
-            {compact && <button type="button" className="mt-1 min-h-11 w-full text-xs text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring" onClick={() => { changeCompact(false); setOpen(false) }}>نمایش دوباره‌ی شخصیت عسل</button>}
+            {!inline && compact && <button type="button" className="mt-1 min-h-11 w-full text-xs text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring" onClick={() => { changeCompact(false); setOpen(false) }}>نمایش دوباره‌ی شخصیت عسل</button>}
           </div>
         </Dialog.Content>
       </Dialog.Portal>

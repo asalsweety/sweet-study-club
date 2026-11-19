@@ -2,11 +2,11 @@ export const themePresetOptions = [
   {
     value: 'sweet',
     label: 'Sweet Study',
-    description: 'سبز باغ و کاغذ گرم',
+    description: 'کاغذ عسلی، صورتی و سبز ملایم',
     swatches: [
-      '#28624e',
-      '#edf1e8',
-      '#3b6ab4',
+      '#feeac7',
+      '#f7b1b0',
+      '#cad182',
     ],
   },
   {

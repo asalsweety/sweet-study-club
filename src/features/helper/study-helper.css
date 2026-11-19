@@ -11,7 +11,7 @@
 }
 
 /* Keep the last page action scrollable above the floating character. */
-.app-workspace .workspace-footer { padding-bottom: 15rem; }
+.app-workspace[data-floating-helper] .workspace-footer { padding-bottom: 15rem; }
 
 .asal-character { position: relative; display: inline-block; flex-shrink: 0; overflow: hidden; }
 .asal-character-sheet { position: absolute; inset: 0 auto auto 0; width: 300%; height: 200%; max-width: none; }
@@ -34,5 +34,5 @@
 @media (min-width: 1024px) {
   .study-helper-position { bottom: max(1.5rem, env(safe-area-inset-bottom)); }
   .study-helper-panel { max-height: calc(100dvh - 3rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
-  .app-workspace .workspace-footer { padding-bottom: 11rem; }
+  .app-workspace[data-floating-helper] .workspace-footer { padding-bottom: 11rem; }
 }

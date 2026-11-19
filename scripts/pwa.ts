@@ -15,8 +15,8 @@ export function pwaPlugins() {
       scope: '/',
       display: 'standalone',
       orientation: 'portrait',
-      background_color: '#f6f5f0',
-      theme_color: '#28624e',
+      background_color: '#feeac7',
+      theme_color: '#feeac7',
       categories: ['education', 'productivity'],
       icons: [
         { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

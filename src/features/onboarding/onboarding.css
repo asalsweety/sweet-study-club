@@ -1,0 +1,118 @@
+.onboarding.onboarding-welcome {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+  background: var(--background);
+}
+
+.onboarding-welcome .onboarding-card {
+  width: min(42rem, 100%);
+  min-width: 0;
+  border-color: var(--border);
+  background: var(--card);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: var(--elev-2);
+}
+
+.onboarding-top {
+  min-height: 2.75rem;
+  margin-block-end: 1.25rem;
+}
+
+.onboarding-progress {
+  display: flex;
+  gap: .375rem;
+}
+
+.onboarding-progress span {
+  width: .625rem;
+  height: .375rem;
+  border-radius: 999px;
+  background: var(--muted);
+}
+
+.onboarding-progress [data-complete] {
+  background: color-mix(in oklab, var(--primary) 36%, var(--card));
+}
+
+.onboarding-progress [data-current] {
+  width: 1.5rem;
+  background: var(--primary);
+}
+
+.onboarding-intro {
+  display: grid;
+  justify-items: center;
+  gap: .875rem;
+  text-align: center;
+}
+
+.onboarding-welcome .eyebrow {
+  color: var(--muted-foreground);
+}
+
+.onboarding-mascot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 6.75rem;
+  height: 6.75rem;
+  border: 1px solid var(--border);
+  border-radius: 2rem;
+  background: color-mix(in oklab, var(--secondary) 45%, var(--card));
+}
+
+.onboarding-bee {
+  position: absolute;
+  inset: auto auto -.25rem -.375rem;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: .25rem;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--card);
+}
+
+.onboarding-icon {
+  background: color-mix(in oklab, var(--primary) 12%, var(--card));
+  color: var(--foreground);
+}
+
+.onboarding-feature,
+.onboarding-welcome .onboarding-choice,
+.onboarding-pill {
+  background: color-mix(in oklab, var(--background) 56%, var(--card));
+}
+
+.onboarding-pill {
+  min-height: 2.75rem;
+  border: 1px solid var(--border);
+  transition: border-color var(--dur-quick) ease, background-color var(--dur-quick) ease;
+}
+
+.onboarding-welcome .onboarding-choice.is-selected,
+.onboarding-pill:is([aria-checked="true"], [aria-pressed="true"]) {
+  border-color: color-mix(in oklab, var(--secondary-foreground) 38%, var(--secondary));
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  box-shadow: none;
+}
+
+.onboarding-choice-hint {
+  color: var(--muted-foreground);
+}
+
+.onboarding-choice.is-selected .onboarding-choice-hint {
+  color: var(--secondary-foreground);
+}
+
+.onboarding-welcome .onboarding-action[data-slot="button"] {
+  background-image: none;
+  box-shadow: none;
+}
+
+.onboarding-welcome .onboarding-action::after {
+  display: none;
+}
