@@ -1,7 +1,8 @@
 import PageHeading from '../components/PageHeading'
 import QueryError from '../components/QueryError'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Receipt, ShoppingBag } from 'lucide-react'
+import { Receipt } from 'lucide-react'
 import { api } from '../app/api'
 import { queryKeys } from '../app/session'
 import { formatToman, jalaliShort } from '../shared/lib/format'
@@ -9,21 +10,53 @@ import PlanRequestsPanel from '../features/shop/PlanRequestsPanel'
 import ChibiStudio from '../features/shop/ChibiStudio'
 
 const orderStatus = { pending: 'در انتظار پرداخت', paid: 'پرداخت شد', cancelled: 'لغو شد', failed: 'ناموفق' } as const
+const stickerSheets = [
+  ['sheet-bees', 'زنبورهای باشگاه'],
+  ['sheet-garden', 'گل‌ها، زنبورها و قلب‌ها'],
+  ['sheet-tape', 'نوارهای افقی'],
+  ['sheet-tape-vertical', 'نوارهای عمودی'],
+  ['sheet-girl', 'حالت‌های چیبی دختر'],
+  ['sheet-boy', 'حالت‌های چیبی پسر'],
+] as const
 
+const individualStickers = [
+  { label: 'زنبورها', files: Array.from({ length: 13 }, (_, i) => `cute-bee-${i + 1}`) },
+  { label: 'گل‌ها', files: Array.from({ length: 12 }, (_, i) => `cute-flower-${i + 1}`) },
+  { label: 'قلب‌ها', files: Array.from({ length: 13 }, (_, i) => `cute-heart-${i + 1}`) },
+  { label: 'نوارها', files: [1, 2, 3].flatMap(i => [`cute-strip-${i}`, `cute-strip-${i}-v`]) },
+  { label: 'باشگاه', files: ['bee', 'books', 'honey', 'library', 'cottage', ...[1, 2, 3, 4].map(i => `bee-sticker-${i}`)] },
+]
 export default function ShopPage() {
+  const [collection, setCollection] = useState('')
   const orders = useQuery({ queryKey: queryKeys.orders, queryFn: api.shop.orders })
 
   return (
-    <div className="flex flex-col gap-5">
-      <PageHeading title="فروشگاه باشگاه" description="با مطالعه سکه جمع کن و اتاق چیبی‌ات را بچین." />
-      <section className="surface flex items-start gap-3 p-4 sm:p-6" aria-labelledby="shop-launch">
-        <ShoppingBag size={22} className="mt-1 shrink-0 text-primary" aria-hidden />
+    <div className="shop-reference flex flex-col gap-5">
+      <PageHeading eyebrow="برای قدم بعدی" title="فروشگاه باشگاه" description="با مطالعه سکه جمع کن و اتاق چیبی‌ات را بچین." />
+      <section className="shop-launch surface relative flex items-center gap-3 p-4 sm:p-6" aria-labelledby="shop-launch">
+        <img src="/images/figma/shop-asal.webp" alt="" width={120} height={128} className="shop-asal hidden" />
         <div>
           <h2 id="shop-launch" className="text-lg font-bold">فروشگاه به‌زودی باز می‌شود</h2>
           <p className="mt-1 text-sm text-muted-foreground">به‌زودی محصولات مورد علاقه‌ی شما را اضافه می‌کنیم.</p>
         </div>
       </section>
       <ChibiStudio />
+      <details className="surface p-4 sm:p-6">
+        <summary className="min-h-11 cursor-pointer rounded-lg py-2 text-base font-bold focus-visible:outline-2 focus-visible:outline-ring">برگه‌های برچسب</summary>
+        <div className="grid grid-cols-2 gap-3 pt-2 md:grid-cols-3">
+          {stickerSheets.map(([file, label]) => {
+            const src = `/images/study-stickers/${file}.webp`
+            return <a key={file} href={src} className="block rounded-xl border border-border bg-muted/40 p-2 text-center text-sm font-semibold hover:border-ring focus-visible:outline-2 focus-visible:outline-ring">
+              <img src={src} alt="" width={864} height={864} loading="lazy" decoding="async" className="mb-2 aspect-square h-auto w-full rounded-lg object-contain" />
+              {label}
+            </a>
+          })}
+        </div>
+        <label className="mt-5 flex flex-wrap items-center gap-3 text-sm font-bold">برچسب‌های تکی
+          <select value={collection} onChange={e => setCollection(e.target.value)} className="rounded-lg border border-border bg-card px-3 py-2"><option value="">انتخاب مجموعه</option>{individualStickers.map(group => <option key={group.label}>{group.label}</option>)}</select>
+        </label>
+        {collection && <div className="mt-3 grid grid-cols-4 gap-3 sm:grid-cols-8">{individualStickers.find(group => group.label === collection)?.files.map((name, index) => <a key={name} href={`/images/study-stickers/${name}.webp`}><img src={`/images/study-stickers/${name}.webp`} alt={`${collection} ${index + 1}`} width={144} height={144} loading="lazy" className="aspect-square w-full object-contain" /></a>)}</div>}
+      </details>
       {orders.isError && <QueryError error={orders.error} retry={() => void orders.refetch()} />}
 
       <PlanRequestsPanel />

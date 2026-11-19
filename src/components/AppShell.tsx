@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Flower2, Lock, Menu, Search } from 'lucide-react'
+import { ArrowLeft, Flower2, Lock, Menu, Moon, Search, Sun } from 'lucide-react'
 import { api } from '../app/api'
 import { queryKeys } from '../app/session'
 import { useState, type ReactNode } from 'react'
@@ -7,10 +7,12 @@ import { Link, useLocation } from 'react-router-dom'
 import { appRoutes } from '../app/navigation/routes'
 import type { UserProfile } from '../shared/api/profile'
 import BottomNavigation from './BottomNavigation'
+import Avatar from './Avatar'
 import Sidebar from './Sidebar'
+import { useTheme } from '../features/theme/useTheme'
+import './workspace-reference.css'
 import { accountNavigation, adminNavigation, primaryNavigation, secondaryNavigation } from '../app/navigation/items'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog'
-import Avatar from './Avatar'
 import CommandPalette from './CommandPalette'
 import LiveSessionCapsule from './LiveSessionCapsule'
 import StudyHelper from '../features/helper/StudyHelper'
@@ -27,27 +29,26 @@ export default function AppShell({ profile, children }: { profile: UserProfile; 
   const timer = useQuery({ queryKey: queryKeys.timer, queryFn: api.timer.get }).data
   const [menuOpen, setMenuOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [guideOpen, setGuideOpen] = useState(false)
+  const theme = useTheme()
   const destinations = [...primaryNavigation, ...secondaryNavigation, accountNavigation, ...(profile.role === 'admin' ? [adminNavigation] : [])]
-  const current = destinations.find((item) => item.path === location.pathname)?.label ?? 'باشگاه مطالعه'
-  const hasFloatingHelper = location.pathname !== appRoutes.home
-  return <div className="app-workspace" dir="rtl" data-floating-helper={hasFloatingHelper || undefined}>
+  return <div className="app-workspace" data-page={location.pathname} dir="rtl">
     <a className="skip-link" href="#main-content">رفتن به محتوای صفحه</a>
     <Sidebar profile={profile} />
     <div className="min-w-0 flex-1">
       <header className="workspace-header">
-        <div className="flex min-w-0 items-center gap-3">
-          <button type="button" className="grid size-11 place-items-center rounded-xl transition-transform active:scale-95 lg:hidden" aria-label="همۀ بخش‌ها" onClick={() => setMenuOpen(true)}><Menu size={20} /></button>
-          <span className="hidden text-xs text-muted-foreground sm:inline">باشگاه مطالعه</span><span aria-hidden className="hidden text-border sm:inline">/</span>
-          <span key={current} className="truncate text-sm font-bold [animation:rise-in_420ms_var(--ease-spring)_backwards]">{current}</span>
-        </div>
+        <button type="button" className="workspace-menu" aria-label="همۀ بخش‌ها" onClick={() => setMenuOpen(true)}>
+          {location.pathname === appRoutes.home ? <><img src="/images/figma/club-logo.webp" width={41} height={41} alt="" className="dark:hidden" /><Flower2 className="hidden dark:block" size={24} /></> : <Menu size={20} />}
+        </button>
         <div className="flex items-center gap-2">
-          <LiveSessionCapsule className="header-live" />
-          <button type="button" className="header-chip" onClick={() => setPaletteOpen(true)} aria-label="جست‌وجو و فرمان‌ها" aria-keyshortcuts="Control+K Meta+K /">
-            <Search size={16} />
-            <span className="hidden md:inline">جست‌وجو و فرمان‌ها</span>
-            <span className="hidden items-center gap-1 md:flex" dir="ltr"><span className="kbd">{isMac ? '⌘' : 'Ctrl'}</span><span className="kbd">K</span></span>
+          <button type="button" className="header-chip workspace-search" onClick={() => setPaletteOpen(true)} aria-label="جست‌وجو و فرمان‌ها" aria-keyshortcuts="Control+K Meta+K /">
+            <Search size={16} /><span className="hidden sm:inline">جست‌وجو و فرمان‌ها</span><span className="sm:hidden">جست‌وجو</span><kbd dir="ltr">{isMac ? '⌘K' : 'Ctrl K'}</kbd>
           </button>
-          <Link to={appRoutes.profile} viewTransition className="flex min-h-11 items-center gap-2 rounded-xl px-2 transition-colors hover:bg-muted" aria-label="حساب و تنظیمات"><span className="hidden text-xs text-muted-foreground sm:inline">{profile.displayName}</span><Avatar name={profile.displayName} url={profile.avatarUrl} size="sm" /></Link>
+          <Link to={appRoutes.profile} aria-label="حساب و تنظیمات" className="grid size-11 place-items-center rounded-full lg:hidden"><Avatar name={profile.displayName} url={profile.avatarUrl} size="sm" /></Link>
+        </div>
+        <div className="workspace-tools">
+          <button type="button" className="header-chip" onClick={() => theme.setMode(theme.mode === 'dark' ? 'light' : 'dark')}>{theme.mode === 'dark' ? <Sun size={14} /> : <Moon size={14} />}{theme.mode === 'dark' ? 'حالت روشن' : 'حالت تاریک'}</button>
+          <LiveSessionCapsule className="header-live" />
         </div>
       </header>
       <main id="main-content" tabIndex={-1} className="workspace-content">
@@ -60,12 +61,8 @@ export default function AppShell({ profile, children }: { profile: UserProfile; 
     {/* Today already shows the full timer card. */}
     {location.pathname !== appRoutes.home && <LiveSessionCapsule className="mobile-live-capsule" />}
     <BottomNavigation onMore={() => setMenuOpen(true)} expanded={menuOpen} />
-    {hasFloatingHelper && (
-      <div className={location.pathname === appRoutes.shop ? 'contents max-sm:hidden' : 'contents'}>
-        <StudyHelper key={location.pathname} />
-      </div>
-    )}
-    <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} isAdmin={profile.role === 'admin'} />
+    <StudyHelper key={location.pathname} open={guideOpen} onOpenChange={setGuideOpen} />
+    <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onOpenHelper={() => setGuideOpen(true)} isAdmin={profile.role === 'admin'} />
     <Dialog open={menuOpen} onOpenChange={setMenuOpen}><DialogContent dir="rtl" className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>فضای تو</DialogTitle><DialogDescription>همۀ بخش‌های باشگاه، یک‌جا.</DialogDescription></DialogHeader><nav aria-label="همۀ بخش‌ها" className="stagger grid gap-1">{destinations.map(({ path, label, icon: Icon }) => <Link key={path} to={path} viewTransition onClick={() => setMenuOpen(false)} aria-current={location.pathname === path ? 'page' : undefined} className="nav-item"><Icon size={19} /><span className="flex-1">{label}</span><ArrowLeft size={16} /></Link>)}</nav></DialogContent></Dialog>
   </div>
 }

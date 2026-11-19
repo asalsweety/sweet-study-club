@@ -1,0 +1,26 @@
+.practice-setup { position: relative; }
+.practice-honey-art { width: 134px; height: 134px; left: -7px; top: -5px; transform: scaleX(-1); }
+.practice-bank-types { grid-column: 1 / -1; }
+@media (min-width: 1280px) {
+  .learning-workspace { display: flex; flex-direction: column; gap: 20px; }
+  .learning-stats { order: 1; }
+  .learning-nav { flex-wrap: nowrap; border: 1px solid var(--border); padding: 4px; border-radius: 14px; background: var(--muted); gap: 0; min-height: 45px; }
+  .learning-nav nav { flex: 1; }
+  .learning-nav nav button { flex: 1; min-height: 35px; margin: 0; border: 0; border-radius: 10px; }
+  .learning-nav nav button[aria-current="page"] { background: var(--card); color: var(--foreground); }
+  .learning-nav nav svg, .learning-nav label span { display: none; }
+  .learning-nav label { margin: 0; width: 18%; }
+  .learning-nav label select { height: 35px; border: 0; background: transparent; text-align: center; }
+  .practice-bank-types { height: auto; min-height: 27px; align-items: center; }
+  .practice-bank-types button { min-height: 27px; border-radius: 20px; }
+  .practice-subjects { grid-column: 1; grid-row: 2; }
+  .practice-subjects > div:first-child { display: none; }
+  .practice-subject-list { grid-template-columns: 1fr; }
+  .practice-subject-list button { min-height: 76px; justify-content: center; border-radius: 16px; background: var(--background); }
+  .practice-subject-list button[aria-pressed="true"] { background: var(--secondary); color: var(--secondary-foreground); }
+  .practice-subject-list button > :first-child { display: none; }
+  .practice-subject-list button > span { margin-top: 0; }
+  .practice-subject-list button > svg { inset: auto auto 28px 18px; }
+  .practice-setup { min-height: 560px; align-content: start; }
+  .practice-setup > div:first-child > span:first-child { display: none; }
+}

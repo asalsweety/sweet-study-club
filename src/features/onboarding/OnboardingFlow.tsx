@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, Check, LoaderCircle, Sparkles, Timer, UsersRound } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, LoaderCircle, Sparkles } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../../app/api'
 import { queryKeys } from '../../app/session'
 import StudySticker from '../../components/StudySticker'
@@ -19,11 +19,11 @@ import '../helper/study-helper.css'
 import './onboarding.css'
 
 const intro = [
-  { icon: Timer, title: 'تمرکز، با ریتم خودت', body: 'یک جلسه شروع کن تا عسل کنارت در اتاق پیکسلی‌اش درس بخواند. مطالعۀ آزاد، پومودورو یا پارت‌های روزانۀ باشگاه.' },
-  { icon: CalendarDays, title: 'یک روز قابل انجام', body: 'کارهای امروز و هفته را بچین، یادآور بگذار و ببین هر روز چقدر جلو رفتی.' },
-  { icon: BookOpen, title: 'یادگیری مخصوص رشتۀ تو', body: 'بانک سؤال، آزمون، مرور و دستیار هوشمند؛ همه بر اساس مسیری که الان انتخاب می‌کنی.' },
-  { icon: UsersRound, title: 'کنار هم، بهتر', body: 'دوستانت را اضافه کن، ببین چه کسی همین الان درس می‌خواند و تشویقش کن.' },
-]
+  { sticker: 'bee-sticker-3', title: 'تمرکز، با ریتم خودت', body: 'یک جلسه شروع کن تا چیبی‌ات کنارت در اتاق پیکسلی درس بخواند. مطالعۀ آزاد، پومودورو یا پارت‌های روزانۀ باشگاه.' },
+  { sticker: 'bee-sticker-2', title: 'یک روز قابل انجام', body: 'کارهای امروز و هفته را بچین، یادآور بگذار و ببین هر روز چقدر جلو رفتی.' },
+  { sticker: 'bee-sticker-1', title: 'یادگیری مخصوص رشتۀ تو', body: 'بانک سؤال، آزمون، مرور و دستیار هوشمند؛ همه بر اساس مسیری که الان انتخاب می‌کنی.' },
+  { sticker: 'bee-sticker-4', title: 'کنار هم، بهتر', body: 'دوستانت را اضافه کن، ببین چه کسی همین الان درس می‌خواند و تشویقش کن.' },
+] as const
 
 const dailyGoals = [60, 120, 180, 240, 300, 360]
 
@@ -35,7 +35,10 @@ const dailyGoals = [60, 120, 180, 240, 300, 360]
 export default function OnboardingFlow({ settings, editing = false }: { settings: UserSettings; editing?: boolean }) {
   const client = useQueryClient()
   const navigate = useNavigate()
-  const [step, setStep] = useState(editing ? 1 : 0)
+  const [params] = useSearchParams()
+  const replay = editing && params.get('tour') === '1'
+  const [currentStep, setStep] = useState(editing ? 1 : 0)
+  const step = replay ? 0 : currentStep
   const [group, setGroup] = useState<EducationGroupId | null>(settings.educationGroup)
   const [stage, setStage] = useState<string | null>(settings.educationStage)
   const [goals, setGoals] = useState<StudyGoal[]>(settings.studyGoals.length ? settings.studyGoals : ['exam', 'habit'])
@@ -78,9 +81,9 @@ export default function OnboardingFlow({ settings, editing = false }: { settings
     <main dir="rtl" className="onboarding onboarding-welcome">
       <div className="onboarding-card">
         <header className="onboarding-top flex items-center justify-between gap-3">
-          <div className="onboarding-progress" role="progressbar" aria-label="پیشرفت راه‌اندازی" aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={position + 1}>
+          {!replay && <div className="onboarding-progress" role="progressbar" aria-label="پیشرفت راه‌اندازی" aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={position + 1}>
             {steps.map((id, index) => <span key={id} data-complete={index < position || undefined} data-current={index === position || undefined} />)}
-          </div>
+          </div>}
           {step > (editing ? 1 : 0) && <button type="button" onClick={back} className="flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm text-muted-foreground transition-colors hover:bg-muted"><ArrowRight size={16} />قبلی</button>}
         </header>
 
@@ -92,8 +95,11 @@ export default function OnboardingFlow({ settings, editing = false }: { settings
             </div>
             <div><p className="eyebrow">به باشگاه مطالعه خوش آمدی</p><h1 className="mt-1 text-3xl">سلام! من عسلم</h1><p className="mt-1 text-sm leading-7 text-muted-foreground">قبل از شروع، بگذار نشانت بدهم اینجا چطور کار می‌کند.</p></div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">{intro.map(({ icon: Icon, title, body }) => <div key={title} className="onboarding-feature flex gap-3 rounded-2xl border border-border p-4"><span className="onboarding-icon grid size-10 shrink-0 place-items-center rounded-xl"><Icon size={19} /></span><div><p className="text-sm font-bold">{title}</p><p className="mt-1 text-xs leading-6 text-muted-foreground">{body}</p></div></div>)}</div>
-          <Button size="lg" className="onboarding-action h-13 rounded-2xl" onClick={next}>بزن بریم<ArrowLeft /></Button>
+          <div className="grid gap-3 sm:grid-cols-2">{intro.map(({ sticker, title, body }) => <div key={title} className="onboarding-feature flex gap-3 rounded-2xl border border-border p-4"><StudySticker kind={sticker} className="size-10 shrink-0" /><div><p className="text-sm font-bold">{title}</p><p className="mt-1 text-xs leading-6 text-muted-foreground">{body}</p></div></div>)}</div>
+          {replay
+            ? <><Button size="lg" className="onboarding-action h-13 rounded-2xl" onClick={() => navigate('/', { replace: true })}>بازگشت به باشگاه<ArrowLeft /></Button>
+                <Button variant="outline" onClick={() => navigate('/welcome', { replace: true })}>ویرایش مسیر تحصیلی</Button></>
+            : <Button size="lg" className="onboarding-action h-13 rounded-2xl" onClick={next}>بزن بریم<ArrowLeft /></Button>}
         </section>}
 
         {step === 1 && <section key="group" className="grid gap-5">

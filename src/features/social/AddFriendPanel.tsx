@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Copy, Link2, Share2, UserPlus } from 'lucide-react'
+import { Link2, Share2, UserPlus } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { api } from '../../app/api'
 import { queryKeys, useSettings } from '../../app/session'
@@ -41,6 +41,7 @@ export default function AddFriendPanel() {
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
+    if (code.trim().length < 6 || add.isPending) return
     setNotice(null)
     add.mutate()
   }
@@ -48,36 +49,25 @@ export default function AddFriendPanel() {
   const myCode = settings.data?.friendCode
 
   return (
-    <section className="glass rise flex flex-col gap-4 rounded-2xl p-5 sm:p-6">
+    <section className="club-panel flex min-h-[265px] flex-col gap-3">
       <h2 className="flex items-center gap-2 text-lg font-bold">
         <UserPlus size={19} className="text-primary" /> افزودن دوست
       </h2>
 
-      <div className="flex items-center justify-between gap-3 rounded-2xl bg-primary p-4 text-primary-foreground ">
-        <div>
-          <p className="text-xs opacity-80">کد دوستی تو</p>
-          <p className="font-mono text-2xl font-bold tracking-[0.2em]" dir="ltr">{myCode ?? '••••••••'}</p>
-        </div>
-        <Button
-          size="icon"
-          variant="secondary"
-          aria-label="کپی کد"
-          disabled={!myCode}
-          onClick={() => myCode && void navigator.clipboard.writeText(myCode).then(() => setNotice('کد کپی شد.'))}
-          className="rounded-xl bg-white/90 text-foreground hover:bg-white"
-        >
-          <Copy size={16} />
-        </Button>
-      </div>
+      <button type="button" className="self-start rounded text-start text-xs font-bold text-primary hover:underline"
+        disabled={!myCode} onClick={() => myCode && void navigator.clipboard.writeText(myCode).then(() => setNotice('کد کپی شد.')).catch(() => setNotice(myCode))}>
+        کد دوستی تو: <bdi>{myCode ?? '…'}</bdi> · کپی کد
+      </button>
 
+      <label htmlFor="friend-code" className="text-xs font-bold">کد دوستی دوستت</label>
       <form onSubmit={submit} className="flex gap-2">
-        <Input
+        <Input id="friend-code"
           value={code}
           onChange={(event) => setCode(event.target.value)}
-          placeholder="کد دوستت"
+          placeholder="مثلاً SARA1094"
           dir="ltr"
           maxLength={12}
-          className="font-mono uppercase tracking-widest"
+          className="h-11 text-right uppercase"
           aria-label="کد دوستی دوستت"
         />
         <Button type="submit" disabled={code.trim().length < 6 || add.isPending} className="rounded-xl font-bold">

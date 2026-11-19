@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, BookOpen, CalendarDays, Eye, EyeOff, Flower2, LoaderCircle, Sparkles, Timer, UsersRound } from 'lucide-react'
+import { ArrowLeft, BookOpen, CalendarDays, Eye, EyeOff, LoaderCircle, Sparkles, Timer, UsersRound } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { auth } from '../../app/auth'
 import { replaceSession } from '../../app/session'
+import StudySticker from '../../components/StudySticker'
 import { ApiClientError } from '../../shared/api/api-client-error'
 import { errorMessage } from '../../shared/api/http'
 import { Button } from '../../components/ui/button'
@@ -71,7 +72,7 @@ export default function AuthScreen() {
   return <main dir="rtl" className="auth-layout">
     <section className="auth-form-side">
       <a href="/" className="brand-lockup [animation:fade-in_600ms_ease-out_backwards]" aria-label="Sweet Study Club">
-        <span className="brand-mark shadow-[var(--glow-primary)]"><Flower2 size={24} /></span>
+        <span className="brand-mark shadow-[var(--glow-primary)]"><StudySticker kind="bee" className="size-8" /></span>
         <span dir="ltr">sweet study<span className="block text-[10px] font-medium tracking-[0.24em] text-muted-foreground">A LITTLE EVERY DAY</span></span>
       </a>
       <div className="auth-mobile-art" aria-hidden>

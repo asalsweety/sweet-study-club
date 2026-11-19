@@ -2,7 +2,8 @@ import PageHeading from '../components/PageHeading'
 import QueryError from '../components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Bell, ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { api } from '../app/api'
 import { queryKeys } from '../app/session'
 import type { PlannerItem } from '../shared/api/planner'
@@ -22,6 +23,14 @@ export default function PlannerPage() {
   const [selected, setSelected] = useState(today)
   const [anchor, setAnchor] = useState(() => addDays(today, -tehranClock(Date.now()).weekday))
   const [editing, setEditing] = useState<PlannerItem | 'new' | null>(null)
+  const [params, setParams] = useSearchParams()
+  useEffect(() => {
+    if (params.get('add') !== '1') return
+    setSelected(today)
+    setAnchor(addDays(today, -tehranClock(Date.now()).weekday))
+    setEditing('new')
+    setParams(current => { current.delete('add'); return current }, { replace: true })
+  }, [params, setParams, today])
   const from = anchor
   const to = addDays(anchor, 34)
   const key = queryKeys.planner(from, to)

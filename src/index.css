@@ -13,8 +13,6 @@
   --foreground: #050315;
   --card: #fff8eb;
   --card-foreground: var(--foreground);
-  --popover: var(--card);
-  --popover-foreground: var(--foreground);
   --primary: #f7b1b0;
   --primary-foreground: var(--foreground);
   --primary-ink: #9e3543;
@@ -29,23 +27,16 @@
   --border: #e8d2aa;
   --input: #aa845d;
   --ring: var(--primary-ink);
-  --chart-1: #cb606d;
   --chart-2: #729046;
   --chart-3: #9e6308;
   --chart-4: #8c6a97;
   --chart-5: #9e3543;
   --sidebar: var(--card);
-  --sidebar-foreground: var(--foreground);
-  --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-accent: var(--secondary);
   --sidebar-accent-foreground: var(--secondary-foreground);
-  --sidebar-border: var(--border);
-  --sidebar-ring: var(--ring);
   --success: #4b6e24;
   --success-foreground: #ffffff;
   --warning: #9e6308;
-  --warning-foreground: #ffffff;
   /* Shared visual roles keep legacy feature screens, exported reports, and
      overlays aligned with every TweakCN palette in both color modes. */
   --primary-gradient: linear-gradient(var(--primary), var(--primary));
@@ -59,7 +50,6 @@
     var(--ring),
     var(--primary)
   );
-  --overlay: color-mix(in oklab, black 52%, transparent);
   --success-soft: color-mix(
     in oklab,
     var(--success) 18%,
@@ -95,24 +85,8 @@
     var(--muted-foreground) 58%,
     var(--card)
   );
-  --brand-wash: color-mix(
-    in oklab,
-    var(--primary) 12%,
-    var(--background)
-  );
-  --brand-wash-strong: color-mix(
-    in oklab,
-    var(--chart-4) 22%,
-    var(--background)
-  );
-  --inset-highlight: color-mix(in oklab, white 42%, transparent);
   /* Transitional aliases keep older feature panels themeable while they move
      onto the shadcn primitives. They intentionally derive from semantic tokens. */
-  --surface: var(--card);
-  --surface-solid: var(--card);
-  --text: var(--foreground);
-  --primary-dark: color-mix(in oklab, var(--primary) 76%, black);
-  --soft: var(--secondary);
   --shadow: color-mix(in oklab, var(--foreground) 12%, transparent);
 }
 
@@ -123,8 +97,6 @@
   --foreground: #feeac7;
   --card: #171333;
   --card-foreground: var(--foreground);
-  --popover: #201b3f;
-  --popover-foreground: var(--foreground);
   --primary: #f7b1b0;
   --primary-foreground: #050315;
   --primary-ink: var(--primary);
@@ -139,7 +111,6 @@
   --border: #322b59;
   --input: #71669b;
   --ring: var(--primary-ink);
-  --chart-1: #f7b1b0;
   --chart-2: #cad182;
   --chart-3: #ffe9ae;
   --chart-4: #b5a0dc;
@@ -150,12 +121,6 @@
   --success: #cad182;
   --success-foreground: #050315;
   --warning: #ffe9ae;
-  --warning-foreground: #050315;
-  --surface: color-mix(in oklab, var(--card) 90%, transparent);
-  --surface-solid: var(--card);
-  --text: var(--foreground);
-  --primary-dark: var(--primary);
-  --soft: var(--secondary);
   --shadow: color-mix(in oklab, black 38%, transparent);
 }
 
@@ -171,8 +136,6 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
@@ -186,23 +149,16 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
   --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
-  --color-warning-foreground: var(--warning-foreground);
   --radius-sm: calc(var(--radius) - 0.375rem);
   --radius-md: calc(var(--radius) - 0.25rem);
   --radius-lg: var(--radius);
@@ -476,13 +432,9 @@ select {
 .auth-form-side { display: flex; flex-direction: column; align-items: flex-start; padding: 2rem clamp(1.5rem, 5vw, 6rem); }
 .auth-form-wrap { width: 100%; max-width: 26rem; margin: auto; padding: 3rem 0 1rem; }
 .auth-story { display: none; }
-.dashboard-focus { padding: clamp(1.5rem, 3vw, 2.5rem); background: var(--secondary); border: 1px solid color-mix(in oklab, var(--primary) 16%, var(--border)); border-radius: 1.5rem; }
 .quick-link { display: flex; gap: 1rem; align-items: center; border-bottom: 1px solid var(--border); padding: 1.1rem 0; }
 .quick-link:last-child { border-bottom: 0; }
 @media (hover: hover) and (pointer: fine) { .quick-link:hover { color: var(--primary-ink); } }
-.metric-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--border); border-radius: 1.25rem; background: var(--card); }
-.metric-strip > * { padding: 1.25rem; }
-.metric-strip > * + * { border-inline-start: 1px solid var(--border); }
 .section-tabs { display: flex; flex-wrap: wrap; gap: .4rem; padding: .35rem; width: fit-content; border: 1px solid var(--border); background: var(--card); border-radius: .9rem; }
 .section-tabs a, .section-tabs button { display: flex; align-items: center; justify-content: center; gap: .5rem; min-height: 2.65rem; padding: .5rem 1rem; font-size: .8rem; color: var(--muted-foreground); border-radius: .6rem; }
 .section-tabs [aria-current="page"], .section-tabs [aria-pressed="true"] { color: var(--secondary-foreground); background: var(--secondary); font-weight: 700; }
@@ -506,7 +458,6 @@ button:disabled { cursor: not-allowed; }
 @media (max-width: 639px) {
   .workspace-header { height: 4rem; }
   .workspace-content { padding-top: 1.5rem; }
-  .metric-strip > * { padding: 1rem .65rem; }
   .section-tabs { width: 100%; }
   .section-tabs > * { flex: 1; padding-inline: .5rem; }
   .auth-form-side > .brand-lockup { font-size: 1.1rem; }

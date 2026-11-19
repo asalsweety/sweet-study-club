@@ -2,86 +2,42 @@ import QueryError from '../../components/QueryError'
 import { Maximize2, Pause, Play, Square } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../../app/navigation/routes'
-import { useChibi, useSettings } from '../../app/session'
-import PixelStudyScene from '../focus/PixelStudyScene'
-import { tehranClock } from '../../shared/lib/tehran'
+import TodayStudyRoom from '../focus/TodayStudyRoom'
 import { fa, formatClock } from '../../shared/lib/format'
 import { Button } from '../../components/ui/button'
 import ClockText from '../../components/ClockText'
 import { elapsedSecondsOf, pomodoroRemaining, useNow, type useStudyTimer } from './useStudyTimer'
 
-type ActiveTimerCardProps = {
-  timer: ReturnType<typeof useStudyTimer>
-  onStop: () => void
-}
-
+type ActiveTimerCardProps = { timer: ReturnType<typeof useStudyTimer>; onStop: () => void }
 const modeLabels = { free: 'مطالعه‌ی آزاد', scheduled: 'پارت برنامه', pomodoro: 'پومودورو' } as const
 
 export default function ActiveTimerCard({ timer, onStop }: ActiveTimerCardProps) {
   const state = timer.timer
   const now = useNow(state?.timerStatus === 'running' || state?.pomodoro ? 1000 : null)
-  const settings = useSettings()
-  const chibi = useChibi(Boolean(state))
   if (!state) return null
-  const hour = Math.floor(tehranClock(now).minuteOfDay / 60)
   const elapsed = elapsedSecondsOf(state, now)
   const pomodoro = pomodoroRemaining(state, now)
   const running = state.timerStatus === 'running'
   const sceneState = running ? 'studying' : pomodoro?.phase === 'break' ? 'break' : 'paused'
-
-  return (
-    <section className="relative isolate min-w-0 overflow-hidden rounded-[1.75rem] bg-[linear-gradient(135deg,color-mix(in_oklab,var(--primary)_88%,white),var(--primary)_45%,color-mix(in_oklab,var(--primary)_70%,var(--chart-4)))] p-4 text-primary-foreground shadow-[var(--glow-primary)] [animation:rise-in_600ms_var(--ease-spring)_backwards] sm:p-8">
-      <div aria-hidden className="orb -left-16 -top-16 size-56 bg-white/20" />
-      <div aria-hidden className="orb -bottom-24 right-1/4 size-48 bg-white/10 [animation-delay:-3s]" />
-      {running && <div aria-hidden className="absolute inset-x-0 bottom-0 h-1 overflow-hidden bg-primary-foreground/10"><div className="h-full w-1/3 rounded-full bg-primary-foreground/50 [animation:timer-sweep_2.6s_var(--ease-in-out)_infinite]" /></div>}
-      <div className="relative grid grid-cols-1 items-center gap-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,17rem)]">
-        <div className="@container flex min-w-0 flex-col gap-2">
-          <span className="flex w-fit items-center gap-2 rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold backdrop-blur">{running && <span className="live-dot" />}
-            {modeLabels[state.mode]}
-            {pomodoro && ` · دور ${fa(pomodoro.round)} از ${fa(pomodoro.rounds)}`}
-          </span>
-          <h2 className="text-2xl font-bold [overflow-wrap:anywhere]">{state.subjectName}</h2>
-          <p className="text-sm opacity-85">
-            {pomodoro
-              ? pomodoro.phase === 'break'
-                ? pomodoro.remaining > 0
-                  ? `استراحت: ${formatClock(pomodoro.remaining)} مانده`
-                  : 'استراحت تمام شد؛ آماده‌ی دور بعدی؟'
-                : pomodoro.remaining > 0
-                  ? `تا استراحت: ${formatClock(pomodoro.remaining)}`
-                  : 'وقت استراحت است ☕'
-              : running
-                ? 'در حال تمرکز...'
-                : 'متوقف شده'}
-          </p>
-          <ClockText value={formatClock(elapsed)} ticking={running} className={`mt-2 w-fit text-[length:min(4.5rem,16cqi)] ${running ? '' : 'opacity-70'}`} />
-        </div>
-
-        <Link to={appRoutes.focus} viewTransition aria-label="باز کردن اتاق تمرکز" className="block min-w-0 transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]">
-          <PixelStudyScene scene={settings.data?.chibiScene ?? 'night-desk'} isNight={hour >= 19 || hour < 6} appearance={chibi.data?.appearance} state={sceneState} className="pixel-card w-full" />
-        </Link>
+  const clock = formatClock(pomodoro ? Math.max(0, pomodoro.remaining) : elapsed)
+  return <section className="today-session surface">
+    <div className="today-session-info">
+      <div className="today-session-badges">
+        <h2>{running ? 'در حال تمرکز' : sceneState === 'break' ? 'در حال استراحت' : 'متوقف شده'} · {state.subjectName}</h2>
+        <span>{modeLabels[state.mode]}{pomodoro && ` · دور ${fa(pomodoro.round)} از ${fa(pomodoro.rounds)}`}</span>
       </div>
-
-      {(timer.pause.isError || timer.resume.isError) && <div className="mt-4"><QueryError error={timer.pause.error ?? timer.resume.error} /></div>}
-      <div className="relative mt-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-        {running ? (
-          <Button variant="secondary" disabled={timer.busy} onClick={() => timer.pause.mutate()} className="h-auto min-h-11 min-w-0 rounded-2xl bg-card px-2 text-center font-bold whitespace-normal text-card-foreground hover:bg-card/90 sm:px-4">
-            <Pause /> {state.mode === 'pomodoro' ? 'شروع استراحت' : 'توقف'}
-          </Button>
-        ) : (
-          <Button variant="secondary" disabled={timer.busy} onClick={() => timer.resume.mutate()} className="h-auto min-h-11 min-w-0 rounded-2xl bg-card px-2 text-center font-bold whitespace-normal text-card-foreground hover:bg-card/90 sm:px-4">
-            <Play /> {state.mode === 'pomodoro' ? 'دور بعدی' : 'ادامه'}
-          </Button>
-        )}
-        <Button variant="ghost" disabled={timer.busy} onClick={onStop} className="h-auto min-h-11 min-w-0 rounded-2xl bg-primary-foreground/10 px-2 text-center font-bold whitespace-normal text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground sm:px-4">
-          <Square /> پایان و ثبت
-        </Button>
-        <Button asChild variant="ghost" className="col-span-2 rounded-2xl bg-primary-foreground/10 font-bold text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground sm:ms-auto">
-          <Link to={appRoutes.focus}>
-            <Maximize2 /> اتاق تمرکز
-          </Link>
-        </Button>
+      <ClockText value={clock} ticking={running} />
+      <p>زمان مطالعۀ این جلسه: <bdi>{formatClock(elapsed)}</bdi>{pomodoro && pomodoro.remaining <= 0 && (sceneState === 'break' ? ' · وقت برگشت به درس است' : ' · وقت استراحت است')}</p>
+      <div className="today-session-actions">
+        <Button variant="outline" disabled={timer.busy} onClick={onStop}><Square />پایان و ثبت</Button>
+        {running ? <Button variant="secondary" disabled={timer.busy} onClick={() => timer.pause.mutate()}><Pause />{state.mode === 'pomodoro' ? 'شروع استراحت' : 'توقف'}</Button>
+          : <Button variant="secondary" disabled={timer.busy} onClick={() => timer.resume.mutate()}><Play />{state.mode === 'pomodoro' ? 'دور بعدی' : 'ادامه'}</Button>}
+        <Button asChild><Link to={appRoutes.focus}><Maximize2 />ورود به اتاق تمرکز</Link></Button>
       </div>
-    </section>
-  )
+      {(timer.pause.isError || timer.resume.isError) && <QueryError error={timer.pause.error ?? timer.resume.error} />}
+    </div>
+    <Link to={appRoutes.focus} viewTransition aria-label="باز کردن اتاق تمرکز" className="today-session-room">
+      <TodayStudyRoom state={sceneState} className="today-session-art" />
+    </Link>
+  </section>
 }

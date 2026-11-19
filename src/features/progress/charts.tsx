@@ -1,29 +1,34 @@
+import { useState } from 'react'
 import { fa, formatHours, jalaliShort } from '../../shared/lib/format'
 import { cn } from '../../shared/lib/utils'
 
 type Day = { date: string; seconds: number }
 
-export function DayBars({ days, compact = false }: { days: Day[]; compact?: boolean }) {
-  const max = Math.max(3600, ...days.map((day) => day.seconds))
-  // A month has ~30 bars: let them shrink and label every fifth day, so the
-  // chart always fits a phone.
+export function DayBars({ days }: { days: Day[] }) {
+  const max = Math.max(1, ...days.map((day) => day.seconds))
+  const [selectedDate, setSelectedDate] = useState<string>()
+  const selected = days.find(day => day.date === selectedDate) ?? days.at(-1)
   const dense = days.length > 14
   return (
-    <div className={cn('flex h-44 min-w-0 items-end', dense ? 'gap-[3px] sm:gap-1' : 'gap-1.5')} role="img" aria-label="نمودار مطالعه‌ی روزانه">
-      {days.map((day, index) => {
-        const height = Math.round((day.seconds / max) * 100)
-        return (
-          <div key={day.date} className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
-            {!dense && <span className="text-[10px] font-bold text-muted-foreground opacity-0 transition group-hover:opacity-100">{formatHours(day.seconds)}</span>}
-            <div
-              className={cn('grow-bar w-full bg-[image:var(--primary-gradient-vertical)] transition-[height,filter] duration-700 hover:brightness-110', dense ? 'rounded-t-[3px] sm:rounded-t-md' : 'rounded-t-xl', day.seconds === 0 && 'bg-none bg-muted')}
-              style={{ height: `${Math.max(day.seconds === 0 ? 4 : 8, height)}%`, animationDelay: `${Math.min(index, 30) * 25}ms` }}
-              title={`${jalaliShort(day.date)}: ${formatHours(day.seconds)}`}
-            />
-            {!compact && <span className={cn('h-3.5 max-w-full overflow-visible whitespace-nowrap text-[10px] text-muted-foreground', dense && index % 5 !== 0 && 'invisible')}>{jalaliShort(day.date).split(' ')[0]}</span>}
-          </div>
-        )
-      })}
+    <div className="grid gap-2">
+      {dense && selected ? (
+        <select aria-label="روز نمودار" className="w-fit max-w-full rounded-md bg-card text-xs" value={selected.date} onChange={event => setSelectedDate(event.target.value)}>
+          {days.map(day => <option key={day.date} value={day.date}>{jalaliShort(day.date)} · {formatHours(day.seconds)}</option>)}
+        </select>
+      ) : selected && <output className="text-xs text-muted-foreground">{jalaliShort(selected.date)} · {formatHours(selected.seconds)}</output>}
+      <div className={cn('flex h-[118px] min-w-0', dense ? 'gap-1' : 'gap-2 lg:gap-5')} role="group" aria-label="نمودار مطالعه‌ی روزانه">
+        {days.map((day, index) => (
+          <button key={day.date} type="button" className="flex min-w-0 flex-1 flex-col items-center gap-1"
+            aria-label={`${jalaliShort(day.date)}، ${formatHours(day.seconds)}`} aria-pressed={day.date === selected?.date}
+            onClick={() => setSelectedDate(day.date)} onFocus={() => setSelectedDate(day.date)} onMouseEnter={() => setSelectedDate(day.date)}>
+            <span className="flex w-full flex-1 items-end">
+              <span className={cn('w-full rounded-[min(12px,1vw)]', day.seconds === max ? 'bg-primary' : day.seconds ? 'bg-primary/45' : 'bg-muted')}
+                style={{ height: `${Math.max(3, day.seconds / max * 100)}%` }} />
+            </span>
+            <span className="h-4 text-[10px] text-muted-foreground">{(!dense || index % 5 === 0) && jalaliShort(day.date).split(' ')[0]}</span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -58,9 +63,9 @@ export function Heatmap({ days }: { days: Day[] }) {
   const level = (seconds: number) => (seconds === 0 ? 0 : seconds < 3600 ? 1 : seconds < 3 * 3600 ? 2 : seconds < 6 * 3600 ? 3 : 4)
   const shades = ['bg-muted', 'bg-primary/25', 'bg-primary/50', 'bg-primary/75', 'bg-primary']
   return (
-    <div className="grid grid-flow-col grid-rows-7 gap-1 overflow-x-auto pb-1" role="img" aria-label="نقشه‌ی حرارتی مطالعه">
+    <div className="grid w-fit max-w-full auto-cols-[16px] grid-flow-col grid-rows-7 gap-x-1.5 gap-y-[5px] overflow-x-auto" role="img" aria-label="نقشه‌ی حرارتی مطالعه">
       {days.map((day, index) => (
-        <span key={day.date} title={`${jalaliShort(day.date)}: ${formatHours(day.seconds)}`} className={cn('size-3.5 rounded-[4px] [animation:pop-in_420ms_var(--ease-spring)_backwards]', shades[level(day.seconds)])} style={{ animationDelay: `${Math.floor(index / 7) * 22}ms` }} />
+        <span key={day.date} title={`${jalaliShort(day.date)}: ${formatHours(day.seconds)}`} className={cn('size-4 rounded-[4px] [animation:pop-in_420ms_var(--ease-spring)_backwards]', shades[level(day.seconds)])} style={{ animationDelay: `${Math.floor(index / 7) * 22}ms` }} />
       ))}
     </div>
   )

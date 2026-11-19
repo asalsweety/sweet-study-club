@@ -29,7 +29,7 @@ function Row({ title, hint, children }: { title: string; hint?: string; children
   )
 }
 
-export default function SettingsPanel({ profile }: { profile: UserProfile }) {
+export default function SettingsPanel({ profile, compact = false }: { profile: UserProfile; compact?: boolean }) {
   const client = useQueryClient()
   const settings = useSettings()
   const [name, setName] = useState(profile.displayName)
@@ -46,7 +46,7 @@ export default function SettingsPanel({ profile }: { profile: UserProfile }) {
     },
   })
   const rename = useMutation({
-    mutationFn: async (input: { dailyGoalMinutes: number; konkurDate: string | null }) => {
+    mutationFn: async (input: { dailyGoalMinutes: number; konkurDate?: string | null }) => {
       const nextProfile = await api.profile.update({ displayName: name.trim() })
       client.setQueryData(queryKeys.profile, nextProfile)
       return api.settings.update({ ...input, bio: bio.trim() || null })
@@ -66,20 +66,20 @@ export default function SettingsPanel({ profile }: { profile: UserProfile }) {
     <section className="glass rise flex flex-col gap-3 rounded-2xl p-5 sm:p-6">
       <h2 className="mb-1 flex items-center gap-2 text-lg font-bold"><Settings2 size={19} className="text-primary" /> تنظیمات شخصی</h2>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/15 bg-secondary/50 p-4">
+      {!compact && <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/15 bg-secondary/50 p-4">
         <div>
           <p className="text-xs text-muted-foreground">مسیر تحصیلی</p>
           <p className="mt-1 text-sm font-bold">{profileLabel(s.educationGroup, s.educationStage) ?? 'هنوز انتخاب نشده'}</p>
         </div>
         <Button asChild variant="outline" size="sm" className="rounded-xl"><Link to="/welcome">تغییر مسیر</Link></Button>
-      </div>
+      </div>}
 
       <form onSubmit={(event) => {
         event.preventDefault()
         const values = new FormData(event.currentTarget)
-        rename.mutate({ dailyGoalMinutes: Number(values.get('dailyGoalMinutes')), konkurDate: String(values.get('konkurDate') || '') || null })
+        rename.mutate({ dailyGoalMinutes: Number(values.get('dailyGoalMinutes')), ...(!compact && { konkurDate: String(values.get('konkurDate') || '') || null }) })
       }} className="grid gap-4 border-b border-border pb-5">
-      <fieldset disabled={rename.isPending} className="grid min-w-0 gap-4 sm:grid-cols-2">
+      <fieldset disabled={rename.isPending} className={cn("grid min-w-0 gap-4 sm:grid-cols-2", compact && "lg:grid-cols-3")}>
         <div className="flex flex-col gap-2">
           <Label htmlFor="me-name">اسم نمایشی</Label>
           <Input id="me-name" value={name} required minLength={2} maxLength={40} onChange={(e) => setName(e.target.value)} />
@@ -92,14 +92,15 @@ export default function SettingsPanel({ profile }: { profile: UserProfile }) {
           <Label htmlFor="me-goal">هدف روزانه (دقیقه)</Label>
           <Input name="dailyGoalMinutes" required step={1} id="me-goal" type="number" min={0} max={1440} defaultValue={s.dailyGoalMinutes} />
         </div>
-        <div className="flex flex-col gap-2">
+        {!compact && <div className="flex flex-col gap-2">
           <Label htmlFor="me-konkur">تاریخ {examForProfile(s.educationGroup, s.educationStage) ?? 'آزمون'}</Label>
           <DateInput name="konkurDate" id="me-konkur" value={konkurPreview} aria-describedby="me-konkur-jalali" onChange={(event) => setKonkurPreview(event.target.value)} />
           <p id="me-konkur-jalali" className="text-xs text-muted-foreground" aria-live="polite">{konkurPreview && /^\d{4}-\d{2}-\d{2}$/.test(konkurPreview) ? `${jalaliFullDate(konkurPreview)} · ${daysUntil(konkurPreview) > 0 ? `${fa(daysUntil(konkurPreview))} روز مانده` : 'این تاریخ گذشته است'}` : 'روز آزمون را از تقویم انتخاب کن؛ معادل شمسی‌اش همین‌جا نشان داده می‌شود.'}</p>
-        </div>
+        </div>}
       </fieldset>
       <div className="flex flex-wrap items-center gap-3"><Button type="submit" disabled={rename.isPending || name.trim().length < 2}>{rename.isPending ? 'در حال ذخیره…' : 'ذخیرۀ تغییرات'}</Button>{rename.isSuccess && <p role="status" className="text-xs text-primary">تغییرات ذخیره شد.</p>}</div>
       </form>
+      {compact ? <div className="flex flex-wrap items-center gap-2 text-xs"><span className="rounded-full bg-muted px-3 py-1">{s.showOnLeaderboard ? 'نمایش در لیگ: روشن' : 'نمایش در لیگ: خاموش'}</span><span className="rounded-full bg-muted px-3 py-1">تایمر {s.timerDisplay === 'chibi' ? 'چیبی' : 'ساده'}</span><Link to="?section=settings" className="rounded-full bg-secondary px-3 py-1 underline">ویرایش تنظیمات و حریم خصوصی</Link></div> : <>
       <p className="text-xs leading-6 text-muted-foreground">تنظیمات زیر با تغییر، ذخیره می‌شوند.</p>
       <Row title="نمایش در جدول رتبه‌بندی" hint="اگر خاموش باشد، زمانت در لیگ دیده نمی‌شود.">
         <Switch aria-label="نمایش در جدول رتبه‌بندی" disabled={update.isPending} checked={s.showOnLeaderboard} onCheckedChange={(value) => update.mutate({ showOnLeaderboard: value })} />
@@ -126,6 +127,7 @@ export default function SettingsPanel({ profile }: { profile: UserProfile }) {
         <Switch aria-label="یادآورها و اعلان‌ها" disabled={update.isPending} checked={s.notificationsEnabled} onCheckedChange={(value) => void askNotifications(value)} />
       </Row>
 
+      </>}
       {(update.isError || rename.isError) && <p role="alert" className="text-sm text-destructive">{errorMessage(update.error ?? rename.error)}</p>}
     </section>
   )

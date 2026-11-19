@@ -1,32 +1,31 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
 import {
-  applyThemeToDocument,
-  readStoredColorMode,
-  readStoredThemePreset,
-  storeColorMode,
-  storeThemePreset,
-  type ColorMode,
-  type ThemePreset,
+  applyThemeToDocument, readStoredColorMode, readStoredThemePreset,
+  storeColorMode, storeThemePreset, type ColorMode, type ThemePreset,
 } from './model'
 
+const themeEvent = 'study-theme-change'
+function subscribe(update: () => void) {
+  window.addEventListener(themeEvent, update)
+  window.addEventListener('storage', update)
+  return () => {
+    window.removeEventListener(themeEvent, update)
+    window.removeEventListener('storage', update)
+  }
+}
 export function useTheme() {
-  const [preset, setPreset] = useState<ThemePreset>(readStoredThemePreset)
-  const [mode, setMode] = useState<ColorMode>(readStoredColorMode)
-
-  useEffect(() => {
-    applyThemeToDocument(preset, mode)
-  }, [preset, mode])
-
+  const preset = useSyncExternalStore(subscribe, readStoredThemePreset)
+  const mode = useSyncExternalStore(subscribe, readStoredColorMode)
+  useEffect(() => { applyThemeToDocument(preset, mode) }, [preset, mode])
   return {
-    preset,
-    mode,
+    preset, mode,
     setPreset: (next: ThemePreset) => {
-      setPreset(next)
       storeThemePreset(next)
+      window.dispatchEvent(new Event(themeEvent))
     },
     setMode: (next: ColorMode) => {
-      setMode(next)
       storeColorMode(next)
+      window.dispatchEvent(new Event(themeEvent))
     },
   }
 }

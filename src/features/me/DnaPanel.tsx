@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import QueryError from '../../components/QueryError'
 import { Dna } from 'lucide-react'
 import { api } from '../../app/api'
 import { queryKeys } from '../../app/session'
@@ -19,12 +20,25 @@ const styles = {
   discovering: 'هنوز در حال شناختن سبک تو هستیم',
 } as const
 
-export default function DnaPanel() {
-  const dna = useQuery({ queryKey: queryKeys.dna, queryFn: api.progress.dna }).data
+export default function DnaPanel({ compact = false }: { compact?: boolean }) {
+  const query = useQuery({ queryKey: queryKeys.dna, queryFn: api.progress.dna })
+  const dna = query.data
+  if (query.isError && !dna) return <QueryError error={query.error} retry={() => void query.refetch()} />
   if (!dna) return <div className="skeleton h-72 rounded-2xl" />
   const type = chronotypes[dna.chronotype]
   const peak = Math.max(1, ...dna.hourlyMinutes)
 
+  if (compact) {
+    const bins = Array.from({ length: 12 }, (_, i) => (dna.hourlyMinutes[i * 2] ?? 0) + (dna.hourlyMinutes[i * 2 + 1] ?? 0))
+    const max = Math.max(1, ...bins)
+    return <section className="profile-dna surface grid content-start gap-4 p-6" aria-label="مطالعۀ DNA">
+      <span className="w-fit rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">مطالعۀ DNA</span>
+      <h2 className="text-xl font-bold">{type.title} · {styles[dna.style].split(' — ')[0]}</h2>
+      <p className="text-sm text-muted-foreground">{type.text}</p>
+      <div className="mt-2 flex h-20 items-end gap-1.5" role="img" aria-label="توزیع مطالعه در ساعت‌های روز">{bins.map((minutes, i) => <span key={i} title={`ساعت ${fa(i * 2)} · ${fa(minutes)} دقیقه`} className={`flex-1 rounded ${minutes >= max * .85 ? 'bg-primary' : 'bg-secondary'}`} style={{ height: `${Math.max(4, minutes / max * 100)}%` }} />)}</div>
+      <p className="text-xs text-muted-foreground">میانگین هر جلسه {fa(dna.averageSessionMinutes)} دقیقه · {fa(dna.sessionsAnalyzed)} جلسه</p>
+    </section>
+  }
   return (
     <section className="glass rise flex flex-col gap-4 rounded-2xl p-5 sm:p-6">
       <h2 className="flex items-center gap-2 text-lg font-bold"><Dna size={19} className="text-primary" /> Study DNA</h2>

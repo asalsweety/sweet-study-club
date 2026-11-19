@@ -3,7 +3,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 export function pwaPlugins() {
   const pwaPlugins = VitePWA({
     registerType: 'prompt',
-    includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
+    includeAssets: ['icons/favicon.png', 'icons/apple-touch-icon.png'],
     manifest: {
       id: '/',
       name: 'باشگاه مطالعه شیرین',
@@ -21,8 +21,8 @@ export function pwaPlugins() {
       icons: [
         { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
         { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-        { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-        { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+        { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        { src: '/icons/favicon.png', sizes: '64x64', type: 'image/png', purpose: 'any' },
       ],
       shortcuts: [
         { name: 'شروع مطالعه', short_name: 'مطالعه', url: '/', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },

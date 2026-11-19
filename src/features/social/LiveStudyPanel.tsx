@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Radio } from 'lucide-react'
+import { Check, Heart } from 'lucide-react'
 import { useState } from 'react'
 import { api } from '../../app/api'
 import { queryKeys } from '../../app/session'
@@ -33,23 +33,11 @@ export default function LiveStudyPanel() {
   const counts = live.data?.counts
 
   return (
-    <section className="glass rise flex flex-col gap-4 rounded-2xl p-5 sm:p-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-lg font-bold">
-          <Radio size={19} className="text-[var(--success)] motion-safe:animate-pulse" /> مطالعه‌ی زنده
-        </h2>
-        <div className="flex rounded-xl bg-muted/70 p-1 text-xs font-bold">
-          {(['friends', 'everyone'] as const).map((value) => (
-            <button key={value} type="button" aria-pressed={scope === value} onClick={() => setScope(value)} className={cn('rounded-lg px-3 py-1.5', scope === value ? 'bg-card shadow-sm' : 'text-muted-foreground')}>
-              {value === 'friends' ? 'دوستان' : 'همه'}
-            </button>
-          ))}
-        </div>
-      </header>
-
-      <div className="flex flex-wrap gap-2">
+    <section aria-label="مطالعه‌ی زنده" className="club-panel flex min-w-0 flex-col gap-3">
+      <h2 className="text-base font-bold">مطالعه‌ی زنده</h2>
+      <div className="flex flex-wrap items-center gap-2">
         {([
-          ['all', 'همه'],
+          ['all', `همه ${fa(live.data?.people.length ?? 0)}`],
           ['studying', `در حال مطالعه ${fa(counts?.studying ?? 0)}`],
           ['online', `آنلاین ${fa(counts?.online ?? 0)}`],
           ['offline', `آفلاین ${fa(counts?.offline ?? 0)}`],
@@ -59,16 +47,20 @@ export default function LiveStudyPanel() {
             type="button"
             aria-pressed={filter === value}
             onClick={() => setFilter(value)}
-            className={cn('rounded-full border px-3 py-1 text-xs font-bold transition', filter === value ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground')}
+            className={cn('min-h-[27px] rounded-full px-2.5 text-xs font-bold', filter === value ? 'bg-primary text-primary-foreground' : value === 'studying' ? 'bg-[var(--success-soft)] text-[var(--success-text)]' : value === 'online' ? 'bg-[var(--warning-soft)] text-[var(--warning-text)]' : 'bg-muted text-muted-foreground')}
           >
             {label}
           </button>
         ))}
+        <select aria-label="نمایش همراهان مطالعه" value={scope} onChange={event => setScope(event.target.value as typeof scope)} className="ms-auto h-[27px] max-w-full rounded-md px-1 text-xs text-muted-foreground">
+          <option value="friends">دوستان</option>
+          <option value="everyone">همه اعضا</option>
+        </select>
       </div>
 
       {cheer.isError && <p role="alert" className="text-sm text-destructive">{errorMessage(cheer.error)}</p>}
 
-      <ul className="flex flex-col gap-2">
+      <ul className="flex flex-col gap-3">
         {live.isPending && <li className="skeleton h-16 rounded-2xl" />}
         {!live.isPending && people.length === 0 && (
           <li className="rounded-2xl bg-muted/40 p-6 text-center text-sm text-muted-foreground">
@@ -78,6 +70,7 @@ export default function LiveStudyPanel() {
         {people.map((person) => (
           <PersonRow
             key={person.userId}
+            liveRow
             name={person.displayName}
             avatarUrl={person.avatarUrl}
             status={person.status}
@@ -91,9 +84,9 @@ export default function LiveStudyPanel() {
                   disabled={cheer.isPending || sent === person.userId}
                   onClick={() => cheer.mutate(person.userId)}
                   aria-label={`تشویق ${person.displayName}`}
-                  className="grid size-10 place-items-center rounded-xl bg-primary/10 text-lg transition hover:scale-110 active:scale-90 disabled:opacity-60"
+                  className="flex min-h-[42px] items-center justify-center gap-2 rounded-[14px] bg-secondary px-3.5 text-xs font-bold text-secondary-foreground disabled:opacity-60 sm:min-w-24"
                 >
-                  {sent === person.userId ? <span className="[animation:pop-in_420ms_var(--ease-spring)_backwards]">✓</span> : '💖'}
+                  {sent === person.userId ? <Check size={16} /> : <Heart size={16} />} تشویق
                 </button>
               ) : null
             }

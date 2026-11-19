@@ -1,10 +1,11 @@
 import { lazy, Suspense } from 'react'
-import { Flower2, RefreshCw } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { appRoutes } from './app/navigation/routes'
 import { useProfile, useSession, useSettings } from './app/session'
 import { ApiClientError } from './shared/api/api-client-error'
 import { Button } from './components/ui/button'
+import StudySticker from './components/StudySticker'
 import Toaster from './components/Toaster'
 
 const AppShell = lazy(() => import('./components/AppShell'))
@@ -33,7 +34,7 @@ function FullScreenLoader({ label }: { label: string }) {
       <div className="flex flex-col items-center gap-5 [animation:fade-in_500ms_ease-out_backwards]">
         <span className="relative grid size-16 place-items-center rounded-[1.4rem] bg-primary text-primary-foreground shadow-[var(--glow-primary)]">
           <span aria-hidden className="absolute inset-0 animate-ping rounded-[1.4rem] bg-primary/30 motion-reduce:animate-none" />
-          <Flower2 size={30} className="relative [animation:spin-slow_6s_linear_infinite] motion-reduce:animate-none" />
+          <StudySticker kind="bee" className="relative size-10" />
         </span>
         <p className="text-sm text-muted-foreground">{label}</p>
       </div>

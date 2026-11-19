@@ -10,6 +10,7 @@ import { Button } from '../../components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../components/ui/dialog'
 import { Textarea } from '../../components/ui/textarea'
 import { showSessionCelebration } from './sessionCelebrationStore'
+import './session-panels.css'
 import { elapsedSecondsOf, type useStudyTimer } from './useStudyTimer'
 
 type FinishSessionSheetProps = {
@@ -21,7 +22,7 @@ type FinishSessionSheetProps = {
 
 function Counter({ label, value, onChange, tone }: { label: string; value: number; onChange: (next: number) => void; tone: string }) {
   return (
-    <div className="flex min-w-0 items-center justify-between gap-2 rounded-2xl bg-muted/60 p-3 sm:flex-col">
+    <div className="session-counter">
       <span className={cn('text-xs font-bold', tone)}>{label}</span>
       <div className="flex items-center gap-2">
         <button type="button" aria-label={`کم کردن ${label}`} onClick={() => onChange(Math.max(0, value - 1))} className="grid size-9 place-items-center rounded-xl bg-card shadow-sm transition-transform hover:bg-secondary active:scale-90">
@@ -78,59 +79,53 @@ export default function FinishSessionSheet({ open, onOpenChange, timer, onFinish
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent dir="rtl" className="max-h-[92dvh] overflow-y-auto rounded-2xl sm:max-w-lg">
-        <DialogHeader className="text-right">
-          <DialogTitle className="text-xl font-bold">پایان جلسه</DialogTitle>
-          <DialogDescription>
-            {formatDuration(elapsed)} {timer.timer?.subjectName ?? ''} — اگر تست زدی، نتیجه‌اش را بنویس.
-          </DialogDescription>
+      <DialogContent dir="rtl" className="session-panel finish-panel">
+        <DialogHeader className="finish-heading">
+          <DialogTitle>پایان جلسه و ثبت گزارش</DialogTitle>
+          <DialogDescription>{timer.timer?.subjectName} · {formatDuration(elapsed)} مطالعه{timer.timer?.mode === 'pomodoro' && ' · پومودورو'}</DialogDescription>
         </DialogHeader>
+        <img className="finish-bee" src="/images/figma/modal-tea-bee.webp" width="54" height="54" alt="" />
 
-        <div className="grid gap-2 sm:grid-cols-3">
-          <Counter label="درست" value={correct} onChange={setCorrect} tone="text-[var(--success-text)]" />
-          <Counter label="غلط" value={wrong} onChange={setWrong} tone="text-[var(--destructive-text)]" />
-          <Counter label="نزده" value={blank} onChange={setBlank} tone="text-muted-foreground" />
-        </div>
+        <section className="finish-tests" aria-labelledby="session-tests-heading">
+          <h3 id="session-tests-heading">تست‌های این جلسه (اختیاری)</h3>
+          <div className="finish-counters">
+            <Counter label="درست" value={correct} onChange={setCorrect} tone="text-[var(--success-text)]" />
+            <Counter label="غلط" value={wrong} onChange={setWrong} tone="text-[var(--destructive-text)]" />
+            <Counter label="نزده" value={blank} onChange={setBlank} tone="text-muted-foreground" />
+          </div>
+          <p className="finish-score">جمع: {fa(total)} تست · درصد خالص: {percent === null ? '—' : `${fa(percent)}٪`}</p>
+        </section>
 
-        <div className="flex items-center justify-between rounded-2xl border border-dashed border-primary/40 bg-primary/5 px-4 py-3">
-          <span className="text-sm font-bold">درصد (با نمره‌ی منفی)</span>
-          <span className="text-2xl font-bold text-primary tabular-nums">{percent === null ? '—' : `${fa(percent)}٪`}</span>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <p className="text-sm font-bold">تمرکزت چطور بود؟</p>
-          <div className="flex justify-between gap-2">
-            {ratings.map((value, index) => (
-              <button
-                key={value}
-                type="button"
-                aria-label={`امتیاز ${fa(index + 1)} از ۵: ${moodLabels[index]}`}
-                aria-pressed={rating === index + 1}
-                onClick={() => setRating(index + 1)}
-                className={cn(
-                  'grid flex-1 place-items-center gap-1 rounded-2xl px-1 pb-1.5 pt-2 transition-[transform,background-color,box-shadow,filter] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-90',
-                  rating === index + 1 ? 'scale-105 bg-primary/15 shadow-md ring-2 ring-primary' : 'bg-muted/60 saturate-[0.55] hover:saturate-100',
-                )}
-              >
-                <AsalMood rating={value} label={false} className="w-full max-w-14" />
-                <span className="text-[10px] font-bold text-muted-foreground">{moodLabels[index]}</span>
+        <section className="finish-feelings" aria-labelledby="session-mood-heading">
+          <h3 id="session-mood-heading">حس‌وحال الانت چطور بود؟</h3>
+          <div className="finish-moods">
+            {ratings.map(value => (
+              <button key={value} type="button" aria-label={`امتیاز ${fa(value)} از ۵: ${moodLabels[value - 1]}`}
+                aria-pressed={rating === value} onClick={() => setRating(value)}>
+                <span className="finish-mood-frame"><AsalMood rating={value} label={false} /></span>
+                <span>{moodLabels[value - 1]}</span>
               </button>
             ))}
           </div>
-        </div>
+        </section>
 
-        <Textarea aria-label="یادداشت جلسه" value={note} maxLength={500} onChange={(event) => setNote(event.target.value)} placeholder="یادداشت کوتاه: چه خواندی؟ کجا گیر کردی؟ (اختیاری)" rows={3} />
-
+        <label className="finish-note">
+          یادداشت کوتاه جلسه (اختیاری)
+          <Textarea aria-label="یادداشت جلسه" value={note} maxLength={500} onChange={(event) => setNote(event.target.value)} placeholder="مثلاً مرور ژنتیک جمعیت کامل شد…" rows={1} />
+        </label>
         {timer.stop.isError && (
           <p role="alert" className="rounded-2xl bg-[var(--destructive-soft)] px-4 py-3 text-sm text-[var(--destructive-text)]">
             {errorMessage(timer.stop.error)}
           </p>
         )}
 
-        <Button size="lg" onClick={finish} disabled={timer.stop.isPending} className="h-12 rounded-2xl bg-primary text-base font-bold ">
+        <div className="finish-actions">
+        <Button onClick={finish} disabled={timer.stop.isPending}>
           {timer.stop.isPending ? <LoaderCircle className="animate-spin" /> : <CheckCircle2 />}
-          ثبت جلسه
+          ثبت و پایان جلسه
         </Button>
+        <Button variant="outline" onClick={() => onOpenChange(false)}>ادامه بدون ثبت</Button>
+        </div>
       </DialogContent>
     </Dialog>
   )

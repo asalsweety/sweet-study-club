@@ -1,0 +1,61 @@
+/* Component coordinates follow the 500 × 584 report and 480 × 549 celebration
+   panels. Short viewports retain the shared scrollable sheet behavior. */
+.session-panel[data-slot="dialog-content"] {
+  gap: 0;
+  padding: 28px;
+  border-radius: 28px;
+  background: var(--card);
+}
+.session-panel [data-slot="dialog-title"] { padding: 0; font-family: inherit; font-weight: 700; line-height: 32px; }
+.session-panel [data-slot="dialog-description"] { color: var(--primary-ink); font-size: 13px; line-height: 22px; }
+.session-panel [data-slot="button"] { border-radius: 14px; min-height: 44px; }
+.finish-panel[data-slot="dialog-content"] { max-width: 500px; }
+.finish-heading { min-height: 52px; gap: 0; padding-inline-end: 3rem; align-items: flex-start; }
+.finish-heading [data-slot="dialog-title"] { font-size: 20px; }
+.finish-bee { position: absolute; width: 54px; height: 54px; left: 50%; top: 17px; transform: translateX(-50%); pointer-events: none; }
+.dark .finish-bee { display: none; }
+.finish-panel h3, .finish-note { font-size: 13px; line-height: 22px; font-weight: 700; }
+.finish-tests { margin-top: 15px; }
+.finish-counters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 17px; }
+.session-counter { display: flex; height: 80px; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border-radius: 16px; background: var(--muted); }
+.session-counter:first-child { background: color-mix(in srgb, var(--secondary) 50%, var(--card)); }
+.session-counter:nth-child(2) { background: var(--destructive-soft); }
+.session-counter > div { gap: 3px; }
+.session-counter button { height: 24px; width: 24px; border-radius: 8px; }
+.session-counter input { width: 32px; }
+.finish-score, .celebration-goal span { display: inline-flex; align-items: center; min-height: 27px; border-radius: 1rem; padding-inline: 10px; font-size: 11px; font-weight: 700; }
+.finish-score { margin-top: 18px; color: var(--primary-foreground); background: var(--primary); }
+.finish-feelings { margin-top: 17px; }
+.finish-moods { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); direction: ltr; gap: 8px; margin-top: 17px; }
+.finish-moods button { display: grid; justify-items: center; align-content: center; gap: 4px; min-height: 86px; direction: rtl; border-radius: 16px; border: 1px solid var(--border); background: var(--muted); font-size: 11px; }
+.finish-moods button[aria-pressed=true] { background: var(--secondary); outline: 2px solid var(--primary); }
+.finish-mood-frame, .celebration-avatar { display: grid; place-items: center; width: 46px; max-width: 100%; height: 42px; }
+.session-panel .asal-mood { width: 100%; background-image: url("/images/figma/modal-moods.webp"); image-rendering: auto; }
+.finish-note { display: grid; gap: 5px; margin-top: 18px; }
+.finish-note textarea { height: 44px; min-height: 44px; padding-block: 10px; }
+.finish-actions { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; margin-top: 18px; }
+.finish-actions button:last-child { width: 119px; padding-inline: 6px; }
+
+.celebration-panel[data-slot="dialog-content"] { max-width: 480px; text-align: center; }
+.celebration-emblem { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.celebration-avatar { width: 64px; height: 58px; }
+.celebration-cup { width: 64px; height: 64px; display: grid; place-items: center; border-radius: 50%; background: var(--secondary); color: var(--secondary-foreground); }
+.celebration-panel [data-slot="dialog-title"] { margin-top: 17px; font-size: 24px; }
+.celebration-panel [data-slot="dialog-description"] { margin-top: 22px; }
+.celebration-stats { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin-top: 13.25px; }
+.celebration-stats > div { height: 103px; display: grid; place-items: center; align-content: space-between; padding: 14px 4px; background: var(--muted); border-radius: 16px; }
+.celebration-stats svg { height: 16px; width: 16px; color: var(--primary-ink); }
+.celebration-stats strong { font-size: 22px; line-height: 1.2; }
+.celebration-stats > div > span { font-size: 11px; }
+.celebration-goal { margin-top: 18px; min-height: 27px; }
+.celebration-goal span { background: color-mix(in srgb,var(--secondary) 50%,var(--card)); color: var(--secondary-foreground); }
+.celebration-bee { width: 92px; height: 92px; justify-self: center; margin-block: 18px; }
+.celebration-panel[data-slot="dialog-content"] > [data-slot="button"] { display: flex; }
+@media (max-width: 639px) {
+  .session-panel[data-slot="dialog-content"] { padding-inline: 16px; }
+  .finish-bee { display: none; }
+  .finish-heading [data-slot="dialog-title"] { font-size: 18px; }
+  .finish-moods { gap: 4px; }
+  .finish-counters { gap: 6px; }
+  .finish-actions button:last-child { min-width: 0; }
+}

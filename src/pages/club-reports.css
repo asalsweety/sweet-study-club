@@ -1,0 +1,52 @@
+.club-panel {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 20px;
+  background: var(--card);
+}
+
+.club-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 4px;
+  min-height: 45px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--muted);
+}
+
+.club-tabs button {
+  flex: 1;
+  min-width: 0;
+  border-radius: 10px;
+  font-size: .75rem;
+  font-weight: 700;
+}
+
+.league-tabs { width: 460px; max-width: 100%; }
+.league-podium { display: grid; align-content: space-between; gap: 12px; min-height: 141px; }
+.league-podium > div, .league-podium > p:last-child { color: var(--primary-ink); }
+.dark .league-podium.is-me { background: var(--primary); color: var(--primary-foreground); }
+.dark .league-podium.is-me > div, .dark .league-podium.is-me > p { color: inherit; }
+.league-title-art { display: none; }
+
+@media (min-width: 1024px) {
+  .dark .league-title-art {
+    display: block;
+    position: absolute;
+    inset-inline-start: 125px;
+    top: 1px;
+    width: 69px;
+    height: 69px;
+    transform: scaleX(-1);
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .club-report > .page-heading > div { max-width: 100%; }
+  .club-panel { padding: 14px; }
+  .league-podium { padding: 12px 8px; }
+  .league-tabs button { padding-inline: 8px; }
+}

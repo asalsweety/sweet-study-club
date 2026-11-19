@@ -9,6 +9,7 @@ import type { FriendsResponse } from '../shared/api/social'
 import { fa } from '../shared/lib/format'
 import Avatar from '../components/Avatar'
 import { Button } from '../components/ui/button'
+import './club-reports.css'
 import AddFriendPanel from '../features/social/AddFriendPanel'
 import LiveStudyPanel from '../features/social/LiveStudyPanel'
 import PersonRow from '../features/social/PersonRow'
@@ -27,16 +28,16 @@ export default function FriendsPage() {
   const data = friends.data
 
   return (
-    <div className="grid gap-6">
+    <div className="club-report grid grid-cols-1 gap-5">
       <PageHeading eyebrow="کنار هم، بهتر" title="همراهان مطالعه" description="دوست‌هایت را پیدا کن، کنار هم درس بخوانید و به هم انگیزه بدهید." />
       {friends.isError && <QueryError error={friends.error} retry={() => void friends.refetch()} />}
       {(respond.isError || remove.isError || block.isError || unblock.isError) && <QueryError error={respond.error ?? remove.error ?? block.error ?? unblock.error} />}
-      <div className="grid items-start gap-5 lg:grid-cols-[1.3fr_1fr]">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
       <div className="flex flex-col gap-5">
         <LiveStudyPanel />
-        <section className="glass rise flex flex-col gap-3 rounded-2xl p-5 sm:p-6">
-          <h2 className="text-lg font-bold">دوستان من {data && <span className="text-sm text-muted-foreground">({fa(data.friends.length)})</span>}</h2>
-          <ul className="flex flex-col gap-2">
+        <section className="club-panel">
+          <h2 className="text-base font-bold">دوستان من {data && <span className="text-sm text-muted-foreground">({fa(data.friends.length)})</span>}</h2>
+          <ul className="mt-3 flex flex-col gap-2">
             {friends.isPending && <li className="skeleton h-16 rounded-2xl" />}
             {data?.friends.length === 0 && <li className="rounded-2xl bg-muted/40 p-5 text-center text-sm text-muted-foreground">هنوز دوستی اضافه نکردی.</li>}
             {data?.friends.map((friend) => (

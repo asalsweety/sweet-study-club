@@ -10,7 +10,7 @@ import { pomodoroRemaining } from '../study/useStudyTimer'
 function notify(title: string, body: string, enabled: boolean) {
   if (!enabled || !('Notification' in window) || Notification.permission !== 'granted') return false
   try {
-    new Notification(title, { body, icon: '/favicon.svg', lang: 'fa', dir: 'rtl' })
+    new Notification(title, { body, icon: '/icons/icon-192.png', lang: 'fa', dir: 'rtl' })
     return true
   } catch {
     return false

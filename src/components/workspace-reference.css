@@ -1,0 +1,77 @@
+html:has(.app-workspace) { scrollbar-gutter: auto; }
+.workspace-menu { display: grid; place-items: center; height: 44px; min-width: 44px; border-radius: 12px; }
+.workspace-tools, .sidebar-flower { display: none; }
+.workspace-search kbd { font-size: .65rem; }
+.app-workspace .workspace-header { box-sizing: border-box; height: calc(64px + env(safe-area-inset-top, 0px)); background: var(--background); animation: none; border-color: var(--border); }
+.app-workspace .workspace-content { padding: 16px 16px 24px; }
+.workspace-menu img { border-radius: 5px; }
+.dark .app-workspace[data-page="/"] .workspace-menu { background: var(--primary); color: var(--primary-foreground); }
+@media (min-width: 1024px) {
+  .workspace-menu { display: none; }
+  .workspace-tools { display: flex; align-items: center; gap: 10px; }
+  .app-workspace .workspace-header { height: 72px; padding-inline: 28px; }
+  .app-workspace .header-chip { min-height: 36px; border: 1px solid var(--border); background: var(--card); }
+  .app-workspace .workspace-search { width: 180px; justify-content: space-between; white-space: nowrap; padding-inline: 10px; gap: 4px; }
+  .app-workspace .workspace-content { max-width: 1500px; padding: 24px 28px; min-height: calc(100dvh - 72px); }
+  .app-workspace .desktop-sidebar { background: var(--sidebar) !important; }
+  .sidebar-account { min-height: 61px; background: var(--muted); }
+  .app-workspace .nav-pill::before { display: none; }
+  .desktop-sidebar .brand-mark { width: 41px; height: 41px; border-radius: 5px; background: transparent; }
+  .desktop-sidebar .brand-mark img { width: 41px; height: 41px; border-radius: 5px; }
+  .dark .app-workspace:is([data-page="/"],[data-page="/shop"]) .brand-mark { background: var(--primary); border-radius: 12px; }
+  .dark .app-workspace:is([data-page="/"],[data-page="/shop"]) .brand-mark img { display: none; }
+  .dark .app-workspace:is([data-page="/"],[data-page="/shop"]) .sidebar-flower { display: block; }
+  .dark .app-workspace .workspace-header { background: var(--card); }
+}
+@media (min-width: 1280px) {
+  .app-workspace .desktop-sidebar { width: 272px; padding: 22.5px 20px 21px; }
+  .desktop-sidebar .brand-lockup { padding: 0; gap: 12px; }
+  .desktop-sidebar nav:first-of-type { margin-top: 22px; }
+  .desktop-sidebar nav + nav { margin-top: 20px; }
+  .app-workspace .desktop-sidebar .nav-item { min-height: 42px; padding-block: 8px; }
+  .desktop-sidebar .nav-caption { padding-block-end: 0; }
+  .desktop-sidebar .brand-mark { transform: translate(-1px,-2px); }
+  .app-workspace[data-page="/learn"] .brand-mark { transform: translate(-2px,-3.5px); }
+  .dark .app-workspace[data-page="/learn"] .brand-mark { transform: translate(11px,-3.5px); }
+  .dark .app-workspace[data-page="/progress"] .brand-mark { transform: translate(-11px,8px); }
+  .app-workspace[data-page="/planner"] .brand-mark { transform: translate(-1.5px,-2px); }
+  .dark .app-workspace[data-page="/planner"] .brand-mark { transform: translate(-1px,-3.5px); }
+}
+@media (min-width: 1024px) {
+
+  .app-workspace .workspace-footer { display: none; }
+}
+@media (min-width: 1280px) {
+
+  .shop-launch.surface { min-height: 201px; background: var(--secondary); color: var(--secondary-foreground); }
+  .dark .shop-launch { padding-left: 170px; }
+  .dark .shop-launch .shop-asal { display: block; position: absolute; left: 24px; top: 36px; width: 120px; height: 128px; }
+}
+@media (min-width: 640px) {
+  .study-helper-panel.study-helper-position { width: min(420px, calc(100vw - 32px)); }
+  .palette-panel { width: min(540px, calc(100vw - 24px)); background: var(--card); }
+  .palette-list { padding: 8px 16px 16px; }
+  .palette-list > div + div { margin-top: 10px; }
+  .palette-list .palette-item { margin-bottom: 0; min-height: 42px; background: var(--background); }
+  .palette-list .palette-item[aria-selected="true"] { background: var(--secondary); }
+}
+
+@media (min-width: 1024px) {
+  :is(.club-report,.learning-workspace,.shop-reference,.profile-overview) > .page-heading {
+    min-height: 90px;
+    margin: 0;
+    padding-top: 4px;
+    align-items: center;
+  }
+  :is(.club-report,.learning-workspace,.shop-reference,.profile-overview) .page-heading .eyebrow { line-height: 18px; }
+  :is(.club-report,.learning-workspace,.shop-reference,.profile-overview) .page-heading h1 { margin: 4px 0 0; font-family: var(--font-sans); font-size: 26px; line-height: 36px; font-weight: 800; }
+  :is(.club-report,.learning-workspace,.shop-reference,.profile-overview) .page-description { margin-top: 6px; line-height: 22px; }
+  .profile-overview { gap: 20px; }
+  .profile-overview #export { min-height: 201px; }
+  .profile-overview .profile-dna { min-height: 278px; gap: 12px; }
+}
+
+@media print {
+  .profile-overview > :is(section, nav) { display: none; }
+  #export > [aria-hidden="true"][dir] { position: static !important; width: auto !important; }
+}

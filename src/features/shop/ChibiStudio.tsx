@@ -13,6 +13,7 @@ import { fa } from '../../shared/lib/format'
 import PixelStudyScene from '../focus/PixelStudyScene'
 
 const companions = { asal: 'با عسل درس بخون', girl: 'چیبی دختر', boy: 'چیبی پسر' }
+const companionPortraits = { girl: '/images/chibi-pack/girl.webp', boy: '/images/chibi-pack/boy.webp' }
 const skins = { light: 'روشن', warm: 'گندمی', deep: 'تیره' }
 const hair = { brown: 'قهوه‌ای', black: 'مشکی', auburn: 'مسی' }
 const selectClass = 'min-h-11 w-full min-w-0 rounded-xl border border-input bg-card px-3 text-base'
@@ -39,7 +40,7 @@ export default function ChibiStudio() {
   if (!chibi.data) return <QueryError error={chibi.error} retry={() => void chibi.refetch()} />
 
   const { appearance, coins, owned } = chibi.data
-  const look = draft ?? appearance
+  const look = draft ?? { companion: appearance.companion, skin: appearance.skin, hair: appearance.hair }
   const changed = look.companion !== appearance.companion || look.skin !== appearance.skin || look.hair !== appearance.hair
 
   return (
@@ -60,12 +61,24 @@ export default function ChibiStudio() {
           event.preventDefault()
           if (changed && !save.isPending) save.mutate({ action: 'look', look })
         }}>
-          <div className="grid gap-1 text-sm font-bold">
-            <label htmlFor="chibi-companion">همراه مطالعه</label>
-            <select id="chibi-companion" className={selectClass} value={look.companion} disabled={save.isPending} onChange={(event) => setDraft({ ...look, companion: event.target.value as ChibiLook['companion'] })}>
-              {chibiStyles.map((id) => <option key={id} value={id}>{companions[id]}</option>)}
-            </select>
-          </div>
+          <fieldset className="min-w-0" disabled={save.isPending}>
+            <legend className="mb-2 text-sm font-bold">همراه مطالعه</legend>
+            <div className="grid grid-cols-2 gap-2">
+              {chibiStyles.filter((id) => id !== 'asal').map((id) => (
+                <label key={id} className="relative min-w-0 cursor-pointer">
+                  <input type="radio" name="chibi-companion" value={id} className="peer sr-only" checked={look.companion === id} onChange={() => setDraft({ ...look, companion: id })} />
+                  <span className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl border border-input bg-card px-2 py-3 text-center text-sm font-bold peer-checked:border-ring peer-checked:bg-secondary peer-checked:text-secondary-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
+                    <img src={companionPortraits[id]} alt="" width={56} height={86} className="h-[86px] w-auto object-contain" decoding="async" />
+                    {companions[id]}
+                  </span>
+                </label>
+              ))}
+              <label className="col-span-2 min-w-0 cursor-pointer">
+                <input type="radio" name="chibi-companion" value="asal" className="peer sr-only" checked={look.companion === 'asal'} onChange={() => setDraft({ ...look, companion: 'asal' })} />
+                <span className="flex min-h-11 items-center justify-center rounded-xl border border-input bg-card px-3 text-center text-sm font-bold peer-checked:border-ring peer-checked:bg-secondary peer-checked:text-secondary-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-ring">{companions.asal}</span>
+              </label>
+            </div>
+          </fieldset>
           {look.companion !== 'asal' && (
             <div className="grid grid-cols-2 gap-2">
               <div className="grid gap-1 text-sm font-bold">

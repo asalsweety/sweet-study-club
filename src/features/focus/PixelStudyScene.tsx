@@ -1,12 +1,13 @@
 import { memo, useEffect, useRef } from 'react'
 import { chibiItems, defaultChibi, type ChibiAppearance } from '../../shared/api/chibi'
+import { createDeskSpriteCache, deskSprites } from './chibiSprite'
 import { chibiSkin, drawCustomChibi, drawDeskDecor } from './customChibi'
 import { sceneThemes, type ChibiScene as SceneId } from './scenes'
+import { studyRoomImage } from './studyRoomImage'
 
 /**
- * A lo-fi pixel-art study room starring Asal (sprite generated from her
- * illustration by scripts/pixelate-asal.py). While a session runs she writes
- * and nods along; paused, she dozes; on a pomodoro break she sips her tea.
+ * The supplied study room art with Asal or a customizable companion. During
+ * a session they study, doze when paused, and sip tea on a Pomodoro break.
  * Drawn on a 256×144 canvas scaled with crisp pixels at ~12 fps; drawing
  * stops off-screen and in hidden tabs, and reduced-motion users get a still.
  */
@@ -17,6 +18,7 @@ type Props = {
   isNight: boolean
   state: PixelSceneState
   appearance?: ChibiAppearance | undefined
+  studyBackdrop?: string | undefined
   className?: string
 }
 
@@ -24,7 +26,6 @@ const W = 256
 const H = 144
 const FRAME_MS = 1000 / 12
 const DESK_Y = 112
-const SPRITE_URL = '/images/pixel/asal-desk.png?v=2'
 // Display size of each frame. Measure the loaded sheet independently in case
 // an older asset is cached. The sheet always has three equal frames.
 const SPRITE_W = 86
@@ -354,7 +355,7 @@ function samplePalette(sprite: HTMLImageElement): Palette {
     ctx.drawImage(sprite, 0, 0, sprite.naturalWidth / 3, sprite.naturalHeight, 0, 0, SPRITE_W, SPRITE_H)
     const data = ctx.getImageData(0, 0, SPRITE_W, SPRITE_H).data
     const at = (x: number, y: number) => { const i = (y * SPRITE_W + x) * 4; return `#${[data[i], data[i + 1], data[i + 2]].map((c) => (c ?? 0).toString(16).padStart(2, '0')).join('')}` }
-    const sleeve = at(Math.round(SPRITE_W * 0.36), Math.round(SPRITE_H * 0.94))
+    const sleeve = at(Math.round(SPRITE_W * 0.44), Math.round(SPRITE_H * 0.94))
     const skin = at(Math.round(SPRITE_W * 0.536), Math.round(SPRITE_H * 0.625))
     return { skin, skinShade: mix(skin, -0.1), sleeve, sleeveShade: mix(sleeve, -0.22), sleeveLight: mix(sleeve, 0.18) }
   } catch {
@@ -362,10 +363,11 @@ function samplePalette(sprite: HTMLImageElement): Palette {
   }
 }
 
-function PixelStudyScene({ scene, isNight, state, appearance = defaultChibi, className }: Props) {
+function PixelStudyScene({ scene, isNight, state, appearance = defaultChibi, studyBackdrop, className }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const props = useRef({ scene, isNight, state, appearance })
-  props.current = { scene, isNight, state, appearance }
+  const repaintRef = useRef<(() => void) | null>(null)
+  const props = useRef({ scene, isNight, state, appearance, studyBackdrop })
+  props.current = { scene, isNight, state, appearance, studyBackdrop }
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -379,31 +381,71 @@ function PixelStudyScene({ scene, isNight, state, appearance = defaultChibi, cla
       if (!layout) { layout = createLayout(id); layouts.set(id, layout) }
       return layout
     }
-    const sprite = new Image()
-    let spriteReady = false
+    const images = new Map<string, HTMLImageElement>()
+    const coloredSprite = createDeskSpriteCache()
     let palette = fallbackPalette
     let lastTime = 0
-    sprite.onload = () => { spriteReady = true; palette = samplePalette(sprite); render(lastTime) }
-    sprite.src = SPRITE_URL
+
+    const loadImage = (url: string) => {
+      let image = images.get(url)
+      if (!image) {
+        image = new Image()
+        image.onload = () => {
+          if (url === deskSprites.girl && image) palette = samplePalette(image)
+          render(lastTime)
+        }
+        images.set(url, image)
+        image.src = url
+      }
+      return image.complete && image.naturalWidth > 0 ? image : null
+    }
 
     const render = (t: number) => {
       lastTime = t
       const { scene: id, isNight: night, state: mood, appearance: look } = props.current
       const isAsal = look.companion === 'asal'
-      const base = isAsal ? palette : { ...fallbackPalette, ...chibiSkin[look.skin] }
+      const isBoy = look.companion === 'boy'
+      const base = isAsal || look.skin === 'warm' ? palette : { ...palette, ...chibiSkin[look.skin] }
       const sleeve = look.outfit ? chibiItems[look.outfit].color : null
       const colors = sleeve ? { ...base, sleeve, sleeveShade: mix(sleeve, -0.22), sleeveLight: mix(sleeve, 0.18) } : base
       const bob = mood === 'studying' ? Math.floor(t / 0.75) % 2 : mood === 'paused' && Math.sin(t * 1.3) > 0.5 ? 1 : 0
       const frame = mood === 'break' ? 2 : mood === 'paused' || t % 3.6 < 0.16 ? 1 : 0
+      const showBakedAsal = isAsal && !look.outfit && (id === 'night-desk' || mood === 'studying')
+      const room = loadImage(props.current.studyBackdrop ?? studyRoomImage(id, mood, showBakedAsal))
+      const sprite = loadImage(deskSprites[isBoy ? 'boy' : 'girl'])
+      const roomHasCharacter = room && showBakedAsal
       ctx.globalAlpha = 1
       ctx.globalCompositeOperation = 'source-over'
-      drawRoom(ctx, t, id, night, layoutFor(id), r)
-      drawLamp(r)
-      if (!isAsal) {
-        drawCustomChibi(look, colors.sleeve, frame, bob, r)
-      } else if (spriteReady) {
+      if (room) {
+        ctx.drawImage(room, 0, 0, W, H)
+      } else {
+        drawRoom(ctx, t, id, night, layoutFor(id), r)
+        drawLamp(r)
+      }
+      if (!roomHasCharacter && sprite) {
         const frameWidth = sprite.naturalWidth / 3
-        ctx.drawImage(sprite, frame * frameWidth, 0, frameWidth, sprite.naturalHeight, SPRITE_X, SPRITE_Y + bob, SPRITE_W, SPRITE_H)
+        // The book and teacup artwork include the boy's hands. Lower the closed-eye
+        // portrait to the desktop when paused, where the tea pose is cropped out.
+        const spriteFrame = isBoy && mood === 'studying' ? 0 : frame
+        const spriteY = SPRITE_Y + bob + (isBoy && mood === 'paused' ? 17 : 0)
+        ctx.save()
+        ctx.beginPath()
+        ctx.rect(0, 0, W, DESK_Y)
+        ctx.clip()
+        ctx.drawImage(coloredSprite(sprite, look), spriteFrame * frameWidth, 0, frameWidth, sprite.naturalHeight, SPRITE_X, spriteY, SPRITE_W, SPRITE_H)
+        ctx.restore()
+      } else if (!roomHasCharacter && !isAsal) {
+        drawCustomChibi(look, colors.sleeve, frame, bob, r)
+      }
+      if (room) {
+        if (!isBoy && mood === 'studying') {
+          const progress = drawNotebook(t, mood, r)
+          drawArms(t, mood, progress, colors, r)
+        }
+        if (!roomHasCharacter && !isBoy && mood === 'break') drawMug(t, mood, colors, ctx, r)
+        drawDeskDecor(look.decor, r)
+        if (!roomHasCharacter && mood === 'paused') drawSleepZ(ctx, t, r)
+        return
       }
       drawDesk(ctx, id, night, r)
       const progress = drawNotebook(t, mood, r)
@@ -419,11 +461,15 @@ function PixelStudyScene({ scene, isNight, state, appearance = defaultChibi, cla
       vignette(ctx)
     }
 
+    repaintRef.current = () => render(lastTime)
+    const releaseImages = () => {
+      repaintRef.current = null
+      for (const image of images.values()) image.onload = null
+    }
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)')
     if (reduced.matches) {
-      const still = window.setInterval(() => render(5), 1000)
       render(5)
-      return () => window.clearInterval(still)
+      return releaseImages
     }
     let frame = 0
     let last = 0
@@ -439,8 +485,10 @@ function PixelStudyScene({ scene, isNight, state, appearance = defaultChibi, cla
     observer.observe(canvas)
     render(0)
     frame = requestAnimationFrame(loop)
-    return () => { cancelAnimationFrame(frame); observer.disconnect() }
+    return () => { cancelAnimationFrame(frame); observer.disconnect(); releaseImages() }
   }, [])
+
+  useEffect(() => { repaintRef.current?.() }, [scene, isNight, state, appearance, studyBackdrop])
 
   const name = appearance.companion === 'asal' ? 'عسل' : 'چیبی تو'
   const label = name + (state === 'studying' ? ' پشت میزش مشغول مطالعه است' : state === 'break' ? ' در استراحت چای می‌نوشد' : ' کمی چرت می‌زند')

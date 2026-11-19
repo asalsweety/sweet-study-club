@@ -17,10 +17,19 @@ type PersonRowProps = {
   subjectName: string | null
   todaySeconds: number
   liveSeconds?: number | null
+  liveRow?: boolean
   actions?: ReactNode
 }
 
-export default function PersonRow({ name, avatarUrl, status, subjectName, todaySeconds, liveSeconds, actions }: PersonRowProps) {
+export default function PersonRow({ name, avatarUrl, status, subjectName, todaySeconds, liveSeconds, liveRow, actions }: PersonRowProps) {
+  if (liveRow) return <li className="flex min-h-[72px] items-center gap-3 rounded-2xl border border-border bg-background px-3.5 py-2.5">
+    <Avatar name={name} url={avatarUrl} status={status} size="sm" />
+    <div className="min-w-0 flex-1">
+      <p className="text-sm font-bold">{name} · {statusText[status]} {subjectName && status !== 'offline' && subjectName}</p>
+      <p className="mt-1 text-xs text-muted-foreground">امروز {formatDuration(todaySeconds)}{liveSeconds ? ` · این جلسه ${formatDuration(liveSeconds)}` : ''}</p>
+    </div>
+    {actions}
+  </li>
   return (
     <li className="flex items-center gap-3 rounded-2xl bg-muted/40 p-3 transition hover:bg-muted/70">
       <Avatar name={name} url={avatarUrl} status={status} size="md" />

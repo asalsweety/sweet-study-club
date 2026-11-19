@@ -11,7 +11,7 @@
 }
 
 /* Keep the last page action scrollable above the floating character. */
-.app-workspace[data-floating-helper] .workspace-footer { padding-bottom: 15rem; }
+.app-workspace .workspace-footer { padding-bottom: 15rem; }
 
 .asal-character { position: relative; display: inline-block; flex-shrink: 0; overflow: hidden; }
 .asal-character-sheet { position: absolute; inset: 0 auto auto 0; width: 300%; height: 200%; max-width: none; }
@@ -31,8 +31,26 @@
   .asal-character-greeting { animation: none; }
 }
 
+@media (max-width: 375px) {
+  button.study-helper-position { bottom: calc(5.25rem + env(safe-area-inset-bottom)); }
+  button.study-helper-position .asal-character { height: 3rem; width: 3rem; }
+}
+
+@media (max-width: 1023px) {
+  .mobile-live-capsule ~ button.study-helper-position {
+    bottom: calc(9rem + env(safe-area-inset-bottom));
+  }
+}
+
 @media (min-width: 1024px) {
   .study-helper-position { bottom: max(1.5rem, env(safe-area-inset-bottom)); }
   .study-helper-panel { max-height: calc(100dvh - 3rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
-  .app-workspace[data-floating-helper] .workspace-footer { padding-bottom: 11rem; }
+  html:not(.dark) .friends-helper {
+    left: max(12px, env(safe-area-inset-left));
+    bottom: max(28px, env(safe-area-inset-bottom));
+    width: 154px;
+    height: 164px;
+    background: url('/images/figma/social-friends-greeting.webp') center / contain no-repeat;
+  }
+  html:not(.dark) .friends-helper > * { visibility: hidden; }
 }

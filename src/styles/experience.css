@@ -11,10 +11,6 @@
   --dur-press: 120ms;
   --dur-quick: 200ms;
   --dur-base: 360ms;
-  --dur-slow: 640ms;
-  --elev-1:
-    0 1px 2px color-mix(in oklab, var(--foreground) 5%, transparent),
-    0 1px 1px color-mix(in oklab, var(--foreground) 3%, transparent);
   --elev-2:
     0 1px 2px color-mix(in oklab, var(--foreground) 5%, transparent),
     0 10px 28px -14px color-mix(in oklab, var(--foreground) 22%, transparent);
@@ -176,11 +172,6 @@ body::after {
   50% { opacity: 0.45; transform: scale(0.8); }
 }
 
-@keyframes float-y {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-
 @keyframes spin-slow {
   to { transform: rotate(360deg); }
 }
@@ -235,8 +226,6 @@ body::after {
 
 /* ---- Surfaces ---- */
 .surface,
-.metric-strip,
-.dashboard-focus,
 .glass {
   box-shadow: var(--elev-2), var(--hairline);
 }
@@ -259,38 +248,6 @@ body::after {
     box-shadow: var(--elev-3), var(--hairline);
     border-color: color-mix(in oklab, var(--primary) 28%, var(--border));
   }
-}
-
-.hero-card {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  border-radius: 1.75rem;
-  border: 1px solid color-mix(in oklab, var(--primary) 18%, var(--border));
-  background:
-    radial-gradient(120% 140% at 100% 0%, color-mix(in oklab, var(--primary) 16%, transparent), transparent 55%),
-    radial-gradient(90% 120% at 0% 100%, color-mix(in oklab, var(--chart-4) 14%, transparent), transparent 60%),
-    var(--card);
-  box-shadow: var(--elev-2), var(--hairline);
-}
-
-.hero-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background-image: radial-gradient(color-mix(in oklab, var(--primary) 22%, transparent) 1px, transparent 1px);
-  background-size: 18px 18px;
-  mask-image: radial-gradient(70% 80% at 85% 20%, black, transparent 70%);
-  opacity: 0.6;
-}
-
-.orb {
-  position: absolute;
-  border-radius: 999px;
-  filter: blur(40px);
-  pointer-events: none;
-  animation: float-y 9s var(--ease-in-out) infinite;
 }
 
 /* ---- Buttons ---- */
@@ -753,24 +710,6 @@ body::after {
   color: var(--secondary-foreground);
 }
 
-.palette-item .palette-icon {
-  display: grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  flex-shrink: 0;
-  border-radius: 0.65rem;
-  background: var(--muted);
-  color: var(--muted-foreground);
-  transition: background-color var(--dur-quick) ease, color var(--dur-quick) ease, transform var(--dur-base) var(--ease-spring);
-}
-
-.palette-item[aria-selected="true"] .palette-icon {
-  background: var(--primary);
-  color: var(--primary-foreground);
-  transform: scale(1.06);
-}
-
 @media (max-width: 639px) {
   .palette-panel {
     top: auto;
@@ -797,20 +736,6 @@ body::after {
   width: 100vw;
   height: 100dvh;
   pointer-events: none;
-}
-
-@keyframes trophy-bounce {
-  0% { opacity: 0; transform: scale(0.3) rotate(-18deg); }
-  60% { opacity: 1; transform: scale(1.12) rotate(6deg); }
-  100% { transform: scale(1) rotate(0); }
-}
-
-.celebrate-badge {
-  animation: trophy-bounce 760ms var(--ease-out) both;
-}
-
-.celebrate-ring {
-  animation: spin-slow 14s linear infinite;
 }
 
 /* Goal ring glow once the day's goal is met. */
@@ -851,8 +776,6 @@ body::after {
 
 @media (prefers-reduced-motion: reduce) {
   body::before,
-  .orb,
-  .celebrate-ring,
   .live-dot {
     animation: none !important;
   }
@@ -1032,11 +955,6 @@ body::after {
   }
 }
 
-@keyframes timer-sweep {
-  from { transform: translateX(150%); }
-  to { transform: translateX(-350%); }
-}
-
 /* ---- Focus room ---- */
 .focus-aurora {
   background:
@@ -1180,16 +1098,6 @@ h2,
   }
 }
 
-.pixel-card {
-  display: block;
-  aspect-ratio: 16 / 9;
-  border-radius: 1.1rem;
-  border: 1px solid color-mix(in oklab, var(--primary-foreground) 22%, transparent);
-  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.55);
-  image-rendering: pixelated;
-  animation: pop-in 560ms var(--ease-spring) backwards;
-}
-
 /* ---- Study clock ---- */
 .clock-text {
   display: inline-flex;
@@ -1241,25 +1149,6 @@ h2,
   }
 }
 
-/* Wide screens: a compact bar in the corner, like a lo-fi stream overlay. */
-@media (min-width: 1101px) and (min-height: 560px) and (pointer: fine) {
-  .pixel-dock {
-    position: absolute;
-    width: auto;
-    max-width: calc(100% - 3rem);
-    left: 1.5rem;
-    bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
-    flex-direction: row;
-    align-items: center;
-    gap: 1.1rem;
-    padding: 0.75rem 0.9rem 0.75rem 3.5rem;
-  }
-
-  .pixel-dock .focus-keys {
-    display: none;
-  }
-}
-
 /* Tablets in portrait (iPad): the room is a large framed card and the
    session controls sit centred beneath it. */
 @media (orientation: portrait) and (min-width: 600px) and (max-width: 1100px) {
@@ -1267,58 +1156,6 @@ h2,
     max-width: 56rem;
     margin-top: 1rem;
     border-radius: 2rem;
-  }
-}
-
-/* ---- Today layout ----
-   Phones stack; tablets pair the goal ring with the weekly chart and the
-   schedule with the quick links; desktops keep the side column. */
-.today-grid {
-  display: grid;
-  gap: 1.25rem;
-  align-items: start;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "hero" "live" "goal" "metrics" "parts" "week" "links";
-}
-
-.today-grid > [class*="grid-area:goal"],
-.today-grid > [class*="grid-area:hero"] {
-  align-self: stretch;
-}
-
-@media (min-width: 768px) {
-  .today-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas:
-      "hero hero"
-      "live live"
-      "goal week"
-      "metrics metrics"
-      "parts links";
-  }
-
-  .today-grid > [class*="grid-area:week"] > section {
-    height: 100%;
-  }
-
-  .today-grid > [class*="grid-area:week"] {
-    align-self: stretch;
-  }
-}
-
-@media (min-width: 1280px) {
-  .today-grid {
-    grid-template-columns: minmax(0, 1fr) 20rem;
-    grid-template-areas:
-      "hero goal"
-      "live live"
-      "metrics metrics"
-      "parts week"
-      "parts links";
-  }
-
-  .today-grid > [class*="grid-area:week"] {
-    align-self: start;
   }
 }
 
@@ -1334,7 +1171,6 @@ h2,
 
   .desktop-sidebar .brand-lockup > span:last-child,
   .desktop-sidebar .nav-caption,
-  .desktop-sidebar .hero-card,
   .desktop-sidebar a[href="/me"] > div,
   .desktop-sidebar a[href="/me"] > svg {
     display: none;

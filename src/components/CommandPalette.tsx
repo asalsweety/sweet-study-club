@@ -1,6 +1,6 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { useQuery } from '@tanstack/react-query'
-import { CornerDownLeft, Maximize2, Moon, Palette, Play, Search, Settings2, Sun, UserPlus } from 'lucide-react'
+import { CalendarDays, CornerDownLeft, MessageCircle, Maximize2, Moon, Palette, Play, Search, Settings2, Sparkles, Sun, UserPlus } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ComponentType, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../app/api'
@@ -46,7 +46,9 @@ const navigationKeywords: Record<string, string> = {
   [appRoutes.admin]: 'admin studio مدیریت',
 }
 
-export default function CommandPalette({ open, onOpenChange, isAdmin }: { open: boolean; onOpenChange: (open: boolean) => void; isAdmin: boolean }) {
+const quickActions = 'اقدام‌های سریع'
+
+export default function CommandPalette({ open, onOpenChange, isAdmin, onOpenHelper }: { onOpenHelper: () => void; open: boolean; onOpenChange: (open: boolean) => void; isAdmin: boolean }) {
   const navigate = useNavigate()
   const theme = useTheme()
   const hasTimer = Boolean(useQuery({ queryKey: queryKeys.timer, queryFn: api.timer.get }).data)
@@ -75,27 +77,32 @@ export default function CommandPalette({ open, onOpenChange, isAdmin }: { open: 
     const go = (path: string) => () => navigate(path, { viewTransition: true })
     const pages = [...primaryNavigation, ...secondaryNavigation, accountNavigation, ...(isAdmin ? [adminNavigation] : [])]
     return [
-      { id: 'start', group: 'کارهای سریع', label: 'شروع جلسۀ مطالعه', hint: 'آزاد، پومودورو یا پارت‌های روزانه', keywords: 'start study timer pomodoro شروع تایمر مطالعه', icon: Play, run: () => navigate(`${appRoutes.home}?start=1`, { viewTransition: true }) },
-      { id: 'focus', group: 'کارهای سریع', label: 'رفتن به اتاق تمرکز', hint: hasTimer ? 'تمام‌صفحه، با صدای محیطی' : 'اول یک جلسه شروع کن', keywords: 'focus room fullscreen تمرکز اتاق', icon: Maximize2, run: go(hasTimer ? appRoutes.focus : `${appRoutes.home}?start=1`) },
+      { id: 'start', group: quickActions, label: 'شروع جلسۀ مطالعه', hint: 'آزاد، پومودورو یا پارت‌های روزانه', keywords: 'start study timer شروع تایمر مطالعه', icon: Play, run: go(`${appRoutes.home}?start=1`) },
+      { id: 'pomodoro', group: quickActions, label: hasTimer ? 'بازگشت به جلسۀ در حال اجرا' : 'شروع جلسۀ پومودورو (۲۵ دقیقه)', keywords: 'start study timer pomodoro 25 تایمر مطالعه', icon: Play, run: go(hasTimer ? appRoutes.home : `${appRoutes.home}?start=pomodoro`) },
+      { id: 'focus', group: quickActions, label: 'ورود به اتاق تمرکز پیکسلی', keywords: 'focus room fullscreen pixel تمرکز اتاق', icon: Maximize2, run: go(`${appRoutes.focus}?room=pixel`) },
+      {
+        id: 'mode', group: quickActions, label: 'تغییر پوسته به حالت تاریک / روشن', keywords: 'dark light mode theme تاریک روشن شب', icon: theme.mode === 'dark' ? Sun : Moon,
+        run: () => { theme.setMode(theme.mode === 'dark' ? 'light' : 'dark'); toast(theme.mode === 'dark' ? 'حالت روشن فعال شد' : 'حالت تاریک فعال شد', { icon: theme.mode === 'dark' ? '☀️' : '🌙', duration: 2400 }) },
+      },
+      { id: 'task', group: quickActions, label: 'افزودن کار جدید به برنامۀ امروز', keywords: 'planner add task today کار وظیفه برنامه تقویم', icon: CalendarDays, run: go(`${appRoutes.planner}?add=1`) },
+      { id: 'helper', group: quickActions, label: 'باز کردن راهنمای عسل', keywords: 'help guide راهنما عسل', icon: MessageCircle, run: onOpenHelper },
+      { id: 'study-assistant', group: 'کارهای سریع', label: 'پرسش از دستیار مطالعه', keywords: 'AI assistant ask chat دستیار هوش مصنوعی عسل تحلیل آزمون', icon: Sparkles, run: go(`${appRoutes.learning}?tab=assistant`) },
       { id: 'invite', group: 'کارهای سریع', label: 'دعوت یک دوست', keywords: 'invite friend code دعوت دوست', icon: UserPlus, run: go(appRoutes.friends) },
       { id: 'settings', group: 'کارهای سریع', label: 'تنظیمات و هدف روزانه', keywords: 'settings goal konkur تنظیمات هدف کنکور', icon: Settings2, run: go(`${appRoutes.profile}?section=settings`) },
       ...pages.map(({ path, label, icon }) => ({ id: `page-${path}`, group: 'صفحه‌ها', label, keywords: navigationKeywords[path] ?? '', icon, run: go(path) })),
-      {
-        id: 'mode', group: 'ظاهر', label: theme.mode === 'dark' ? 'حالت روشن' : 'حالت تاریک', keywords: 'dark light mode theme تاریک روشن شب', icon: theme.mode === 'dark' ? Sun : Moon,
-        run: () => { theme.setMode(theme.mode === 'dark' ? 'light' : 'dark'); toast(theme.mode === 'dark' ? 'حالت روشن فعال شد' : 'حالت تاریک فعال شد', { icon: theme.mode === 'dark' ? '☀️' : '🌙', duration: 2400 }) },
-      },
       ...themePresetOptions.map((option) => ({
         id: `theme-${option.value}`, group: 'ظاهر', label: `پوستۀ ${option.label}`, hint: option.description, keywords: `theme palette color پوسته رنگ ${option.value}`, icon: Palette,
         run: () => { theme.setPreset(option.value); toast(`پوستۀ ${option.label} انتخاب شد`, { icon: '🎨', duration: 2400 }) },
       })),
     ]
-  }, [navigate, isAdmin, theme, hasTimer])
+  }, [navigate, isAdmin, theme, hasTimer, onOpenHelper])
 
   const results = useMemo(() => {
+    const available = hasTimer ? commands.filter(command => command.id !== 'start') : commands
     const needle = normalize(query)
-    if (!needle) return commands
-    return commands.filter((command) => normalize(`${command.label} ${command.hint ?? ''} ${command.keywords}`).includes(needle))
-  }, [commands, query])
+    if (!needle) return available
+    return available.filter((command) => normalize(`${command.label} ${command.hint ?? ''} ${command.keywords}`).includes(needle))
+  }, [commands, hasTimer, query])
 
   const choose = (command: Command | undefined) => {
     if (!command) return
@@ -125,16 +132,16 @@ export default function CommandPalette({ open, onOpenChange, isAdmin }: { open: 
     <DialogPrimitive.Root open={open} onOpenChange={(next) => { onOpenChange(next); if (!next) { setQuery(''); setActive(0) } }}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay data-slot="dialog-overlay" className="fixed inset-0 z-50" />
-        <DialogPrimitive.Content dir="rtl" className="palette-panel" aria-describedby={undefined}>
+        <DialogPrimitive.Content dir="rtl" className="palette-panel" aria-describedby={undefined} onOpenAutoFocus={() => { setQuery(''); setActive(0) }}>
           <DialogPrimitive.Title className="sr-only">جست‌وجو و فرمان‌ها</DialogPrimitive.Title>
-          <div className="flex items-center gap-3 border-b border-border px-4">
-            <Search size={18} className="shrink-0 text-muted-foreground" />
+          <div className="flex items-center gap-3 border-b border-border px-5 text-sm">
+            <Search size={18} className="shrink-0 text-[var(--primary-ink)]" />
             <input
               autoFocus
               value={query}
               onChange={(event) => { setQuery(event.target.value); setActive(0) }}
               onKeyDown={onKeyDown}
-              placeholder="کجا برویم؟ چه کار کنیم؟"
+              placeholder="جست‌وجو بین صفحات، شروع جلسه و فرمان‌ها..."
               aria-label="جست‌وجوی صفحه یا فرمان"
               role="combobox"
               aria-expanded
@@ -143,9 +150,9 @@ export default function CommandPalette({ open, onOpenChange, isAdmin }: { open: 
               enterKeyHint="go"
               autoComplete="off"
               spellCheck={false}
-              className="h-14 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground"
+              className="h-15 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
-            <span className="hidden sm:inline-flex"><span className="kbd">Esc</span></span>
+            <kbd className="hidden rounded-full bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground sm:block">ESC</kbd>
           </div>
           <div ref={listRef} id="palette-results" role="listbox" aria-label="نتیجه‌ها" className="palette-list">
             {results.length === 0 && <p className="px-4 py-10 text-center text-sm text-muted-foreground">چیزی پیدا نشد. واژۀ دیگری امتحان کن.</p>}
@@ -155,7 +162,7 @@ export default function CommandPalette({ open, onOpenChange, isAdmin }: { open: 
               const Icon = command.icon
               return (
                 <div key={command.id}>
-                  {header && <p className="px-3 pb-1.5 pt-3 text-[0.68rem] font-bold text-muted-foreground">{header}</p>}
+                  {header && <p className="pb-1.5 pt-3 text-[0.68rem] font-bold text-muted-foreground sm:pt-[25px]">{header}</p>}
                   <button
                     type="button"
                     id={`palette-${command.id}`}
@@ -165,22 +172,18 @@ export default function CommandPalette({ open, onOpenChange, isAdmin }: { open: 
                     onPointerMove={() => setActive(index)}
                     onClick={() => choose(command)}
                   >
-                    <span className="palette-icon"><Icon size={16} /></span>
+                    <Icon size={16} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-semibold">{command.label}</span>
                       {command.hint && <span className="block truncate text-xs text-muted-foreground">{command.hint}</span>}
                     </span>
-                    {index === active && <CornerDownLeft size={15} className="hidden shrink-0 opacity-70 sm:block" />}
+                    <CornerDownLeft size={14} className="shrink-0 opacity-70" aria-hidden="true" />
                   </button>
                 </div>
               )
             })}
           </div>
-          <div className="hidden items-center justify-between gap-4 border-t border-border px-4 py-2.5 text-[0.7rem] text-muted-foreground sm:flex">
-            <span className="flex items-center gap-1.5"><span dir="ltr" className="flex gap-1"><span className="kbd">↑</span><span className="kbd">↓</span></span> جابه‌جایی</span>
-            <span className="flex items-center gap-1.5"><span className="kbd">Enter</span> انتخاب</span>
-            <span className="flex items-center gap-1.5"><span dir="ltr" className="flex gap-1"><span className="kbd">Ctrl</span><span className="kbd">K</span></span> باز و بسته</span>
-          </div>
+          <p className="hidden border-t border-border px-5 py-2 text-xs text-muted-foreground sm:block"><kbd dir="ltr">↑ ↓</kbd> حرکت بین فرمان‌ها · <kbd>Enter</kbd> انتخاب · <kbd>Esc</kbd> بستن</p>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>

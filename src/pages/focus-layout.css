@@ -1,0 +1,56 @@
+.reference-focus {
+  --room-panel: #171333;
+  --room-line: #322b59;
+  --room-ink: #feeac7;
+  --room-accent: #f7b1b0;
+  color: var(--room-ink);
+  background: #0e0b22;
+  height: 100dvh;
+}
+.reference-focus[data-display="digital"] { background: linear-gradient(140deg,#050314 7%,#171233 55%,#2b1c3d); }
+.reference-focus .pixel-backdrop {
+  inset: auto; left: -2.361111%; top: 3.111111%; width: 109.791667%; height: 98.777778%; object-fit: cover; object-position: center;
+}
+.reference-focus .pixel-backdrop-shade { background: linear-gradient(to bottom,rgba(5,3,20,.58),rgba(5,3,20,.18) 45%,rgba(5,3,20,.72)); }
+.reference-focus :is(.focus-halo,.focus-particles) { display:none; }
+.room-nav { position: absolute; z-index: 12; top: 28px; inset-inline: 28px; display:flex; align-items: start; justify-content: space-between; pointer-events:none; }
+.room-nav > div { display:flex; gap:10px; align-items: start; pointer-events:auto; }
+.room-nav :is(button,summary,select), .room-lock { min-height:36px; border:1px solid var(--room-line); background:var(--room-panel); padding: 6px 14px; font-size:12px; color:var(--room-ink); }
+.room-nav .room-lock { border-radius:30px; display:flex; align-items:center; gap:8px; background:#2b2e26; }
+.room-settings { position: relative; }
+.room-settings summary { cursor:pointer; }
+.room-popup { position:absolute; top:calc(100% + 8px); inset-inline-end:0; padding:12px; width:max-content; max-width:24rem; display:grid; gap:8px; border-radius:18px; background:var(--room-panel); border:1px solid var(--room-line); }
+.room-stage { position:absolute; inset:0; display:grid; justify-items:center; align-items:start; }
+.room-clock { position:absolute; display:flex; align-items:center; flex-direction:column; text-align:center; width:max-content; max-width:65%; }
+.room-clock .clock-text { font-size:clamp(76px,7.5vw,108px); color:var(--room-ink); font-family:system-ui,sans-serif; font-weight:700; filter:none; }
+.room-clock .clock-digit { width:.62em; }
+.room-clock .dock-grip { position:absolute; bottom:100%; opacity:0; }
+.room-clock .dock-resize { top:100%; bottom:auto; opacity:0; }
+.room-clock:is(:hover,:focus-within) :is(.dock-grip,.dock-resize) { opacity:1; }
+.reference-focus[data-display="chibi"] .room-clock { top:32%; gap:16px; }
+.room-subject, .room-phase { font-size:13px; line-height:24px; }
+.reference-focus[data-display="chibi"] .room-subject { border-radius:24px; border:1px solid var(--room-line); min-height:32px; padding:3px 18px; background:var(--room-panel); }
+.reference-focus[data-display="chibi"] .room-subject::after { content:''; display:inline-block; width:8px; height:8px; margin-inline-start:8px; border-radius:50%; background:#cad182; }
+.reference-focus[data-display="digital"] .room-clock { top:calc(48.17% - 180px); width:360px; height:360px; border:4px solid #76536c; border-radius:50%; background:#2a1f386b; justify-content:center; }
+.reference-focus[data-display="digital"] .room-clock::before { content:''; position:absolute; inset:32px; border-radius:50%; border:8px solid var(--room-ink); background:var(--room-panel); }
+.reference-focus[data-display="digital"] .room-clock .clock-text { font-size:76px; }
+.reference-focus[data-display="digital"] .room-clock svg { opacity:.32; }
+.reference-focus[data-display="digital"] .room-subject, .reference-focus[data-display="digital"] .room-phase { position:absolute; z-index:1; }
+.reference-focus[data-display="digital"] .room-subject { top:82px; }
+.reference-focus[data-display="digital"] .room-phase { bottom:82px; color:#cad182; }
+.room-controls, .room-music { position:absolute; z-index:10; bottom:28px; border:1px solid var(--room-line); background:var(--room-panel); }
+.room-controls { left:28px; width:326px; min-height:119px; border-radius:24px; padding:18px; display:grid; gap:12px; align-content:center; }
+.room-controls > div:first-child { flex-direction:row-reverse; flex-wrap:nowrap; }
+.room-controls > div:first-child button { flex:1; border-radius:14px; min-height:40px; font-size:14px; display:flex; justify-content:center; color:#050315; background:var(--room-accent); padding:6px 12px; }
+.room-controls > div:first-child button:last-child { background:#3d2129; color:var(--room-accent); }
+.room-controls > div:first-child svg { width:16px; height:16px; }
+.room-sounds, .room-providers { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.room-sounds { direction:ltr; justify-content:center; }
+.room-sounds button, .room-providers span { border-radius:20px; padding:4px 9px; font-size:11px; background:#201b3f; color:var(--room-ink); }
+.room-sounds button[aria-pressed=true] { background:#cad182; color:#050315; }
+.room-sounds input { width:100%; }
+.reference-focus[data-display="digital"] .room-controls { left:50%; transform:translateX(-50%); width:246px; min-height:70px; padding:14px; border-radius:35px; }
+.room-music { right:28px; width:320px; min-height:115px; border-radius:20px; padding:14px 16px; display:grid; justify-items:start; text-align:start; gap:6px; }
+.room-music > strong { font-size:14px; }
+.room-music > span { font-size:12px; }
+html:has(.reference-focus) { scrollbar-gutter: auto; }

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Music2, Play, Plus, Trash2, X } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { api } from '../../app/api'
 import { queryKeys, useSettings } from '../../app/session'
 import { Button } from '../../components/ui/button'
@@ -15,11 +15,11 @@ import { guessTitle, musicEmbed, providerLabels } from './music'
  * Saved YouTube, SoundCloud and Spotify links for the focus room. Links live
  * on the account (every device); the chosen one plays in a small player.
  */
-export function MusicButton({ className, onPlay }: { className?: string; onPlay: (link: MusicLink) => void }) {
+export function MusicButton({ className, onPlay, children }: { className?: string; children?: ReactNode; onPlay: (link: MusicLink) => void }) {
   const [open, setOpen] = useState(false)
   return (
     <>
-      <button type="button" className={className} onClick={() => setOpen(true)}><Music2 size={16} />موسیقی</button>
+      <button type="button" className={className} onClick={() => setOpen(true)}>{children ?? <><Music2 size={16} />موسیقی</>}</button>
       <MusicLibrary open={open} onOpenChange={setOpen} onPlay={(link) => { setOpen(false); onPlay(link) }} />
     </>
   )
