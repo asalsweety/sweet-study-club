@@ -28,6 +28,7 @@ const LearningPage = lazy(() => import('./pages/LearningPage'))
 const FriendsPage = lazy(() => import('./pages/FriendsPage'))
 const RankingPage = lazy(() => import('./pages/RankingPage'))
 const ShopPage = lazy(() => import('./pages/ShopPage'))
+const FeedbackPage = lazy(() => import('./pages/FeedbackPage'))
 const MePage = lazy(() => import('./pages/MePage'))
 const AdminPage = lazy(() => import('./pages/AdminPage'))
 const InvitePage = lazy(() => import('./pages/InvitePage'))
@@ -133,6 +134,7 @@ function AppContent() {
                   <Route path={appRoutes.friends} element={<FriendsPage />} />
                   <Route path={appRoutes.ranking} element={<RankingPage />} />
                   <Route path={appRoutes.shop} element={<ShopPage />} />
+                  <Route path={appRoutes.feedback} element={<FeedbackPage />} />
                   <Route path={appRoutes.profile} element={<MePage profile={profile.data} />} />
                   <Route path={appRoutes.invite} element={<InvitePage />} />
                   {profile.data.role === 'admin' && <Route path={appRoutes.admin} element={<AdminPage />} />}

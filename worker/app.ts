@@ -3,6 +3,7 @@ import { requestId } from 'hono/request-id'
 import { secureHeaders } from 'hono/secure-headers'
 import type { ServiceStatus } from '../src/shared/api/system'
 import { updateProfileInputSchema } from '../src/shared/api/profile'
+import { createFeedbackInputSchema } from '../src/shared/api/feedback'
 import { createAuth } from './auth'
 import {
   createRequireSession,
@@ -13,6 +14,8 @@ import {
   updateProfileByUserId,
 } from './profile/repository'
 import { ApiError } from './http/errors'
+import { readBody, userId } from './http/validation'
+import { submitFeedback } from './feedback/repository'
 import { adminRoutes } from './routes/admin'
 import { progressRoutes } from './routes/progress'
 import { shopRoutes } from './routes/shop'
@@ -70,7 +73,7 @@ export function createWorkerApp(options: WorkerAppOptions = {}) {
         .bind('schema_version')
         .first<{ value: string }>()
 
-      if (metadata?.value !== '14') {
+      if (metadata?.value !== '15') {
         throw new Error('The expected database migration is missing.')
       }
 
@@ -157,6 +160,12 @@ export function createWorkerApp(options: WorkerAppOptions = {}) {
     }
 
     return context.json({ profile })
+  })
+
+  app.post('/api/feedback', requireSession, async (context) => {
+    const input = await readBody(context, createFeedbackInputSchema)
+    await submitFeedback(context.env.DB, userId(context), input)
+    return context.json({ received: true }, 201)
   })
 
   app.route('/api', studyRoutes(requireSession))

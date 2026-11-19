@@ -4,6 +4,7 @@ import { createOverrideInputSchema, isoDateSchema, upsertStudyPartInputSchema } 
 import { answerPlanRequestInputSchema, upsertProductInputSchema } from '../../src/shared/api/shop'
 import { startOfTehranDay, tehranClock } from '../../src/shared/lib/tehran'
 import { invalidInput } from '../http/errors'
+import { listFeedback } from '../feedback/repository'
 import { readBody, readQuery, requireAdmin, userId } from '../http/validation'
 import * as schedule from '../schedule/service'
 import * as shop from '../shop/service'
@@ -18,6 +19,12 @@ const broadcastInput = z.object({
 export function adminRoutes(requireSession: MiddlewareHandler<WorkerEnvironment>) {
   const app = new Hono<WorkerEnvironment>()
   app.use('/admin/*', requireSession, requireAdmin)
+
+  app.get('/admin/feedback', async (c) => {
+    const { before } = readQuery(c, z.object({ before: z.coerce.number().int().positive().optional() }))
+    c.header('Cache-Control', 'private, no-store')
+    return c.json(await listFeedback(c.env.DB, before))
+  })
 
   app.get('/admin/overview', async (c) => {
     const db = c.env.DB

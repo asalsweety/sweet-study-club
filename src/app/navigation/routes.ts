@@ -7,6 +7,7 @@ export const appRoutes = {
   friends: '/friends',
   ranking: '/ranking',
   shop: '/shop',
+  feedback: '/feedback',
   profile: '/me',
   admin: '/admin',
   invite: '/invite/:token',

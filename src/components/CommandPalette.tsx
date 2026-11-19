@@ -39,6 +39,7 @@ const navigationKeywords: Record<string, string> = {
   [appRoutes.friends]: 'friends live social دوست زنده',
   [appRoutes.ranking]: 'league ranking leaderboard رتبه جدول',
   [appRoutes.shop]: 'shop store plus خرید فروشگاه',
+  [appRoutes.feedback]: 'feedback suggestion bug report نظر پیشنهاد انتقاد مشکل گزارش اشکال',
   [appRoutes.profile]: 'account profile settings پروفایل تنظیمات',
   [appRoutes.admin]: 'admin studio مدیریت',
 }
