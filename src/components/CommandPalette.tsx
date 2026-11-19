@@ -1,16 +1,13 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { useQuery } from '@tanstack/react-query'
-import { CalendarDays, CornerDownLeft, MessageCircle, Maximize2, Moon, Palette, Play, Search, Settings2, Sparkles, Sun, UserPlus } from 'lucide-react'
+import { CalendarDays, CornerDownLeft, MessageCircle, Maximize2, Play, Search, Settings2, Sparkles, UserPlus } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ComponentType, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../app/api'
 import { queryKeys } from '../app/session'
-import { accountNavigation, adminNavigation, primaryNavigation, secondaryNavigation } from '../app/navigation/items'
+import { accountNavigation, adminNavigation, getPrimaryNavigation, secondaryNavigation } from '../app/navigation/items'
 import { appRoutes } from '../app/navigation/routes'
-import { themePresetOptions } from '../features/theme/model'
-import { useTheme } from '../features/theme/useTheme'
 import { haptic } from '../shared/lib/confetti'
-import { toast } from '../shared/lib/toast'
 
 type Command = {
   id: string
@@ -48,9 +45,8 @@ const navigationKeywords: Record<string, string> = {
 
 const quickActions = 'اقدام‌های سریع'
 
-export default function CommandPalette({ open, onOpenChange, isAdmin, onOpenHelper }: { onOpenHelper: () => void; open: boolean; onOpenChange: (open: boolean) => void; isAdmin: boolean }) {
+export default function CommandPalette({ open, onOpenChange, isAdmin, displayName, onOpenHelper }: { onOpenHelper: () => void; open: boolean; onOpenChange: (open: boolean) => void; isAdmin: boolean; displayName: string }) {
   const navigate = useNavigate()
-  const theme = useTheme()
   const hasTimer = Boolean(useQuery({ queryKey: queryKeys.timer, queryFn: api.timer.get }).data)
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
@@ -75,27 +71,19 @@ export default function CommandPalette({ open, onOpenChange, isAdmin, onOpenHelp
 
   const commands = useMemo<Command[]>(() => {
     const go = (path: string) => () => navigate(path, { viewTransition: true })
-    const pages = [...primaryNavigation, ...secondaryNavigation, accountNavigation, ...(isAdmin ? [adminNavigation] : [])]
+    const pages = [...getPrimaryNavigation(displayName), ...secondaryNavigation, accountNavigation, ...(isAdmin ? [adminNavigation] : [])]
     return [
       { id: 'start', group: quickActions, label: 'شروع جلسۀ مطالعه', hint: 'آزاد، پومودورو یا پارت‌های روزانه', keywords: 'start study timer شروع تایمر مطالعه', icon: Play, run: go(`${appRoutes.home}?start=1`) },
       { id: 'pomodoro', group: quickActions, label: hasTimer ? 'بازگشت به جلسۀ در حال اجرا' : 'شروع جلسۀ پومودورو (۲۵ دقیقه)', keywords: 'start study timer pomodoro 25 تایمر مطالعه', icon: Play, run: go(hasTimer ? appRoutes.home : `${appRoutes.home}?start=pomodoro`) },
       { id: 'focus', group: quickActions, label: 'ورود به اتاق تمرکز پیکسلی', keywords: 'focus room fullscreen pixel تمرکز اتاق', icon: Maximize2, run: go(`${appRoutes.focus}?room=pixel`) },
-      {
-        id: 'mode', group: quickActions, label: 'تغییر پوسته به حالت تاریک / روشن', keywords: 'dark light mode theme تاریک روشن شب', icon: theme.mode === 'dark' ? Sun : Moon,
-        run: () => { theme.setMode(theme.mode === 'dark' ? 'light' : 'dark'); toast(theme.mode === 'dark' ? 'حالت روشن فعال شد' : 'حالت تاریک فعال شد', { icon: theme.mode === 'dark' ? '☀️' : '🌙', duration: 2400 }) },
-      },
       { id: 'task', group: quickActions, label: 'افزودن کار جدید به برنامۀ امروز', keywords: 'planner add task today کار وظیفه برنامه تقویم', icon: CalendarDays, run: go(`${appRoutes.planner}?add=1`) },
       { id: 'helper', group: quickActions, label: 'باز کردن راهنمای عسل', keywords: 'help guide راهنما عسل', icon: MessageCircle, run: onOpenHelper },
       { id: 'study-assistant', group: 'کارهای سریع', label: 'پرسش از دستیار مطالعه', keywords: 'AI assistant ask chat دستیار هوش مصنوعی عسل تحلیل آزمون', icon: Sparkles, run: go(`${appRoutes.learning}?tab=assistant`) },
       { id: 'invite', group: 'کارهای سریع', label: 'دعوت یک دوست', keywords: 'invite friend code دعوت دوست', icon: UserPlus, run: go(appRoutes.friends) },
       { id: 'settings', group: 'کارهای سریع', label: 'تنظیمات و هدف روزانه', keywords: 'settings goal konkur تنظیمات هدف کنکور', icon: Settings2, run: go(`${appRoutes.profile}?section=settings`) },
       ...pages.map(({ path, label, icon }) => ({ id: `page-${path}`, group: 'صفحه‌ها', label, keywords: navigationKeywords[path] ?? '', icon, run: go(path) })),
-      ...themePresetOptions.map((option) => ({
-        id: `theme-${option.value}`, group: 'ظاهر', label: `پوستۀ ${option.label}`, hint: option.description, keywords: `theme palette color پوسته رنگ ${option.value}`, icon: Palette,
-        run: () => { theme.setPreset(option.value); toast(`پوستۀ ${option.label} انتخاب شد`, { icon: '🎨', duration: 2400 }) },
-      })),
     ]
-  }, [navigate, isAdmin, theme, hasTimer, onOpenHelper])
+  }, [navigate, isAdmin, displayName, hasTimer, onOpenHelper])
 
   const results = useMemo(() => {
     const available = hasTimer ? commands.filter(command => command.id !== 'start') : commands
@@ -108,7 +96,7 @@ export default function CommandPalette({ open, onOpenChange, isAdmin, onOpenHelp
     if (!command) return
     haptic(8)
     onOpenChange(false)
-    // Let the panel start closing before the route or theme changes.
+    // Let the panel start closing before running the selected action.
     window.setTimeout(command.run, 60)
   }
 

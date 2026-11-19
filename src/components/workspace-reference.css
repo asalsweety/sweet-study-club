@@ -64,7 +64,7 @@ html:has(.app-workspace) { scrollbar-gutter: auto; }
     align-items: center;
   }
   :is(.club-report,.learning-workspace,.shop-reference,.profile-overview) .page-heading .eyebrow { line-height: 18px; }
-  :is(.club-report,.learning-workspace,.shop-reference,.profile-overview) .page-heading h1 { margin: 4px 0 0; font-family: var(--font-sans); font-size: 26px; line-height: 36px; font-weight: 800; }
+  :is(.club-report,.learning-workspace,.shop-reference,.profile-overview) .page-heading h1 { margin: 4px 0 0; font-size: 26px; line-height: 36px; }
   :is(.club-report,.learning-workspace,.shop-reference,.profile-overview) .page-description { margin-top: 6px; line-height: 22px; }
   .profile-overview { gap: 20px; }
   .profile-overview #export { min-height: 201px; }

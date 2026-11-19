@@ -1,5 +1,4 @@
 @import "tailwindcss" source(none);
-@import "./styles/theme-presets.css";
 @source "./**/*.{ts,tsx}";
 @source not "./components/onboarding";
 @source "../index.html";
@@ -37,8 +36,7 @@
   --success: #4b6e24;
   --success-foreground: #ffffff;
   --warning: #9e6308;
-  /* Shared visual roles keep legacy feature screens, exported reports, and
-     overlays aligned with every TweakCN palette in both color modes. */
+  /* Shared visual roles for feature screens, exported reports and overlays. */
   --primary-gradient: linear-gradient(var(--primary), var(--primary));
   --primary-gradient-horizontal: linear-gradient(
     90deg,
@@ -124,14 +122,13 @@
   --shadow: color-mix(in oklab, black 38%, transparent);
 }
 
-:root.theme-preset:not(.theme-sweet) {
-  --primary-ink: var(--primary);
-  --destructive-foreground: #ffffff;
+@theme static {
+  --font-display: "Mahboubeh Mehravar", "Lalezar", "Estedad Variable", Tahoma, sans-serif;
 }
 
 @theme inline {
   --font-sans: "Estedad Variable", "Estedad", "Vazirmatn", Tahoma, Arial, sans-serif;
-  --font-display: "Mahboubeh Mehravar", "Lalezar", "Estedad Variable", Tahoma, sans-serif;
+  --font-mono: var(--font-sans);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -180,11 +177,14 @@
     outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
   }
 
+  html {
+    font-family: var(--font-sans);
+  }
+
   body {
     margin: 0;
     background: var(--background);
     color: var(--foreground);
-    font-family: var(--font-sans);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
   }
@@ -280,7 +280,10 @@ body {
 button,
 input,
 textarea,
-select {
+select,
+option,
+optgroup,
+::file-selector-button {
   font: inherit;
 }
 

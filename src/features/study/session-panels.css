@@ -6,7 +6,7 @@
   border-radius: 28px;
   background: var(--card);
 }
-.session-panel [data-slot="dialog-title"] { padding: 0; font-family: inherit; font-weight: 700; line-height: 32px; }
+.session-panel [data-slot="dialog-title"] { padding: 0; line-height: 32px; }
 .session-panel [data-slot="dialog-description"] { color: var(--primary-ink); font-size: 13px; line-height: 22px; }
 .session-panel [data-slot="button"] { border-radius: 14px; min-height: 44px; }
 .finish-panel[data-slot="dialog-content"] { max-width: 500px; }

@@ -1,9 +1,9 @@
 import { memo, useEffect, useRef } from 'react'
 import { chibiItems, defaultChibi, type ChibiAppearance } from '../../shared/api/chibi'
-import { createDeskSpriteCache, deskSprites } from './chibiSprite'
+import { createDeskSpriteCache } from './chibiSprite'
 import { chibiSkin, drawCustomChibi, drawDeskDecor } from './customChibi'
 import { sceneThemes, type ChibiScene as SceneId } from './scenes'
-import { studyRoomImage } from './studyRoomImage'
+import { deskSprites, studyImage, studyRoomArt, type PixelSceneState } from './studyRoomImage'
 
 /**
  * The supplied study room art with Asal or a customizable companion. During
@@ -11,8 +11,6 @@ import { studyRoomImage } from './studyRoomImage'
  * Drawn on a 256×144 canvas scaled with crisp pixels at ~12 fps; drawing
  * stops off-screen and in hidden tabs, and reduced-motion users get a still.
  */
-export type PixelSceneState = 'studying' | 'break' | 'paused'
-
 type Props = {
   scene: SceneId
   isNight: boolean
@@ -345,29 +343,20 @@ function vignette(ctx: CanvasRenderingContext2D) {
   ctx.globalAlpha = 1
 }
 
-function samplePalette(sprite: HTMLImageElement): Palette {
-  try {
-    const canvas = document.createElement('canvas')
-    canvas.width = SPRITE_W
-    canvas.height = SPRITE_H
-    const ctx = canvas.getContext('2d', { willReadFrequently: true })
-    if (!ctx) return fallbackPalette
-    ctx.drawImage(sprite, 0, 0, sprite.naturalWidth / 3, sprite.naturalHeight, 0, 0, SPRITE_W, SPRITE_H)
-    const data = ctx.getImageData(0, 0, SPRITE_W, SPRITE_H).data
-    const at = (x: number, y: number) => { const i = (y * SPRITE_W + x) * 4; return `#${[data[i], data[i + 1], data[i + 2]].map((c) => (c ?? 0).toString(16).padStart(2, '0')).join('')}` }
-    const sleeve = at(Math.round(SPRITE_W * 0.44), Math.round(SPRITE_H * 0.94))
-    const skin = at(Math.round(SPRITE_W * 0.536), Math.round(SPRITE_H * 0.625))
-    return { skin, skinShade: mix(skin, -0.1), sleeve, sleeveShade: mix(sleeve, -0.22), sleeveLight: mix(sleeve, 0.18) }
-  } catch {
-    return fallbackPalette
-  }
+// Colors from the girl-desk artwork, including rooms where Asal is already
+// painted into the background and the standalone sprite is never needed.
+const girlPalette: Palette = {
+  skin: '#fbc5a0', skinShade: mix('#fbc5a0', -0.1),
+  sleeve: '#eeaaa9', sleeveShade: mix('#eeaaa9', -0.22), sleeveLight: mix('#eeaaa9', 0.18),
 }
 
 function PixelStudyScene({ scene, isNight, state, appearance = defaultChibi, studyBackdrop, className }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const repaintRef = useRef<(() => void) | null>(null)
-  const props = useRef({ scene, isNight, state, appearance, studyBackdrop })
-  props.current = { scene, isNight, state, appearance, studyBackdrop }
+  const art = studyRoomArt(scene, state, appearance)
+  const current = { scene, isNight, state, appearance, roomUrl: studyBackdrop ?? art.room, spriteUrl: art.sprite }
+  const props = useRef(current)
+  props.current = current
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -383,37 +372,33 @@ function PixelStudyScene({ scene, isNight, state, appearance = defaultChibi, stu
     }
     const images = new Map<string, HTMLImageElement>()
     const coloredSprite = createDeskSpriteCache()
-    let palette = fallbackPalette
-    let lastTime = 0
+    const repaint = () => repaintRef.current?.()
 
     const loadImage = (url: string) => {
       let image = images.get(url)
       if (!image) {
-        image = new Image()
-        image.onload = () => {
-          if (url === deskSprites.girl && image) palette = samplePalette(image)
-          render(lastTime)
-        }
+        image = studyImage(url)
+        image.addEventListener('load', repaint)
+        image.addEventListener('error', repaint)
         images.set(url, image)
-        image.src = url
       }
       return image.complete && image.naturalWidth > 0 ? image : null
     }
 
     const render = (t: number) => {
-      lastTime = t
-      const { scene: id, isNight: night, state: mood, appearance: look } = props.current
+      const { scene: id, isNight: night, state: mood, appearance: look, roomUrl, spriteUrl } = props.current
       const isAsal = look.companion === 'asal'
       const isBoy = look.companion === 'boy'
+      const palette = isBoy ? fallbackPalette : girlPalette
       const base = isAsal || look.skin === 'warm' ? palette : { ...palette, ...chibiSkin[look.skin] }
       const sleeve = look.outfit ? chibiItems[look.outfit].color : null
       const colors = sleeve ? { ...base, sleeve, sleeveShade: mix(sleeve, -0.22), sleeveLight: mix(sleeve, 0.18) } : base
       const bob = mood === 'studying' ? Math.floor(t / 0.75) % 2 : mood === 'paused' && Math.sin(t * 1.3) > 0.5 ? 1 : 0
       const frame = mood === 'break' ? 2 : mood === 'paused' || t % 3.6 < 0.16 ? 1 : 0
-      const showBakedAsal = isAsal && !look.outfit && (id === 'night-desk' || mood === 'studying')
-      const room = loadImage(props.current.studyBackdrop ?? studyRoomImage(id, mood, showBakedAsal))
-      const sprite = loadImage(deskSprites[isBoy ? 'boy' : 'girl'])
-      const roomHasCharacter = room && showBakedAsal
+      const room = loadImage(roomUrl)
+      const roomHasCharacter = room && !spriteUrl
+      const failedRoom = !room && images.get(roomUrl)?.complete
+      const sprite = spriteUrl ? loadImage(spriteUrl) : failedRoom ? loadImage(deskSprites.girl) : null
       ctx.globalAlpha = 1
       ctx.globalCompositeOperation = 'source-over'
       if (room) {
@@ -461,31 +446,39 @@ function PixelStudyScene({ scene, isNight, state, appearance = defaultChibi, stu
       vignette(ctx)
     }
 
-    repaintRef.current = () => render(lastTime)
-    const releaseImages = () => {
-      repaintRef.current = null
-      for (const image of images.values()) image.onload = null
-    }
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)')
-    if (reduced.matches) {
-      render(5)
-      return releaseImages
-    }
-    let frame = 0
-    let last = 0
-    let visible = true
     const started = performance.now()
-    const loop = (now: number) => {
-      frame = requestAnimationFrame(loop)
-      if (!visible || now - last < FRAME_MS) return
-      last = now
-      render((now - started) / 1000)
+    let visible = canvas.getClientRects().length > 0
+    let interval = 0
+    repaintRef.current = () => {
+      if (visible && !document.hidden) render(reduced.matches ? 5 : (performance.now() - started) / 1000)
     }
-    const observer = new IntersectionObserver(([entry]) => { visible = entry?.isIntersecting ?? true })
+    const sync = () => {
+      window.clearInterval(interval)
+      repaint()
+      if (visible && !document.hidden && !reduced.matches) interval = window.setInterval(repaint, FRAME_MS)
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      const onScreen = entry?.isIntersecting ?? false
+      if (visible === onScreen) return
+      visible = onScreen
+      sync()
+    })
     observer.observe(canvas)
-    render(0)
-    frame = requestAnimationFrame(loop)
-    return () => { cancelAnimationFrame(frame); observer.disconnect(); releaseImages() }
+    reduced.addEventListener('change', sync)
+    document.addEventListener('visibilitychange', sync)
+    sync()
+    return () => {
+      window.clearInterval(interval)
+      observer.disconnect()
+      reduced.removeEventListener('change', sync)
+      document.removeEventListener('visibilitychange', sync)
+      repaintRef.current = null
+      for (const image of images.values()) {
+        image.removeEventListener('load', repaint)
+        image.removeEventListener('error', repaint)
+      }
+    }
   }, [])
 
   useEffect(() => { repaintRef.current?.() }, [scene, isNight, state, appearance, studyBackdrop])

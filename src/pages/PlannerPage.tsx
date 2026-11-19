@@ -5,6 +5,7 @@ import { Bell, ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from 'lucide-re
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../app/api'
+import { plannerTitle } from '../app/navigation/items'
 import { queryKeys } from '../app/session'
 import type { PlannerItem } from '../shared/api/planner'
 import { errorMessage } from '../shared/api/http'
@@ -17,7 +18,7 @@ import PlannerItemEditor, { type PlannerDraft } from '../features/planner/Planne
 
 const weekdays = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج']
 
-export default function PlannerPage() {
+export default function PlannerPage({ displayName }: { displayName: string }) {
   const client = useQueryClient()
   const today = tehranClock(Date.now()).date
   const [selected, setSelected] = useState(today)
@@ -69,7 +70,7 @@ export default function PlannerPage() {
 
   return (
     <div className="grid gap-6">
-      <PageHeading eyebrow="یک روز، یک قدم" title="برنامۀ من" description="کارهای مهم را مشخص کن؛ برای استراحت هم جا بگذار." action={<Button onClick={() => setEditing('new')}><Plus />کار جدید</Button>} />
+      <PageHeading eyebrow="یک روز، یک قدم" title={plannerTitle(displayName)} description="کارهای مهم را مشخص کن؛ برای استراحت هم جا بگذار." action={<Button onClick={() => setEditing('new')}><Plus />کار جدید</Button>} />
       {items.isError && <QueryError error={items.error} retry={() => void items.refetch()} />}
       <div className="grid items-start gap-5 xl:grid-cols-[1fr_1.15fr]">
       <section className="glass rise rounded-2xl p-5 sm:p-6">

@@ -14,9 +14,9 @@ const topics = [
   { title: 'چطور پومودورو و اتاق پیکسلی را روشن کنم؟', icon: Timer,
     body: 'پومودورو را انتخاب کن، درس و ریتم تمرکز و استراحتت را مشخص کن و شروع را بزن. اگر دوست داری چیبی‌ات همراهت درس بخواند، وارد اتاق پیکسلی شو.',
     links: [['شروع پومودورو', '/?start=pomodoro'], ['اتاق پیکسلی', '/focus?room=pixel']] },
-  { title: 'تغییر تم، حالت تمرکز کامل و صدای باران', icon: Sparkles,
-    body: 'از تنظیمات پروفایل می‌توانی رنگ و پوستۀ باشگاه را عوض کنی. پیش از شروع جلسه، «حالت تمرکز کامل» را روشن کن. در اتاق تمرکز هم از «صدای محیط» باران را انتخاب کن.',
-    links: [['تنظیمات پروفایل', appRoutes.profile + '?section=settings'], ['تنظیمات جلسه', '/?start=1']] },
+  { title: 'چطور تمرکز کامل و صدای باران را روشن کنم؟', icon: Sparkles,
+    body: 'پیش از شروع جلسه، «حالت تمرکز کامل» را روشن کن. در اتاق تمرکز هم از «صدای محیط» باران را انتخاب کن.',
+    links: [['تنظیمات جلسه', '/?start=1'], ['اتاق تمرکز', appRoutes.focus]] },
   { title: 'دعوت از دوستان و رقابت در لیگ هفتگی', icon: UsersRound,
     body: 'در صفحۀ دوستان می‌توانی کد دوستی‌ات را بفرستی یا دوستت را اضافه کنی. در جدول رتبه‌بندی، بازۀ هفتگی را انتخاب کن تا زمان مطالعه‌ات را با دوستانت مقایسه کنی.',
     links: [['دوستان من', appRoutes.friends], ['رتبه‌بندی هفتگی', appRoutes.ranking]] },
@@ -82,7 +82,7 @@ export default function StudyHelper({ open, onOpenChange }: { open: boolean; onO
                 {greeting !== null && <span className="motion-reduce:hidden"><HelperCharacter key={greeting} className="h-16 w-[60px]" play /></span>}
               </button>
               <div className="min-w-0 flex-1">
-                <Dialog.Title className="text-base font-bold"><span className="font-sans">سلام، من عسلم!</span></Dialog.Title>
+                <Dialog.Title className="text-base">سلام، من عسلم!</Dialog.Title>
                 <Dialog.Description className="mt-1 text-[11px] font-semibold text-[var(--primary-ink)]">دستیار و راهنمای باشگاه مطالعه</Dialog.Description>
               </div>
               <button

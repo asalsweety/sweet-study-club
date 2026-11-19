@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import { auth, type AuthSession } from './auth'
 
 const loadApi = () => import('./api').then((module) => module.api)
@@ -30,6 +31,22 @@ export const queryKeys = {
 
 export function useSession() {
   return useQuery({ queryKey: queryKeys.session, queryFn: auth.session, staleTime: 5 * 60_000 })
+}
+
+// Both Today and Focus need the active timer before showing their controls.
+export function usePrefetchStudyData(enabled: boolean, withCompanion: boolean) {
+  const client = useQueryClient()
+  useEffect(() => {
+    if (!enabled) return
+    void client.prefetchQuery({
+      queryKey: queryKeys.timer,
+      queryFn: async () => (await loadApi()).timer.get(),
+    })
+    if (withCompanion) void client.prefetchQuery({
+      queryKey: queryKeys.chibi,
+      queryFn: async () => (await loadApi()).shop.chibi(),
+    })
+  }, [client, enabled, withCompanion])
 }
 
 export function useProfile(enabled = true) {
@@ -72,9 +89,9 @@ export async function replaceSession(client: QueryClient, session: AuthSession |
   client.setQueryData(queryKeys.session, session)
 }
 
-/** Refresh everything that a finished or changed study session affects. */
+/** Refresh totals and rewards once the finished session has been saved. */
 export function invalidateStudyData(client: ReturnType<typeof useQueryClient>) {
-  for (const key of [['timer'], ['progress'], ['heatmap'], ['gamification'], ['dna'], ['leaderboard'], ['live'], ['friends'], queryKeys.chibi]) {
+  for (const key of [['progress'], ['heatmap'], ['gamification'], ['dna'], ['leaderboard'], ['live'], ['friends'], queryKeys.chibi]) {
     void client.invalidateQueries({ queryKey: key })
   }
 }

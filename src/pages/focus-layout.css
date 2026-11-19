@@ -22,7 +22,7 @@
 .room-popup { position:absolute; top:calc(100% + 8px); inset-inline-end:0; padding:12px; width:max-content; max-width:24rem; display:grid; gap:8px; border-radius:18px; background:var(--room-panel); border:1px solid var(--room-line); }
 .room-stage { position:absolute; inset:0; display:grid; justify-items:center; align-items:start; }
 .room-clock { position:absolute; display:flex; align-items:center; flex-direction:column; text-align:center; width:max-content; max-width:65%; }
-.room-clock .clock-text { font-size:clamp(76px,7.5vw,108px); color:var(--room-ink); font-family:system-ui,sans-serif; font-weight:700; filter:none; }
+.room-clock .clock-text { font-size:clamp(76px,7.5vw,108px); color:var(--room-ink); filter:none; }
 .room-clock .clock-digit { width:.62em; }
 .room-clock .dock-grip { position:absolute; bottom:100%; opacity:0; }
 .room-clock .dock-resize { top:100%; bottom:auto; opacity:0; }

@@ -1,6 +1,7 @@
 import { useChibi, useSettings } from '../../app/session'
 import { useTheme } from '../theme/useTheme'
-import PixelStudyScene, { type PixelSceneState } from './PixelStudyScene'
+import PixelStudyScene from './PixelStudyScene'
+import type { PixelSceneState } from './studyRoomImage'
 
 export default function TodayStudyRoom({ state, className }: { state?: PixelSceneState; className: string }) {
   const look = useChibi().data?.appearance

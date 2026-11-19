@@ -1,22 +1,27 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect, useSyncExternalStore } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { appRoutes } from './app/navigation/routes'
-import { useProfile, useSession, useSettings } from './app/session'
+import { usePrefetchStudyData, useProfile, useSession, useSettings } from './app/session'
 import { ApiClientError } from './shared/api/api-client-error'
 import { Button } from './components/ui/button'
 import StudySticker from './components/StudySticker'
 import Toaster from './components/Toaster'
+import { confirmStore } from './shared/lib/confirm'
+import { useSessionCelebration } from './features/study/sessionCelebrationStore'
 
-const AppShell = lazy(() => import('./components/AppShell'))
+const loadShell = () => import('./components/AppShell')
+const loadHome = () => import('./pages/HomePage')
+const loadFocus = () => import('./pages/FocusPage')
+const AppShell = lazy(loadShell)
 const AuthScreen = lazy(() => import('./features/auth/AuthScreen'))
 const BackgroundServices = lazy(() => import('./features/presence/BackgroundServices'))
 const SessionCelebration = lazy(() => import('./features/study/SessionCelebration'))
 // Confirmations are only requested after sign-in; keep the dialog code out of the entry bundle.
 const ConfirmHost = lazy(() => import('./components/ConfirmHost'))
 
-const HomePage = lazy(() => import('./pages/HomePage'))
-const FocusPage = lazy(() => import('./pages/FocusPage'))
+const HomePage = lazy(loadHome)
+const FocusPage = lazy(loadFocus)
 const PlannerPage = lazy(() => import('./pages/PlannerPage'))
 const ProgressPage = lazy(() => import('./pages/ProgressPage'))
 const LearningPage = lazy(() => import('./pages/LearningPage'))
@@ -69,12 +74,35 @@ export default function App() {
   return <><AppContent /><Toaster /></>
 }
 
+function SessionDialogs() {
+  const confirm = useSyncExternalStore(confirmStore.subscribe, confirmStore.get, confirmStore.get)
+  const celebration = useSessionCelebration()
+  return <Suspense fallback={null}>
+    {confirm && <ConfirmHost />}
+    {celebration && <SessionCelebration />}
+  </Suspense>
+}
+
 function AppContent() {
   const session = useSession()
   const signedIn = Boolean(session.data)
   const profile = useProfile(signedIn)
-  const settings = useSettings(Boolean(profile.data))
-  const location = useLocation()
+  const settings = useSettings(signedIn)
+  const { pathname, search } = useLocation()
+  const isToday = pathname === appRoutes.home
+  const isFocus = pathname === appRoutes.focus
+  usePrefetchStudyData(signedIn && (isToday || isFocus),
+    isToday || settings.data?.timerDisplay === 'chibi' || (isFocus && new URLSearchParams(search).get('room') === 'pixel'))
+  useEffect(() => {
+    if (!signedIn || pathname === '/welcome') return
+    // Load the destination's code while the account reads are in flight.
+    // React.lazy will handle import failures when the route renders.
+    if (pathname === appRoutes.focus) void loadFocus().catch(() => {})
+    else {
+      void loadShell().catch(() => {})
+      if (pathname === appRoutes.home) void loadHome().catch(() => {})
+    }
+  }, [signedIn, pathname])
   if (session.isPending) return <FullScreenLoader label="در حال آماده‌سازی اتاق مطالعه..." />
   if (session.isError && !signedIn) return <ConnectionProblem retry={() => void session.refetch()} pending={session.isFetching} />
   const expired = profile.error instanceof ApiClientError && profile.error.status === 401
@@ -83,7 +111,7 @@ function AppContent() {
   if (!profile.data) return <FullScreenLoader label="در حال آماده‌کردن پروفایل..." />
   if (settings.isPending) return <FullScreenLoader label="در حال آماده‌کردن پروفایل..." />
   // First run (or an account from before profiles existed): ask who the learner is.
-  if (settings.data && !settings.data.educationGroup && location.pathname !== '/welcome') {
+  if (settings.data && !settings.data.educationGroup && pathname !== '/welcome') {
     return <Suspense fallback={<FullScreenLoader label="در حال بارگذاری..." />}><OnboardingFlow settings={settings.data} /></Suspense>
   }
 
@@ -99,7 +127,7 @@ function AppContent() {
               <Suspense fallback={<PageFallback />}>
                 <Routes>
                   <Route path={appRoutes.home} element={<HomePage profile={profile.data} />} />
-                  <Route path={appRoutes.planner} element={<PlannerPage />} />
+                  <Route path={appRoutes.planner} element={<PlannerPage displayName={profile.data.displayName} />} />
                   <Route path={appRoutes.progress} element={<ProgressPage profile={profile.data} />} />
                   <Route path={appRoutes.learning} element={<LearningPage />} />
                   <Route path={appRoutes.friends} element={<FriendsPage />} />
@@ -115,7 +143,8 @@ function AppContent() {
           }
         />
       </Routes>
-      <Suspense fallback={null}><BackgroundServices /><SessionCelebration /><ConfirmHost /></Suspense>
+      <Suspense fallback={null}><BackgroundServices /></Suspense>
+      <SessionDialogs />
     </Suspense>
   )
 }

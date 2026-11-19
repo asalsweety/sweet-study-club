@@ -1,11 +1,6 @@
 import type { ChibiAppearance } from '../../shared/api/chibi'
 import { chibiItems } from '../../shared/api/chibi'
 
-export const deskSprites = {
-  girl: '/images/chibi-pack/girl-desk.webp',
-  boy: '/images/chibi-pack/boy-desk.webp',
-}
-
 const skinScales = {
   light: [1.03, 1.1, 1.17],
   warm: [1, 1, 1],

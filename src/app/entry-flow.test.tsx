@@ -3,9 +3,18 @@ import { renderToReadableStream } from 'react-dom/server'
 import { MemoryRouter } from 'react-router-dom'
 import { ApiClientError } from '../shared/api/api-client-error'
 import App from '../App'
-const state = vi.hoisted(() => ({ session: {} as Record<string, unknown>, profile: {} as Record<string, unknown> }))
-// A completed education profile, so the workspace opens without first-run onboarding.
-vi.mock('./session', () => ({ useSession: () => state.session, useProfile: () => state.profile, useSettings: () => ({ isPending: false, data: { educationGroup: 'school', educationStage: 'tajrobi' } }) }))
+const state = vi.hoisted(() => ({
+  session: {} as Record<string, unknown>,
+  profile: {} as Record<string, unknown>,
+  prefetchStudy: vi.fn(),
+  settings: vi.fn((_enabled: boolean) => ({ isPending: false, data: { educationGroup: 'school', educationStage: 'tajrobi' } })),
+}))
+vi.mock('./session', () => ({
+  useSession: () => state.session,
+  useProfile: () => state.profile,
+  usePrefetchStudyData: state.prefetchStudy,
+  useSettings: state.settings,
+}))
 vi.mock('../components/AppShell', () => ({ default: ({ children }: { children: React.ReactNode }) => <div data-testid="workspace">{children}</div> }))
 vi.mock('../features/auth/AuthScreen', () => ({ default: () => <h1>Account entry</h1> }))
 vi.mock('../features/presence/BackgroundServices', () => ({ default: () => null }))
@@ -31,6 +40,18 @@ describe('session-first routing', () => {
   it('uses one account entry for signed-out deep links', async () => {
     state.session = { isPending: false, data: null }
     expect(await render('/learn?tab=notebook')).toContain('Account entry')
+  })
+  it('starts settings and pixel-room data while the signed-in profile is loading', async () => {
+    state.profile = { isPending: true, data: undefined }
+    await render('/focus?room=pixel')
+    expect(state.settings).toHaveBeenLastCalledWith(true)
+    expect(state.prefetchStudy).toHaveBeenLastCalledWith(true, true)
+  })
+  it('keeps account and room requests disabled until the session is known', async () => {
+    state.session = { isPending: true, data: undefined }
+    await render('/focus?room=pixel')
+    expect(state.settings).toHaveBeenLastCalledWith(false)
+    expect(state.prefetchStudy).toHaveBeenLastCalledWith(false, true)
   })
   it('does not turn a connection error into a login screen', async () => {
     state.session = { isPending: false, isError: true, data: undefined }

@@ -6,6 +6,7 @@ import { api } from '../app/api'
 import { appRoutes } from '../app/navigation/routes'
 import { queryKeys, useSettings } from '../app/session'
 import type { UserProfile } from '../shared/api/profile'
+import type { ProgressResponse } from '../shared/api/progress'
 import { daysUntil, fa, formatDuration, greeting, jalaliDay, weekdayName } from '../shared/lib/format'
 import { examForProfile } from '../shared/lib/education'
 import { tehranClock } from '../shared/lib/tehran'
@@ -21,18 +22,16 @@ import { LiveNowStrip } from '../features/social/LiveNow'
 import { useNow, useStudyTimer } from '../features/study/useStudyTimer'
 import './HomePage.css'
 
-function WeekChart({ today }: { today: string }) {
-  const week = useQuery({ queryKey: queryKeys.progress('week'), queryFn: () => api.progress.period('week') })
+function WeekChart({ today, week }: { today: string; week: ProgressResponse | undefined }) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  if (week.isError) return <QueryError error={week.error} retry={() => void week.refetch()} />
-  const days = week.data?.current.byDay ?? []
+  const days = week?.current.byDay ?? []
   const max = Math.max(1, ...days.map(day => day.seconds))
-  const change = week.data?.change.totalSeconds
+  const change = week?.change.totalSeconds
   const selected = days.find(day => day.date === selectedDate)
   return <section className="surface today-week" aria-label="مطالعۀ این هفته">
     <img className="today-chart-bee" alt="" src="/images/figma/today-bee.webp" width={74} height={74} />
     <div><h2>مطالعۀ این هفته</h2><p className="text-xs text-muted-foreground">
-      {week.data ? formatDuration(week.data.current.totalSeconds) : '—'}
+      {week ? formatDuration(week.current.totalSeconds) : '—'}
       {change != null && ' · ' + (change === 0 ? 'برابر با هفتۀ قبل' : fa(Math.abs(Math.round(change))) + '٪ ' + (change > 0 ? 'بیشتر' : 'کمتر') + ' از هفتۀ قبل')}
     </p></div>
     <output className="text-xs text-muted-foreground">{selected && weekdayName(selected.date) + ' · ' + fa(Math.round(selected.seconds / 60)) + ' دقیقه'}</output>
@@ -58,7 +57,7 @@ export default function HomePage({ profile }: { profile: UserProfile }) {
   const timer = useStudyTimer()
   const settings = useSettings()
   const schedule = useQuery({ queryKey: queryKeys.schedule(today), queryFn: () => api.schedule.day(today) })
-  const progress = useQuery({ queryKey: queryKeys.progress('day'), queryFn: () => api.progress.period('day') })
+  const progress = useQuery({ queryKey: queryKeys.progress('week'), queryFn: () => api.progress.period('week') })
   const gamification = useQuery({ queryKey: queryKeys.gamification, queryFn: api.progress.gamification })
   const broadcasts = useQuery({ queryKey: queryKeys.broadcasts, queryFn: api.shop.broadcasts, staleTime: 5 * 60_000 })
   const live = useQuery({ queryKey: queryKeys.live('friends'), queryFn: () => api.social.live('friends'), staleTime: 20_000 })
@@ -143,7 +142,7 @@ export default function HomePage({ profile }: { profile: UserProfile }) {
       </section>}
     </div>
     <div className="today-review">
-      <WeekChart today={today} />
+      {progress.isError ? <QueryError error={progress.error} retry={() => void progress.refetch()} /> : <WeekChart today={today} week={progress.data} />}
       {schedule.isError ? <QueryError error={schedule.error} retry={() => void schedule.refetch()} /> : <TodayParts schedule={schedule.data} now={now} activeSessionId={active?.sessionId ?? null} onStart={active || timer.isLoading || timer.error ? undefined : startPart} />}
     </div>
     <section aria-label="پیشرفت مطالعۀ امروز" className={'grid gap-3 sm:grid-cols-3 ' + (active ? '' : 'md:hidden')}>

@@ -42,6 +42,16 @@ export function pwaPlugins() {
       ],
       navigateFallback: '/index.html',
       navigateFallbackDenylist: [/^\/api\//],
+      runtimeCaching: [{
+        urlPattern: ({ sameOrigin, request, url }) =>
+          sameOrigin && request.destination === 'image' && url.pathname.startsWith('/images/'),
+        handler: 'StaleWhileRevalidate',
+        options: {
+          cacheName: 'study-artwork',
+          expiration: { maxEntries: 80 },
+          cacheableResponse: { statuses: [200] },
+        },
+      }],
     },
   })
 

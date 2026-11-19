@@ -36,7 +36,11 @@ export function useStudyTimer() {
   const timer = useQuery({ queryKey: queryKeys.timer, queryFn: api.timer.get })
   const current = timer.data ?? null
 
-  const settle = (next: StudyTimerState | null) => client.setQueryData(queryKeys.timer, next)
+  const settle = async (next: StudyTimerState | null) => {
+    // An older poll must not overwrite the timer returned by the command.
+    await client.cancelQueries({ queryKey: queryKeys.timer, exact: true })
+    client.setQueryData(queryKeys.timer, next)
+  }
   const onConflict = (error: unknown) => {
     // Another tab/device changed the timer: adopt the server's truth.
     if (error instanceof ApiClientError && error.status === 409) void client.invalidateQueries({ queryKey: queryKeys.timer })
@@ -45,9 +49,11 @@ export function useStudyTimer() {
 
   const start = useMutation({
     mutationFn: (input: Omit<StartTimerInput, 'commandId'>) => api.timer.start({ ...input, commandId: crypto.randomUUID() }),
-    onSuccess: (next) => {
-      settle(next)
-      invalidateStudyData(client)
+    onSuccess: async (next) => {
+      await settle(next)
+      // Study totals, awards and coins are calculated from completed sessions.
+      void client.invalidateQueries({ queryKey: ['live'] })
+      void client.invalidateQueries({ queryKey: queryKeys.friends })
     },
     onError: onConflict,
   })
@@ -61,8 +67,8 @@ export function useStudyTimer() {
   const stop = useMutation({
     mutationFn: (input: { testCount: number; testsCorrect: number; testsWrong: number; focusRating: number | null; note: string | null }) =>
       api.timer.stop({ ...command(), ...input }),
-    onSuccess: () => {
-      settle(null)
+    onSuccess: async () => {
+      await settle(null)
       invalidateStudyData(client)
     },
     onError: onConflict,

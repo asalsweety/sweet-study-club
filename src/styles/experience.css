@@ -394,7 +394,6 @@ body::after {
   border-bottom-width: 2px;
   border-radius: 0.4rem;
   background: var(--card);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.65rem;
   color: var(--muted-foreground);
 }
@@ -1026,7 +1025,6 @@ body::after {
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0.4rem;
   background: rgba(255, 255, 255, 0.08);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.65rem;
 }
 
@@ -1042,12 +1040,12 @@ body::after {
    Titles use the display face (the licensed handwritten font when allowed,
    free Lalezar otherwise); everything else uses Estedad. Display faces ship a
    single weight, so synthetic bold is disabled to keep strokes clean. */
-:root {
-  --font-display: "Mahboubeh Mehravar", "Lalezar", "Estedad Variable", Tahoma, sans-serif;
-}
-
 h1,
 h2,
+h3,
+h4,
+h5,
+h6,
 [data-slot="dialog-title"],
 .font-display {
   font-family: var(--font-display);

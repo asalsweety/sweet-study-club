@@ -1,11 +1,14 @@
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { readdirSync, rmSync } from 'node:fs'
+import { existsSync, readdirSync, rmSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { lucideImports } from './scripts/lucide-imports.ts'
 
 export default defineConfig(async ({ command, mode }) => {
+  const titleFont = '/fonts/licensed/mahboubeh-mehravar.woff2'
+  const includeTitleFont = (command === 'serve' || process.env.VITE_TITLE_FONT_LICENSED === 'true')
+    && existsSync(resolve('public', titleFont.slice(1)))
   // Tests and ordinary UI edits do not need to load Workbox's build toolchain.
   const runtimePlugins = mode === 'test'
     ? []
@@ -18,6 +21,21 @@ export default defineConfig(async ({ command, mode }) => {
     plugins: [
       lucideImports(), react(), tailwindcss(), ...buildPlugins, ...runtimePlugins,
       {
+        name: 'self-hosted-title-font',
+        transformIndexHtml: {
+          order: 'pre',
+          handler() {
+            const href = includeTitleFont ? titleFont : '/node_modules/@fontsource/lalezar/files/lalezar-arabic-400-normal.woff2'
+            const preload = { tag: 'link', attrs: { rel: 'preload', as: 'font', href, type: 'font/woff2', crossorigin: '' } }
+            if (!includeTitleFont) return [preload]
+            return [
+              preload,
+              { tag: 'style', children: `@font-face{font-family:"Mahboubeh Mehravar";src:url(${titleFont}) format("woff2");font-display:swap}` },
+            ]
+          },
+        },
+      },
+      {
         name: 'exclude-local-worker-secrets',
         apply: 'build' as const,
         closeBundle() {
@@ -28,9 +46,8 @@ export default defineConfig(async ({ command, mode }) => {
               rmSync(resolve('dist', entry.name, '.dev.vars'), { force: true })
             }
           }
-          // The commercial title font may only be served once its website
-          // license is bought (see src/app/titleFont.ts).
-          if (process.env.VITE_TITLE_FONT_LICENSED !== 'true') {
+          // The owner's font is only distributed with explicitly enabled builds.
+          if (!includeTitleFont) {
             rmSync(resolve('dist', 'client', 'fonts', 'licensed'), { recursive: true, force: true })
           }
         },

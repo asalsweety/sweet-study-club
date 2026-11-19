@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '../../components/ui/input'
 import { Switch } from '../../components/ui/switch'
 import type { useStudyTimer } from './useStudyTimer'
+import { usePrepareFocusRoom } from '../focus/usePrepareFocusRoom'
 
 type StartStudySheetProps = {
   open: boolean
@@ -46,6 +47,7 @@ export default function StartStudySheet({ open, onOpenChange, openPart, timer, i
   const [plan, setPlan] = useState<PomodoroPlan | null>(intent === 'pomodoro' ? presets[0]! : null)
   const [focusLock, setFocusLock] = useState(false)
   const navigate = useNavigate()
+  const prepareFocus = usePrepareFocusRoom()
 
   const chosenPlan = plan ?? settings.data?.pomodoro ?? presets[0]!
   // Offered until the person has their own subjects: the defaults for their field.
@@ -56,6 +58,8 @@ export default function StartStudySheet({ open, onOpenChange, openPart, timer, i
     : mode === 'scheduled' ? 'پارت امروز · ' + openPart?.title : 'مطالعه‌ی آزاد'
 
   const begin = (enterRoom = false) => {
+    const openFocus = intent === 'pixel' || focusLock || enterRoom
+    if (openFocus) prepareFocus('studying', intent === 'pixel')
     // Full focus: go fullscreen inside the tap (browsers require a gesture),
     // then open the focus room once the session exists.
     if (focusLock && !document.fullscreenElement) void document.documentElement.requestFullscreen?.().catch(() => undefined)
@@ -69,7 +73,7 @@ export default function StartStudySheet({ open, onOpenChange, openPart, timer, i
       },
       { onSuccess: () => {
         onStarted()
-        if (intent === 'pixel' || focusLock || enterRoom) navigate(intent === 'pixel' ? `${appRoutes.focus}?room=pixel` : appRoutes.focus, { viewTransition: true })
+        if (openFocus) navigate(intent === 'pixel' ? `${appRoutes.focus}?room=pixel` : appRoutes.focus, { viewTransition: true })
       } },
     )
   }

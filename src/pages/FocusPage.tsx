@@ -15,6 +15,7 @@ import ClockText from '../components/ClockText'
 import GoalRing from '../components/GoalRing'
 import { ambientLabels, useAmbientSound, type AmbientSound } from '../features/focus/ambient'
 import PixelStudyScene from '../features/focus/PixelStudyScene'
+import { prepareStudyArt } from '../features/focus/studyRoomImage'
 import DraggableDock from '../features/focus/DraggableDock'
 import { MusicButton, MusicPlayer } from '../features/focus/MusicPanel'
 import { useFocusLock } from '../features/focus/useFocusLock'
@@ -87,14 +88,34 @@ export default function FocusPage() {
     mutationFn: (input: { timerDisplay?: 'digital' | 'chibi'; chibiScene?: SceneId }) => api.settings.update(input),
     onSuccess: (next) => client.setQueryData(queryKeys.settings, next),
   })
-  const toggleDisplay = () => saveDisplay.mutate({ timerDisplay: display === 'chibi' ? 'digital' : 'chibi' }, {
-    onSuccess: () => { if (pixelVisit) setParams(current => { current.delete('room'); return current }, { replace: true }) },
-  })
-
   const [fullscreen, setFullscreen] = useState(() => Boolean(document.fullscreenElement))
   const [music, setMusic] = useState<MusicLink | null>(null)
   const navigate = useNavigate()
   const running = timer.timer?.timerStatus === 'running'
+  const state = timer.timer
+  const scene = settings.data?.chibiScene ?? 'night-desk'
+  const pomodoro = pomodoroRemaining(state, now)
+  const sceneState = running ? 'studying' : pomodoro?.phase === 'break' ? 'break' : 'paused'
+  const toggleDisplay = () => {
+    if (display === 'digital') {
+      void client.fetchQuery({ queryKey: queryKeys.chibi, queryFn: api.shop.chibi })
+        .then(({ appearance }) => prepareStudyArt(scene, sceneState, appearance)).catch(() => undefined)
+    }
+    saveDisplay.mutate({ timerDisplay: display === 'chibi' ? 'digital' : 'chibi' }, {
+      onSuccess: () => { if (pixelVisit) setParams(current => { current.delete('room'); return current }, { replace: true }) },
+    })
+  }
+  const changeScene = (next: SceneId) => {
+    prepareStudyArt(next, sceneState, chibi.data?.appearance)
+    saveDisplay.mutate({ chibiScene: next })
+  }
+  const toggleTimer = () => {
+    if (display === 'chibi') {
+      prepareStudyArt(scene, running ? (state?.mode === 'pomodoro' ? 'break' : 'paused') : 'studying', chibi.data?.appearance)
+    }
+    if (running) timer.pause.mutate()
+    else timer.resume.mutate()
+  }
   const locked = Boolean(timer.timer?.focusLockEnabled)
   useFocusLock(locked && running)
   const leave = async () => {
@@ -130,8 +151,7 @@ export default function FocusPage() {
       if (event.code === 'Space' && timer.timer && !timer.busy) {
         event.preventDefault()
         haptic(10)
-        if (timer.timer.timerStatus === 'running') timer.pause.mutate()
-        else timer.resume.mutate()
+        toggleTimer()
       } else if (event.key === 'f' || event.key === 'F') {
         toggleFullscreen()
       }
@@ -141,16 +161,13 @@ export default function FocusPage() {
   })
 
   if (!timer.isLoading && !timer.error && !timer.timer && !finishing) return <Navigate to={pixelVisit ? `${appRoutes.home}?start=pixel` : appRoutes.home} replace />
-  const state = timer.timer
-  const scene = settings.data?.chibiScene ?? 'night-desk'
   const hour = Math.floor(tehranClock(now).minuteOfDay / 60)
   const isNight = hour >= 19 || hour < 6
-  const pomodoro = pomodoroRemaining(state, now)
 
   const startMusic = (link: MusicLink) => { ambient.setSound('off'); setMusic(link) }
   const actions = state && (
             <div className="flex max-w-full flex-wrap justify-center gap-2 sm:gap-3">
-              <button type="button" disabled={timer.busy} onClick={() => (running ? timer.pause.mutate() : timer.resume.mutate())} aria-keyshortcuts="Space" className="flex min-h-12 items-center gap-2 rounded-2xl bg-white px-4 py-2 text-base font-bold text-[#17392f] shadow-[0_18px_40px_-12px_rgba(0,0,0,0.5)] transition hover:scale-[1.03] active:scale-95 disabled:opacity-60 sm:px-6">
+              <button type="button" disabled={timer.busy} onClick={toggleTimer} aria-keyshortcuts="Space" className="flex min-h-12 items-center gap-2 rounded-2xl bg-white px-4 py-2 text-base font-bold text-[#17392f] shadow-[0_18px_40px_-12px_rgba(0,0,0,0.5)] transition hover:scale-[1.03] active:scale-95 disabled:opacity-60 sm:px-6">
                 {running ? <Pause /> : <Play />}
                 {running ? (state.mode === 'pomodoro' ? 'استراحت' : 'توقف') : state.mode === 'pomodoro' ? 'دور بعدی' : 'ادامه'}
               </button>
@@ -168,10 +185,10 @@ export default function FocusPage() {
   </div>
 
   return (
-    <main dir="rtl" data-display={display} className={cn(desktop && 'reference-focus', 'relative flex min-h-dvh flex-col overflow-hidden text-white [animation:fade-in_700ms_ease-out_backwards]', display === 'digital' ? 'focus-aurora' : 'bg-[#141228]')}>
+    <main dir="rtl" data-display={display} className={cn(desktop && 'reference-focus', 'relative flex min-h-dvh flex-col overflow-hidden text-white', display === 'digital' ? 'focus-aurora' : 'bg-[#141228]')}>
       {display === 'digital' && <div aria-hidden className="focus-particles" />}
-      {display === 'chibi' && (
-        <PixelStudyScene scene={scene} isNight={isNight} appearance={chibi.data?.appearance} state={running ? 'studying' : pomodoro?.phase === 'break' ? 'break' : 'paused'} className="pixel-backdrop" />
+      {display === 'chibi' && state && !chibi.isPending && (
+        <PixelStudyScene scene={scene} isNight={isNight} appearance={chibi.data?.appearance} state={sceneState} className="pixel-backdrop" />
       )}
       {display === 'chibi' && <div aria-hidden className="pixel-backdrop-shade absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-black/45" />}
 
@@ -191,7 +208,7 @@ export default function FocusPage() {
                 <button className={pill} type="button" onClick={toggleDisplay}>
                   {display === 'chibi' ? 'تایمر ساده' : 'اتاق پیکسلی'}
                 </button>
-                {display === 'chibi' ? <select className={pill} aria-label="انتخاب اتاق" value={scene} onChange={event => saveDisplay.mutate({ chibiScene: event.target.value as SceneId })}>
+                {display === 'chibi' ? <select className={pill} aria-label="انتخاب اتاق" value={scene} onChange={event => changeScene(event.target.value as SceneId)}>
                   {Object.entries(sceneThemes).map(([id, theme]) => <option key={id} value={id}>{theme.label}</option>)}
                 </select> : <>{fullScreenButton}{sounds}<MusicButton className={pill} onPlay={startMusic} /></>}
               </div>
@@ -234,7 +251,7 @@ export default function FocusPage() {
             <select
               aria-label="انتخاب اتاق"
               value={scene}
-              onChange={(event) => saveDisplay.mutate({ chibiScene: event.target.value as SceneId })}
+              onChange={(event) => changeScene(event.target.value as SceneId)}
               className={cn(pill, 'appearance-none')}
             >
               {Object.entries(sceneThemes).map(([id, theme]) => (

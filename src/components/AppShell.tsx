@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Flower2, Lock, Menu, Moon, Search, Sun } from 'lucide-react'
+import { ArrowLeft, Flower2, Lock, Menu, Search } from 'lucide-react'
 import { api } from '../app/api'
 import { queryKeys } from '../app/session'
 import { useState, type ReactNode } from 'react'
@@ -9,9 +9,8 @@ import type { UserProfile } from '../shared/api/profile'
 import BottomNavigation from './BottomNavigation'
 import Avatar from './Avatar'
 import Sidebar from './Sidebar'
-import { useTheme } from '../features/theme/useTheme'
 import './workspace-reference.css'
-import { accountNavigation, adminNavigation, primaryNavigation, secondaryNavigation } from '../app/navigation/items'
+import { accountNavigation, adminNavigation, getPrimaryNavigation, secondaryNavigation } from '../app/navigation/items'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog'
 import CommandPalette from './CommandPalette'
 import LiveSessionCapsule from './LiveSessionCapsule'
@@ -30,8 +29,7 @@ export default function AppShell({ profile, children }: { profile: UserProfile; 
   const [menuOpen, setMenuOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [guideOpen, setGuideOpen] = useState(false)
-  const theme = useTheme()
-  const destinations = [...primaryNavigation, ...secondaryNavigation, accountNavigation, ...(profile.role === 'admin' ? [adminNavigation] : [])]
+  const destinations = [...getPrimaryNavigation(profile.displayName), ...secondaryNavigation, accountNavigation, ...(profile.role === 'admin' ? [adminNavigation] : [])]
   return <div className="app-workspace" data-page={location.pathname} dir="rtl">
     <a className="skip-link" href="#main-content">رفتن به محتوای صفحه</a>
     <Sidebar profile={profile} />
@@ -47,7 +45,6 @@ export default function AppShell({ profile, children }: { profile: UserProfile; 
           <Link to={appRoutes.profile} aria-label="حساب و تنظیمات" className="grid size-11 place-items-center rounded-full lg:hidden"><Avatar name={profile.displayName} url={profile.avatarUrl} size="sm" /></Link>
         </div>
         <div className="workspace-tools">
-          <button type="button" className="header-chip" onClick={() => theme.setMode(theme.mode === 'dark' ? 'light' : 'dark')}>{theme.mode === 'dark' ? <Sun size={14} /> : <Moon size={14} />}{theme.mode === 'dark' ? 'حالت روشن' : 'حالت تاریک'}</button>
           <LiveSessionCapsule className="header-live" />
         </div>
       </header>
@@ -60,9 +57,9 @@ export default function AppShell({ profile, children }: { profile: UserProfile; 
     </div>
     {/* Today already shows the full timer card. */}
     {location.pathname !== appRoutes.home && <LiveSessionCapsule className="mobile-live-capsule" />}
-    <BottomNavigation onMore={() => setMenuOpen(true)} expanded={menuOpen} />
+    <BottomNavigation displayName={profile.displayName} onMore={() => setMenuOpen(true)} expanded={menuOpen} />
     <StudyHelper key={location.pathname} open={guideOpen} onOpenChange={setGuideOpen} />
-    <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onOpenHelper={() => setGuideOpen(true)} isAdmin={profile.role === 'admin'} />
-    <Dialog open={menuOpen} onOpenChange={setMenuOpen}><DialogContent dir="rtl" className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>فضای تو</DialogTitle><DialogDescription>همۀ بخش‌های باشگاه، یک‌جا.</DialogDescription></DialogHeader><nav aria-label="همۀ بخش‌ها" className="stagger grid gap-1">{destinations.map(({ path, label, icon: Icon }) => <Link key={path} to={path} viewTransition onClick={() => setMenuOpen(false)} aria-current={location.pathname === path ? 'page' : undefined} className="nav-item"><Icon size={19} /><span className="flex-1">{label}</span><ArrowLeft size={16} /></Link>)}</nav></DialogContent></Dialog>
+    <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onOpenHelper={() => setGuideOpen(true)} isAdmin={profile.role === 'admin'} displayName={profile.displayName} />
+    <Dialog open={menuOpen} onOpenChange={setMenuOpen}><DialogContent dir="rtl" className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>فضای تو</DialogTitle><DialogDescription>همۀ بخش‌های باشگاه، یک‌جا.</DialogDescription></DialogHeader><nav aria-label="همۀ بخش‌ها" className="stagger grid gap-1">{destinations.map(({ path, label, icon: Icon }) => <Link key={path} to={path} viewTransition onClick={() => setMenuOpen(false)} aria-current={location.pathname === path ? 'page' : undefined} className="nav-item"><Icon size={19} /><span className="min-w-0 flex-1 wrap-anywhere">{label}</span><ArrowLeft size={16} /></Link>)}</nav></DialogContent></Dialog>
   </div>
 }

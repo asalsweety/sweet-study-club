@@ -1,8 +1,8 @@
 import { lazy, Suspense } from 'react'
 import ErrorBoundary from './ErrorBoundary'
 import ApplicationProviders from './ApplicationProviders'
+import App from '../App'
 
-const App = lazy(() => import('../App'))
 const PwaUpdatePrompt = import.meta.env.PROD
   ? lazy(() => import('./pwa/PwaUpdatePrompt'))
   : null

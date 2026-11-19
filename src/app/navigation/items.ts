@@ -1,12 +1,19 @@
 import { BarChart3, BookOpen, CalendarDays, House, ShieldCheck, ShoppingBag, Trophy, UserRound, UsersRound } from 'lucide-react'
 import { appRoutes } from './routes'
 
-export const primaryNavigation = [
-  { path: appRoutes.home, label: 'امروز', icon: House },
-  { path: appRoutes.planner, label: 'برنامۀ من', icon: CalendarDays },
-  { path: appRoutes.learning, label: 'یادگیری', icon: BookOpen },
-  { path: appRoutes.progress, label: 'پیشرفت', icon: BarChart3 },
-] as const
+export function plannerTitle(displayName: string) {
+  const name = displayName.trim()
+  return name ? `برنامۀ ${name}` : 'برنامه'
+}
+
+export function getPrimaryNavigation(displayName: string) {
+  return [
+    { path: appRoutes.home, label: 'امروز', icon: House },
+    { path: appRoutes.planner, label: plannerTitle(displayName), icon: CalendarDays },
+    { path: appRoutes.learning, label: 'یادگیری', icon: BookOpen },
+    { path: appRoutes.progress, label: 'پیشرفت', icon: BarChart3 },
+  ] as const
+}
 export const secondaryNavigation = [
   { path: appRoutes.friends, label: 'همراهان مطالعه', icon: UsersRound },
   { path: appRoutes.ranking, label: 'لیگ مطالعه', icon: Trophy },
