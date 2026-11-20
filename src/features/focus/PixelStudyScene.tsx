@@ -34,7 +34,7 @@ const SPRITE_Y = DESK_Y - Math.round(SPRITE_H * 0.89)
 type Rect = (x: number, y: number, w: number, h: number, color: string) => void
 type Palette = { skin: string; skinShade: string; sleeve: string; sleeveShade: string; sleeveLight: string }
 
-const fallbackPalette: Palette = { skin: '#f6c7a3', skinShade: '#e4a987', sleeve: '#557a6b', sleeveShade: '#41625a', sleeveLight: '#6c9483' }
+const boyPalette: Palette = { skin: '#fbc8a9', skinShade: '#e0b297', sleeve: '#beba7b', sleeveShade: '#8e765e', sleeveLight: '#d3cda0' }
 
 function rng(seed: number) {
   let value = seed
@@ -259,31 +259,52 @@ function drawNotebook(t: number, state: PixelSceneState, r: Rect) {
   return progress
 }
 
-function drawArms(t: number, state: PixelSceneState, progress: number, palette: Palette, r: Rect) {
+function drawArms(t: number, state: PixelSceneState, progress: number, palette: Palette, r: Rect, boy: boolean) {
+  // The boy's short-haired silhouette exposes his narrower shoulders.
+  const shoulderY = DESK_Y - (boy ? 3 : 6)
+  const forearm = (shoulderX: number, wristX: number) => {
+    for (let i = 0; i < 9; i++) {
+      const along = i / 8
+      const x = shoulderX + Math.round((wristX - shoulderX) * along)
+      const y = shoulderY + Math.floor((DESK_Y - 2 - shoulderY) * along)
+      r(x, y, 8, 1, i < 2 ? palette.sleeveShade : palette.sleeve)
+    }
+  }
   // Left forearm rests on the notebook.
-  for (let i = 0; i < 9; i++) r(100 + i, DESK_Y - 6 + Math.floor(i / 2), 8, 1, i < 2 ? palette.sleeveShade : palette.sleeve)
-  r(102, DESK_Y - 3, 6, 1, palette.sleeveLight)
+  forearm(boy ? 111 : 100, 108)
+  r(boy ? 111 : 102, DESK_Y - 3, 6, 1, palette.sleeveLight)
   r(108, DESK_Y - 1, 6, 4, palette.skin); r(108, DESK_Y + 2, 6, 1, palette.skinShade)
   if (state === 'break') return
   // Right forearm and the writing hand.
   const writing = state === 'studying'
   const dx = writing ? Math.round(progress * 12) - 2 : 0
   const dy = writing && Math.floor(t * 8) % 2 === 0 ? -1 : 0
-  for (let i = 0; i < 9; i++) r(150 - i + Math.round(dx * (i / 9)), DESK_Y - 6 + Math.floor(i / 2), 8, 1, i < 2 ? palette.sleeveShade : palette.sleeve)
   const hx = 135 + dx
   const hy = DESK_Y - 1 + dy
+  forearm(boy ? 141 : 150, hx + 3)
   r(hx, hy, 6, 4, palette.skin); r(hx, hy + 3, 6, 1, palette.skinShade)
   // Pencil.
   r(hx - 1, hy + 2, 1, 2, '#3a2a20')
   for (let i = 0; i < 7; i++) r(hx + i, hy + 1 - i, 1, 1, i < 5 ? '#f2c94c' : '#f09aac')
 }
 
-function drawMug(t: number, state: PixelSceneState, palette: Palette, ctx: CanvasRenderingContext2D, r: Rect) {
+function drawMug(t: number, state: PixelSceneState, palette: Palette, ctx: CanvasRenderingContext2D, r: Rect, spriteY: number, boy: boolean) {
   const sipping = state === 'break'
   const tilt = sipping && (t % 3.2) < 1.3 ? 1 : 0
   const mx = sipping ? 126 : 166
-  const my = sipping ? SPRITE_Y + Math.round(SPRITE_H * 0.64) - tilt : DESK_Y - 9
+  const my = sipping ? spriteY + Math.round(SPRITE_H * 0.64) - tilt : DESK_Y - 9
   if (sipping) {
+    if (boy) {
+      const wristY = my + 8
+      const elbowY = DESK_Y - 3
+      for (let y = wristY; y <= elbowY; y++) {
+        const span = Math.round(10 * (y - wristY) / (elbowY - wristY))
+        const left = mx - 5 - span
+        const right = mx + 9 + span
+        r(left, y, 6, 1, palette.sleeveShade); r(left + 1, y, 5, 1, palette.sleeve)
+        r(right, y, 6, 1, palette.sleeveShade); r(right, y, 5, 1, palette.sleeve)
+      }
+    }
     r(mx - 4, my + 4, 5, 5, palette.skin); r(mx + 9, my + 4, 4, 5, palette.skin)
   }
   r(mx, my, 9, 10, '#fbf4ea'); r(mx, my, 9, 1, '#ffffff'); r(mx, my + 3, 9, 2, '#ef9fb6'); r(mx + 8, my, 1, 10, '#e3d8c8')
@@ -352,7 +373,7 @@ const girlPalette: Palette = {
 
 function PixelStudyScene({ scene, isNight, state, appearance = defaultChibi, studyBackdrop, className }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const repaintRef = useRef<(() => void) | null>(null)
+  const repaintRef = useRef<((retryFailed?: boolean) => void) | null>(null)
   const art = studyRoomArt(scene, state, appearance)
   const current = { scene, isNight, state, appearance, roomUrl: studyBackdrop ?? art.room, spriteUrl: art.sprite }
   const props = useRef(current)
@@ -372,7 +393,9 @@ function PixelStudyScene({ scene, isNight, state, appearance = defaultChibi, stu
     }
     const images = new Map<string, HTMLImageElement>()
     const coloredSprite = createDeskSpriteCache()
+    let hasPainted = false
     const repaint = () => repaintRef.current?.()
+    const retryFailed = () => repaintRef.current?.(true)
 
     const loadImage = (url: string) => {
       let image = images.get(url)
@@ -382,23 +405,31 @@ function PixelStudyScene({ scene, isNight, state, appearance = defaultChibi, stu
         image.addEventListener('error', repaint)
         images.set(url, image)
       }
-      return image.complete && image.naturalWidth > 0 ? image : null
+      return image
     }
 
     const render = (t: number) => {
       const { scene: id, isNight: night, state: mood, appearance: look, roomUrl, spriteUrl } = props.current
       const isAsal = look.companion === 'asal'
-      const isBoy = look.companion === 'boy'
-      const palette = isBoy ? fallbackPalette : girlPalette
+      const boy = look.companion === 'boy'
+      const palette = boy ? boyPalette : girlPalette
       const base = isAsal || look.skin === 'warm' ? palette : { ...palette, ...chibiSkin[look.skin] }
       const sleeve = look.outfit ? chibiItems[look.outfit].color : null
       const colors = sleeve ? { ...base, sleeve, sleeveShade: mix(sleeve, -0.22), sleeveLight: mix(sleeve, 0.18) } : base
       const bob = mood === 'studying' ? Math.floor(t / 0.75) % 2 : mood === 'paused' && Math.sin(t * 1.3) > 0.5 ? 1 : 0
       const frame = mood === 'break' ? 2 : mood === 'paused' || t % 3.6 < 0.16 ? 1 : 0
-      const room = loadImage(roomUrl)
+      const roomImage = loadImage(roomUrl)
+      const room = roomImage.complete && roomImage.naturalWidth > 0 ? roomImage : null
+      const failedRoom = roomImage.complete && !room
+      const spriteImage = spriteUrl ? loadImage(spriteUrl) : failedRoom ? loadImage(deskSprites.girl) : null
+      // Switch the whole preview at once. A late image from a previous choice
+      // only triggers a repaint with the currently selected URLs.
+      if (hasPainted && (!roomImage.complete || (spriteImage && !spriteImage.complete))) return
+      hasPainted = true
       const roomHasCharacter = room && !spriteUrl
-      const failedRoom = !room && images.get(roomUrl)?.complete
-      const sprite = spriteUrl ? loadImage(spriteUrl) : failedRoom ? loadImage(deskSprites.girl) : null
+      const sprite = spriteImage?.complete && spriteImage.naturalWidth > 0 ? spriteImage : null
+      // Sit the shorter cardigan at the desktop with both shoulders visible.
+      const spriteY = SPRITE_Y - (boy && sprite ? 6 : 0)
       ctx.globalAlpha = 1
       ctx.globalCompositeOperation = 'source-over'
       if (room) {
@@ -409,37 +440,34 @@ function PixelStudyScene({ scene, isNight, state, appearance = defaultChibi, stu
       }
       if (!roomHasCharacter && sprite) {
         const frameWidth = sprite.naturalWidth / 3
-        // The book and teacup artwork include the boy's hands. Lower the closed-eye
-        // portrait to the desktop when paused, where the tea pose is cropped out.
-        const spriteFrame = isBoy && mood === 'studying' ? 0 : frame
-        const spriteY = SPRITE_Y + bob + (isBoy && mood === 'paused' ? 17 : 0)
         ctx.save()
         ctx.beginPath()
         ctx.rect(0, 0, W, DESK_Y)
         ctx.clip()
-        ctx.drawImage(coloredSprite(sprite, look), spriteFrame * frameWidth, 0, frameWidth, sprite.naturalHeight, SPRITE_X, spriteY, SPRITE_W, SPRITE_H)
+        ctx.drawImage(coloredSprite(sprite, look), frame * frameWidth, 0, frameWidth, sprite.naturalHeight, SPRITE_X, spriteY + bob, SPRITE_W, SPRITE_H)
         ctx.restore()
-      } else if (!roomHasCharacter && !isAsal) {
-        drawCustomChibi(look, colors.sleeve, frame, bob, r)
+      } else if (!roomHasCharacter) {
+        const fallbackLook = isAsal ? { ...defaultChibi, companion: 'girl' as const } : look
+        drawCustomChibi(fallbackLook, colors.sleeve, frame, bob, r)
       }
       if (room) {
-        if (!isBoy && mood === 'studying') {
+        if (mood === 'studying') {
           const progress = drawNotebook(t, mood, r)
-          drawArms(t, mood, progress, colors, r)
+          drawArms(t, mood, progress, colors, r, boy)
         }
-        if (!roomHasCharacter && !isBoy && mood === 'break') drawMug(t, mood, colors, ctx, r)
+        if (!roomHasCharacter && mood === 'break') drawMug(t, mood, colors, ctx, r, spriteY, boy)
         drawDeskDecor(look.decor, r)
         if (!roomHasCharacter && mood === 'paused') drawSleepZ(ctx, t, r)
         return
       }
       drawDesk(ctx, id, night, r)
       const progress = drawNotebook(t, mood, r)
-      drawArms(t, mood, progress, colors, r)
+      drawArms(t, mood, progress, colors, r, boy)
       // Book stack, pencil cup and the cat share the right side of the desk.
       r(150, DESK_Y - 4, 18, 4, '#7398c4'); r(151, DESK_Y - 8, 16, 4, '#d4776a'); r(151, DESK_Y - 6, 16, 1, '#ecaa9d'); r(152, DESK_Y - 11, 14, 3, '#efdcb4')
       r(64, DESK_Y - 9, 7, 9, '#9a7cc2'); r(64, DESK_Y - 9, 7, 1, '#b79ddb'); r(65, DESK_Y - 13, 1, 4, '#f2c94c'); r(67, DESK_Y - 14, 1, 5, '#e66d6d'); r(69, DESK_Y - 12, 1, 3, '#6aa889')
       drawDeskDecor(look.decor, r)
-      drawMug(t, mood, colors, ctx, r)
+      drawMug(t, mood, colors, ctx, r, spriteY, boy)
       drawCat(t, r)
       drawLight(ctx, t, night)
       if (mood === 'paused') drawSleepZ(ctx, t, r)
@@ -450,7 +478,12 @@ function PixelStudyScene({ scene, isNight, state, appearance = defaultChibi, stu
     const started = performance.now()
     let visible = canvas.getClientRects().length > 0
     let interval = 0
-    repaintRef.current = () => {
+    repaintRef.current = (retry = false) => {
+      if (retry) {
+        for (const [url, image] of images) {
+          if (image.complete && !image.naturalWidth) images.delete(url)
+        }
+      }
       if (visible && !document.hidden) render(reduced.matches ? 5 : (performance.now() - started) / 1000)
     }
     const sync = () => {
@@ -467,12 +500,14 @@ function PixelStudyScene({ scene, isNight, state, appearance = defaultChibi, stu
     observer.observe(canvas)
     reduced.addEventListener('change', sync)
     document.addEventListener('visibilitychange', sync)
+    window.addEventListener('online', retryFailed)
     sync()
     return () => {
       window.clearInterval(interval)
       observer.disconnect()
       reduced.removeEventListener('change', sync)
       document.removeEventListener('visibilitychange', sync)
+      window.removeEventListener('online', retryFailed)
       repaintRef.current = null
       for (const image of images.values()) {
         image.removeEventListener('load', repaint)
@@ -481,7 +516,7 @@ function PixelStudyScene({ scene, isNight, state, appearance = defaultChibi, stu
     }
   }, [])
 
-  useEffect(() => { repaintRef.current?.() }, [scene, isNight, state, appearance, studyBackdrop])
+  useEffect(() => { repaintRef.current?.(true) }, [scene, isNight, state, appearance, studyBackdrop])
 
   const name = appearance.companion === 'asal' ? 'عسل' : 'چیبی تو'
   const label = name + (state === 'studying' ? ' پشت میزش مشغول مطالعه است' : state === 'break' ? ' در استراحت چای می‌نوشد' : ' کمی چرت می‌زند')

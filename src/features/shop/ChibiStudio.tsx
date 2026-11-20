@@ -1,16 +1,17 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Armchair, Coins, Shirt } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '../../app/api'
 import { queryKeys, useChibi, useSettings } from '../../app/session'
 import QueryError from '../../components/QueryError'
 import { Button } from '../../components/ui/button'
 import {
-  chibiItems, chibiStyles, decorIds, hairColors, minutesPerCoin, outfitIds, skinTones,
+  chibiItems, chibiStyles, decorIds, defaultChibi, hairColors, minutesPerCoin, outfitIds, skinTones,
   type ChibiItemId, type ChibiLook, type ChibiUpdate,
 } from '../../shared/api/chibi'
 import { fa } from '../../shared/lib/format'
 import PixelStudyScene from '../focus/PixelStudyScene'
+import { prepareStudyArt, studyImage } from '../focus/studyRoomImage'
 
 const companions = { asal: 'با عسل درس بخون', girl: 'چیبی دختر', boy: 'چیبی پسر' }
 const companionPortraits = { girl: '/images/chibi-pack/girl.webp', boy: '/images/chibi-pack/boy.webp' }
@@ -24,15 +25,20 @@ export default function ChibiStudio() {
   const client = useQueryClient()
   const chibi = useChibi()
   const settings = useSettings()
+  const scene = settings.data?.chibiScene ?? 'night-desk'
   const [draft, setDraft] = useState<ChibiLook | null>(null)
-  const [message, setMessage] = useState('')
+  useEffect(() => {
+    // Decode the picker and its three previews while the wallet is loading.
+    for (const url of Object.values(companionPortraits)) void studyImage(url).decode().catch(() => undefined)
+    for (const companion of chibiStyles) prepareStudyArt(scene, 'studying', { ...defaultChibi, companion })
+  }, [scene])
   const save = useMutation({
     mutationFn: (input: StudioAction) => input.action === 'buy' ? api.shop.buyChibiItem(input.item) : api.shop.updateChibi(input),
-    onMutate: () => setMessage(''),
-    onSuccess: (next, input) => {
+    onSuccess: async (next, input) => {
+      await client.cancelQueries({ queryKey: queryKeys.chibi, exact: true })
       client.setQueryData(queryKeys.chibi, next)
-      if (input.action === 'look') setDraft(null)
-      setMessage(input.action === 'buy' ? 'به وسایلت اضافه شد.' : 'تغییرات ذخیره شد.')
+      // A tap during the request starts a new draft, which the older save must preserve.
+      if (input.action === 'look') setDraft(current => current === input.look ? null : current)
     },
     onError: () => void client.invalidateQueries({ queryKey: queryKeys.chibi }),
   })
@@ -42,6 +48,7 @@ export default function ChibiStudio() {
   const { appearance, coins, owned } = chibi.data
   const look = draft ?? { companion: appearance.companion, skin: appearance.skin, hair: appearance.hair }
   const changed = look.companion !== appearance.companion || look.skin !== appearance.skin || look.hair !== appearance.hair
+  const showConfirmation = save.isSuccess && (save.variables.action !== 'look' || !changed)
 
   return (
     <section id="chibi" className="surface flex min-w-0 flex-col gap-5 p-4 sm:p-6" aria-labelledby="chibi-heading">
@@ -56,12 +63,12 @@ export default function ChibiStudio() {
       </div>
 
       <div className="grid min-w-0 items-start gap-4 md:grid-cols-2">
-        <PixelStudyScene appearance={{ ...appearance, ...look }} scene={settings.data?.chibiScene ?? 'night-desk'} isNight state="studying" className="h-auto w-full rounded-2xl" />
+        <PixelStudyScene appearance={{ ...appearance, ...look }} scene={scene} isNight state="studying" className="h-auto w-full rounded-2xl" />
         <form className="flex min-w-0 flex-col gap-3" onSubmit={(event) => {
           event.preventDefault()
           if (changed && !save.isPending) save.mutate({ action: 'look', look })
         }}>
-          <fieldset className="min-w-0" disabled={save.isPending}>
+          <fieldset className="min-w-0">
             <legend className="mb-2 text-sm font-bold">همراه مطالعه</legend>
             <div className="grid grid-cols-2 gap-2">
               {chibiStyles.filter((id) => id !== 'asal').map((id) => (
@@ -83,13 +90,13 @@ export default function ChibiStudio() {
             <div className="grid grid-cols-2 gap-2">
               <div className="grid gap-1 text-sm font-bold">
                 <label htmlFor="chibi-skin">رنگ پوست</label>
-                <select id="chibi-skin" className={selectClass} value={look.skin} disabled={save.isPending} onChange={(event) => setDraft({ ...look, skin: event.target.value as ChibiLook['skin'] })}>
+                <select id="chibi-skin" className={selectClass} value={look.skin} onChange={(event) => setDraft({ ...look, skin: event.target.value as ChibiLook['skin'] })}>
                   {skinTones.map((id) => <option key={id} value={id}>{skins[id]}</option>)}
                 </select>
               </div>
               <div className="grid gap-1 text-sm font-bold">
                 <label htmlFor="chibi-hair">رنگ مو</label>
-                <select id="chibi-hair" className={selectClass} value={look.hair} disabled={save.isPending} onChange={(event) => setDraft({ ...look, hair: event.target.value as ChibiLook['hair'] })}>
+                <select id="chibi-hair" className={selectClass} value={look.hair} onChange={(event) => setDraft({ ...look, hair: event.target.value as ChibiLook['hair'] })}>
                   {hairColors.map((id) => <option key={id} value={id}>{hair[id]}</option>)}
                 </select>
               </div>
@@ -134,7 +141,9 @@ export default function ChibiStudio() {
         })}
       </div>
       {save.isError && <QueryError error={save.error} />}
-      <p role="status" className="text-sm text-muted-foreground">{message}</p>
+      <p role="status" className="text-sm text-muted-foreground">
+        {showConfirmation && (save.variables.action === 'buy' ? 'به وسایلت اضافه شد.' : 'تغییرات ذخیره شد.')}
+      </p>
     </section>
   )
 }

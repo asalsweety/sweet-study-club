@@ -5,7 +5,7 @@ export type PixelSceneState = 'studying' | 'break' | 'paused'
 
 export const deskSprites = {
   girl: '/images/chibi-pack/girl-desk.webp',
-  boy: '/images/chibi-pack/boy-desk.webp',
+  boy: '/images/chibi-pack/boy-desk-pixel.webp',
 }
 
 const nightRooms: Record<PixelSceneState, string> = {
