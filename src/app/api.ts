@@ -71,12 +71,17 @@ const adminUsersSchema = z.object({
       displayName: z.string(),
       email: z.string(),
       role: z.enum(['member', 'admin']),
-      createdAt: z.union([z.number(), z.string()]),
+      verified: z.boolean(),
+      avatarUrl: z.string().nullable(),
+      createdAt: z.number(),
       totalSeconds: z.number(),
+      sessions: z.number(),
       lastSeenAt: z.number().nullable(),
     }),
   ),
+  totals: z.object({ total: z.number(), admins: z.number(), verified: z.number(), newThisWeek: z.number() }),
 })
+export type AdminUser = z.infer<typeof adminUsersSchema>['users'][number]
 const idSchema = z.object({ id: z.string() })
 const query = (values: Record<string, string>) => `?${new URLSearchParams(values).toString()}`
 
@@ -85,6 +90,8 @@ export const api = {
     get: () => get('/api/profile', profileResponseSchema).then((r) => r.profile),
     update: (input: { displayName?: string; theme?: 'light' | 'dark' | 'system' }) =>
       patch('/api/profile', profileResponseSchema, input).then((r) => r.profile),
+    uploadAvatar: (picture: Blob) => put('/api/profile/avatar', profileResponseSchema, picture).then((r) => r.profile),
+    removeAvatar: () => del('/api/profile/avatar', profileResponseSchema).then((r) => r.profile),
   },
   timer: {
     get: () => get('/api/study/timer', studyTimerStateResponseSchema).then((r) => r.timer),
@@ -159,8 +166,13 @@ export const api = {
   },
   admin: {
     overview: () => get('/api/admin/overview', adminOverviewSchema),
-    users: (q = '') => get(`/api/admin/users${query({ q })}`, adminUsersSchema).then((r) => r.users),
+    users: (q = '') => get(`/api/admin/users${query({ q })}`, adminUsersSchema),
     setRole: (id: string, role: 'member' | 'admin') => post(`/api/admin/users/${encodeURIComponent(id)}/role`, null, { role }),
+    setVerified: (id: string, verified: boolean) => post(`/api/admin/users/${encodeURIComponent(id)}/verified`, null, { verified }),
+    resetPassword: (id: string) =>
+      post(`/api/admin/users/${encodeURIComponent(id)}/reset-password`, z.object({ temporaryPassword: z.string() }), {}).then((r) => r.temporaryPassword),
+    signOutUser: (id: string) => post(`/api/admin/users/${encodeURIComponent(id)}/sign-out`, null, {}),
+    removeAvatar: (id: string) => del(`/api/admin/users/${encodeURIComponent(id)}/avatar`, null),
     parts: () => get('/api/admin/parts', studyPartsResponseSchema).then((r) => r.parts),
     createPart: (input: UpsertStudyPartInput) => post('/api/admin/parts', studyPartsResponseSchema, input).then((r) => r.parts),
     updatePart: (id: string, input: UpsertStudyPartInput) =>

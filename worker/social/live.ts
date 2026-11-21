@@ -20,6 +20,7 @@ type LiveRow = {
   userId: string
   displayName: string
   avatarUrl: string | null
+  verified: number
   bio: string | null
   isFriend: number
   lastSeenAt: number | null
@@ -37,7 +38,7 @@ export async function listLive(db: D1Database, me: string, scope: 'friends' | 'e
   // Friends see people whose visibility is friends/everyone; strangers only "everyone".
   const result = await db
     .prepare(
-      `SELECT u.id AS userId, u.name AS displayName, u.image AS avatarUrl, s.bio,
+      `SELECT u.id AS userId, u.name AS displayName, u.image AS avatarUrl, u.verified, s.bio,
          (u.id IN (${friendIds})) AS isFriend, p.last_seen_at AS lastSeenAt, t.timer_status AS timerStatus,
          l.subject_name AS subjectName, l.started_at AS startedAt, t.accumulated_seconds AS accumulated,
          t.current_segment_started_at AS segmentStart,
@@ -67,6 +68,7 @@ export async function listLive(db: D1Database, me: string, scope: 'friends' | 'e
       userId: row.userId,
       displayName: row.displayName,
       avatarUrl: row.avatarUrl,
+      verified: row.verified === 1,
       bio: row.bio,
       isFriend: row.isFriend === 1,
       status,
@@ -91,7 +93,7 @@ export async function leaderboard(db: D1Database, me: string, period: PeriodKind
   const range = periodRanges(period, today).current
   const result = await db
     .prepare(
-      `SELECT u.id AS userId, u.name AS displayName, u.image AS avatarUrl, s.bio,
+      `SELECT u.id AS userId, u.name AS displayName, u.image AS avatarUrl, u.verified, s.bio,
          (u.id IN (${friendIds})) AS isFriend, SUM(l.duration_seconds) AS seconds
        FROM study_logs l
        JOIN user u ON u.id = l.user_id
@@ -103,13 +105,14 @@ export async function leaderboard(db: D1Database, me: string, period: PeriodKind
        GROUP BY u.id ORDER BY seconds DESC LIMIT 200`,
     )
     .bind(me, startOfTehranDay(range.from), startOfTehranDay(addDays(range.to, 1)), scope)
-    .all<Omit<LeaderboardEntry, 'rank' | 'isMe' | 'isFriend'> & { isFriend: number }>()
+    .all<Omit<LeaderboardEntry, 'rank' | 'isMe' | 'isFriend' | 'verified'> & { isFriend: number; verified: number }>()
 
   const ranked = result.results.map((row, index) => ({
     ...row,
     rank: index + 1,
     isMe: row.userId === me,
     isFriend: row.isFriend === 1,
+    verified: row.verified === 1,
   }))
   const settings = await db.prepare('SELECT show_on_leaderboard AS shown FROM user_settings WHERE user_id = ?').bind(me).first<{ shown: number }>()
   return {
@@ -145,17 +148,17 @@ export async function sendCheer(db: D1Database, me: string, to: string, emoji: s
 export async function listUnseenCheers(db: D1Database, me: string) {
   const result = await db
     .prepare(
-      `SELECT c.id, c.emoji, c.created_at AS createdAt, u.id AS userId, u.name AS displayName, u.image AS avatarUrl
+      `SELECT c.id, c.emoji, c.created_at AS createdAt, u.id AS userId, u.name AS displayName, u.image AS avatarUrl, u.verified
        FROM cheers c JOIN user u ON u.id = c.from_user_id
        WHERE c.to_user_id = ? AND c.seen_at IS NULL AND c.created_at > ? ORDER BY c.created_at DESC LIMIT 20`,
     )
     .bind(me, Date.now() - 24 * 3_600_000)
-    .all<{ id: string; emoji: string; createdAt: number; userId: string; displayName: string; avatarUrl: string | null }>()
+    .all<{ id: string; emoji: string; createdAt: number; userId: string; displayName: string; avatarUrl: string | null; verified: number }>()
   return result.results.map((row) => ({
     id: row.id,
     emoji: row.emoji,
     createdAt: new Date(row.createdAt).toISOString(),
-    from: { userId: row.userId, displayName: row.displayName, avatarUrl: row.avatarUrl, bio: null },
+    from: { userId: row.userId, displayName: row.displayName, avatarUrl: row.avatarUrl, verified: row.verified === 1, bio: null },
   }))
 }
 

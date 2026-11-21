@@ -5,6 +5,7 @@ export const profileSchema = z.object({
   email: z.string().min(1),
   displayName: z.string().min(2).max(40),
   avatarUrl: z.string().nullable(),
+  verified: z.boolean().default(false),
   role: z.enum(['member', 'admin']),
   theme: z.enum(['light', 'dark', 'system']),
 })

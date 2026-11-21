@@ -9,6 +9,7 @@ type ProfileRow = {
   email: string
   displayName: string
   avatarUrl: string | null
+  verified: number
   role: string
   theme: string
 }
@@ -19,6 +20,7 @@ const selectProfileSql = `
     email,
     name AS displayName,
     image AS avatarUrl,
+    verified,
     role,
     theme
   FROM user
@@ -34,7 +36,7 @@ export async function findProfileByUserId(
     .bind(userId)
     .first<ProfileRow>()
 
-  return row === null ? null : profileSchema.parse(row)
+  return row === null ? null : profileSchema.parse({ ...row, verified: row.verified === 1 })
 }
 
 export async function updateProfileByUserId(

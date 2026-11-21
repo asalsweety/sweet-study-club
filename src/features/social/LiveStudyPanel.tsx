@@ -73,6 +73,7 @@ export default function LiveStudyPanel() {
             liveRow
             name={person.displayName}
             avatarUrl={person.avatarUrl}
+            verified={person.verified}
             status={person.status}
             subjectName={person.subjectName}
             todaySeconds={person.todaySeconds}

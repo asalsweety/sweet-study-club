@@ -14,6 +14,7 @@ const validProfile = {
   email: 'learner@example.com',
   displayName: 'Ada Learner',
   avatarUrl: null,
+  verified: false,
   role: 'member',
   theme: 'system',
 } as const

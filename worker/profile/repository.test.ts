@@ -9,6 +9,7 @@ const profileRow = {
   email: 'learner@example.com',
   displayName: 'Ada Learner',
   avatarUrl: null,
+  verified: 1,
   role: 'member',
   theme: 'system',
 }
@@ -22,7 +23,7 @@ describe('profile repository', () => {
 
     await expect(
       findProfileByUserId(database, 'user-123'),
-    ).resolves.toEqual(profileRow)
+    ).resolves.toEqual({ ...profileRow, verified: true })
 
     expect(prepare).toHaveBeenCalledWith(
       expect.stringContaining('WHERE id = ?'),

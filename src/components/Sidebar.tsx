@@ -5,6 +5,7 @@ import { cn } from '../shared/lib/utils'
 import { accountNavigation, adminNavigation, getPrimaryNavigation, secondaryNavigation } from '../app/navigation/items'
 import { appRoutes } from '../app/navigation/routes'
 import Avatar from './Avatar'
+import VerifiedBadge from './VerifiedBadge'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../app/api'
 import { queryKeys } from '../app/session'
@@ -26,6 +27,6 @@ export default function Sidebar({ profile }: { profile: UserProfile }) {
     <Link to={appRoutes.home} viewTransition className="brand-lockup px-2"><span className="brand-mark"><img src="/images/figma/club-logo.webp" alt="" width={41} height={41} /><Flower2 className="sidebar-flower" size={24} aria-hidden /></span><span dir="ltr">sweet study<span className="block text-[10px] font-medium tracking-[0.23em] text-muted-foreground">A LITTLE EVERY DAY</span></span></Link>
     <nav aria-label="صفحات اصلی" className="stagger mt-12 grid gap-1.5"><p className="nav-caption">فضای مطالعه</p>{getPrimaryNavigation(profile.displayName).map((item) => <SidebarLink key={item.path} {...item} />)}</nav>
     <nav aria-label="باشگاه" className="stagger mt-8 grid gap-1.5"><p className="nav-caption">کنار هم، بهتر</p>{secondaryNavigation.map((item) => <SidebarLink key={item.path} {...item} />)}{profile.role === 'admin' && <SidebarLink {...adminNavigation} />}</nav>
-    <Link to={accountNavigation.path} viewTransition title={accountNavigation.label} className="sidebar-account mt-auto flex items-center gap-3 rounded-xl px-3"><Avatar name={profile.displayName} url={profile.avatarUrl} size="sm" /><div className="min-w-0"><p className="truncate text-sm font-bold">{profile.displayName}{level !== undefined && ` · سطح ${fa(level)}`}</p><p className="mt-1 text-xs text-muted-foreground">حساب و تنظیمات</p></div></Link>
+    <Link to={accountNavigation.path} viewTransition title={accountNavigation.label} className="sidebar-account mt-auto flex items-center gap-3 rounded-xl px-3"><Avatar name={profile.displayName} url={profile.avatarUrl} size="sm" /><div className="min-w-0"><p className="flex min-w-0 items-center gap-1 text-sm font-bold"><span className="truncate">{profile.displayName}{level !== undefined && ` · سطح ${fa(level)}`}</span><VerifiedBadge verified={profile.verified} size={14} /></p><p className="mt-1 text-xs text-muted-foreground">حساب و تنظیمات</p></div></Link>
   </aside>
 }

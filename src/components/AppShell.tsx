@@ -53,7 +53,7 @@ export default function AppShell({ profile, children }: { profile: UserProfile; 
         {timer?.focusLockEnabled && timer.timerStatus === 'running' && <FocusLockBanner />}
         <div key={location.pathname} className="page-transition">{children}</div>
       </main>
-      <footer className="workspace-footer"><span dir="ltr" className="flex items-center gap-2"><Flower2 size={14} /> sweet study club</span><span>با ریتم خودت، رو به جلو.</span></footer>
+      <footer className="workspace-footer"><span dir="ltr" className="flex items-center gap-2"><Flower2 size={14} /> sweet study club</span><span className="flex flex-wrap items-center gap-3"><span>با ریتم خودت، رو به جلو.</span><a href="/privacy" className="hover:text-foreground">حریم خصوصی</a><a href="/terms" className="hover:text-foreground">قوانین</a></span></footer>
     </div>
     {/* Today already shows the full timer card. */}
     {location.pathname !== appRoutes.home && <LiveSessionCapsule className="mobile-live-capsule" />}

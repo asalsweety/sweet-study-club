@@ -6,6 +6,7 @@ export const personSchema = z.object({
   userId: z.string(),
   displayName: z.string(),
   avatarUrl: z.string().nullable(),
+  verified: z.boolean().default(false),
   bio: z.string().nullable(),
 })
 

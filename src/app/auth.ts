@@ -17,6 +17,8 @@ const authErrors: Record<string, string> = {
   PASSWORD_TOO_SHORT: 'رمز عبور باید حداقل ۱۰ کاراکتر باشد.',
   PASSWORD_TOO_LONG: 'رمز عبور خیلی طولانی است.',
   INVALID_EMAIL: 'ایمیل معتبر نیست.',
+  INVALID_PASSWORD: 'رمز فعلی درست نیست.',
+  CREDENTIAL_ACCOUNT_NOT_FOUND: 'این حساب رمز عبور ندارد.',
   TOO_MANY_REQUESTS: 'تعداد تلاش‌ها زیاد است. کمی صبر کن و دوباره امتحان کن.',
 }
 
@@ -51,4 +53,7 @@ export const auth = {
     await authRequest('/sign-in/email', { email, password, rememberMe: true })
   },
   signOut: () => authRequest('/sign-out'),
+  /** Also signs out every other device, e.g. after an admin-issued temporary password. */
+  changePassword: (currentPassword: string, newPassword: string) =>
+    authRequest('/change-password', { currentPassword, newPassword, revokeOtherSessions: true }),
 }

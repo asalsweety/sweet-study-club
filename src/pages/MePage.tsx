@@ -1,12 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../app/api'
 import { fa } from '../shared/lib/format'
-import { LogOut, ShieldCheck } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { appRoutes } from '../app/navigation/routes'
-import { queryKeys, useEntitlements, useSignOut } from '../app/session'
+import { queryKeys, useSignOut } from '../app/session'
 import type { UserProfile } from '../shared/api/profile'
-import Avatar from '../components/Avatar'
 import PageHeading from '../components/PageHeading'
 import QueryError from '../components/QueryError'
 import { Button } from '../components/ui/button'
@@ -15,11 +14,12 @@ import DnaPanel from '../features/me/DnaPanel'
 import ExportPanel from '../features/me/ExportPanel'
 import SettingsPanel from '../features/me/SettingsPanel'
 import SubjectsPanel from '../features/me/SubjectsPanel'
+import ProfileCard from '../features/me/ProfileCard'
+import ChangePasswordForm from '../features/me/ChangePasswordForm'
 import ScoresPanel from '../features/learning/ScoresPanel'
 
 const sections = [['overview', 'پروفایل'], ['settings', 'تنظیمات'], ['subjects', 'درس‌های من'], ['achievements', 'دستاوردها'], ['export', 'گزارش‌ها']] as const
 export default function MePage({ profile }: { profile: UserProfile }) {
-  const entitlements = useEntitlements()
   const signOut = useSignOut()
   const navigate = useNavigate()
   const location = useLocation()
@@ -35,11 +35,12 @@ export default function MePage({ profile }: { profile: UserProfile }) {
   return <div className={section === 'overview' ? 'profile-overview grid gap-5' : 'grid gap-6'}>
     {section === 'overview' ? <>
       <PageHeading action={sectionNav} eyebrow="پروفایل و تنظیمات" title={profile.displayName + (level ? ` · سطح ${fa(level.level)}` : '')} description={level ? `${fa(Math.max(0, level.nextLevelAt - level.experience))} XP تا سطح بعد · هر دقیقه ۱ XP، هر تست درست ۲ XP` : 'مسیر مطالعه و تنظیمات تو'} />
+      <ProfileCard profile={profile} />
       <div className="grid items-start gap-5 md:grid-cols-2"><ExportPanel compact profile={profile} /><DnaPanel compact /></div>
       <SettingsPanel profile={profile} compact />
     </> : <>
     <PageHeading action={sectionNav} eyebrow="فضای شخصی" title="حساب و تنظیمات" description="این فضا را با ریتم، هدف‌ها و سلیقۀ خودت هماهنگ کن." />
-    <section className="surface flex flex-wrap items-center gap-4 p-5 sm:p-6"><Avatar name={profile.displayName} url={profile.avatarUrl} size="lg" /><div className="min-w-0 flex-1"><h2 className="wrap-anywhere text-xl font-bold">{profile.displayName}</h2><p className="mt-1 truncate text-sm text-muted-foreground" dir="ltr">{profile.email}</p></div>{entitlements.data?.plus && <span className="rounded-full bg-secondary px-3 py-1 text-xs text-primary">Sweet Plus</span>}{profile.role === 'admin' && <Button asChild variant="outline"><Link to={appRoutes.admin}><ShieldCheck />مدیریت باشگاه</Link></Button>}</section>
+    <ProfileCard profile={profile} />
     </>}
     {section === 'settings' && <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
       <SettingsPanel profile={profile} />
@@ -48,6 +49,7 @@ export default function MePage({ profile }: { profile: UserProfile }) {
         <p className="my-3 text-sm leading-7 text-muted-foreground">اطلاعات مطالعه به حسابت متصل است و با ورود دوباره در دسترس خواهد بود.</p>
         <Button variant="outline" disabled={signOut.isPending} onClick={() => signOut.mutate()} className="text-destructive"><LogOut />{signOut.isPending ? 'در حال خروج…' : 'خروج از حساب'}</Button>
         {signOut.isError && <div className="mt-3"><QueryError error={signOut.error} /></div>}
+        <ChangePasswordForm />
       </section>
     </div>}
     {section === 'subjects' && <SubjectsPanel />}

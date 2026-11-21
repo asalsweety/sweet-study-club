@@ -106,10 +106,15 @@ export default function AuthScreen() {
           </fieldset>
           {created && submit.isError && <p role="status" className="rounded-xl bg-secondary p-3 text-sm leading-7">حسابت ساخته شد. برای ادامه، با همین ایمیل و رمز وارد شو.</p>}
           {submit.isError && <p role="alert" className="rounded-xl bg-[var(--destructive-soft)] p-3 text-sm leading-7 text-[var(--destructive-text)] [animation:rise-in_360ms_var(--ease-spring)_backwards]">{errorMessage(submit.error)}</p>}
+          {mode === 'sign-up' && <p className="text-xs leading-6 text-muted-foreground">با ساخت حساب، <a href="/terms" className="font-bold text-[var(--primary-ink)] underline-offset-4 hover:underline">قوانین استفاده</a> و <a href="/privacy" className="font-bold text-[var(--primary-ink)] underline-offset-4 hover:underline">حریم خصوصی</a> را می‌پذیری.</p>}
           <Button size="lg" disabled={submit.isPending || (mode === 'sign-up' && name.trim().length < 2)} type="submit" className="h-13 w-full rounded-2xl text-base">{submit.isPending ? <LoaderCircle className="animate-spin" /> : null}{submit.isPending ? (mode === 'sign-in' ? 'در حال ورود…' : 'در حال ساخت حساب…') : mode === 'sign-in' ? 'ورود به فضای مطالعه' : 'ساخت حساب و شروع'}{!submit.isPending && <ArrowLeft />}</Button>
         </form>
+        {mode === 'sign-in' && <details className="forgot-password mt-5 text-sm">
+          <summary className="cursor-pointer font-bold text-[var(--primary-ink)]">رمزت را فراموش کردی؟</summary>
+          <p className="mt-2 leading-7 text-muted-foreground">به مدیر باشگاه پیام بده و ایمیل حسابت را بگو. یک رمز موقت برایت می‌سازد؛ بعد از ورود، از «پروفایل ← تنظیمات» رمز خودت را بگذار.</p>
+        </details>}
       </div>
-      <p className="mt-10 text-xs text-muted-foreground">هر روز، کمی بهتر از دیروز.</p>
+      <p className="mt-10 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground"><span>هر روز، کمی بهتر از دیروز.</span><a href="/privacy" className="hover:text-foreground">حریم خصوصی</a><a href="/terms" className="hover:text-foreground">قوانین استفاده</a></p>
     </section>
     <aside className="auth-story" aria-label="دربارۀ فضای مطالعه">
       <div className="auth-art-frame"><img src="/images/onboarding-study-room.webp" alt="یک میز مطالعۀ آرام کنار پنجره" className="auth-art" fetchPriority="high" /></div>

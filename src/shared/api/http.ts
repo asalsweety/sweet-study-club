@@ -12,15 +12,17 @@ const baseUrl = (import.meta.env?.VITE_API_BASE_URL ?? '').trim().replace(/\/$/,
  */
 export async function http<T>(method: Method, path: string, schema: ZodType<T> | null, body?: unknown): Promise<T> {
   let response: Response
+  // A Blob (e.g. a profile picture) is sent as-is with its own type.
+  const raw = typeof Blob !== 'undefined' && body instanceof Blob
   try {
     response = await fetch(`${baseUrl}${path}`, {
       method,
       credentials: 'include',
       headers: {
         Accept: 'application/json',
-        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        ...(body === undefined ? {} : { 'Content-Type': raw ? body.type : 'application/json' }),
       },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      ...(body === undefined ? {} : { body: raw ? body : JSON.stringify(body) }),
     })
   } catch (cause) {
     throw new ApiClientError('اتصال به سرور برقرار نشد.', { code: 'NETWORK_ERROR', cause })

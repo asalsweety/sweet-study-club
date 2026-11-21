@@ -31,6 +31,7 @@ const ShopPage = lazy(() => import('./pages/ShopPage'))
 const FeedbackPage = lazy(() => import('./pages/FeedbackPage'))
 const MePage = lazy(() => import('./pages/MePage'))
 const AdminPage = lazy(() => import('./pages/AdminPage'))
+const LegalPage = lazy(() => import('./pages/LegalPage'))
 const InvitePage = lazy(() => import('./pages/InvitePage'))
 const OnboardingFlow = lazy(() => import('./features/onboarding/OnboardingFlow'))
 
@@ -104,6 +105,8 @@ function AppContent() {
       if (pathname === appRoutes.home) void loadHome().catch(() => {})
     }
   }, [signedIn, pathname])
+  // Privacy and terms are public: readable before signing in.
+  if (pathname === '/privacy' || pathname === '/terms') return <Suspense fallback={<FullScreenLoader label="در حال بارگذاری..." />}><LegalPage kind={pathname === '/privacy' ? 'privacy' : 'terms'} /></Suspense>
   if (session.isPending) return <FullScreenLoader label="در حال آماده‌سازی اتاق مطالعه..." />
   if (session.isError && !signedIn) return <ConnectionProblem retry={() => void session.refetch()} pending={session.isFetching} />
   const expired = profile.error instanceof ApiClientError && profile.error.status === 401

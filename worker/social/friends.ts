@@ -117,7 +117,8 @@ export async function unblockUser(db: D1Database, me: string, other: string) {
   await db.prepare('DELETE FROM user_blocks WHERE blocker_id = ? AND blocked_id = ?').bind(me, other).run()
 }
 
-type FriendRow = Person & {
+type FriendRow = Omit<Person, 'verified'> & {
+  verified: number
   status: string
   requestedBy: string
   createdAt: number
@@ -141,7 +142,7 @@ export async function listFriends(db: D1Database, me: string): Promise<FriendsRe
   const [rows, blocked] = await Promise.all([
     db
       .prepare(
-        `SELECT u.id AS userId, u.name AS displayName, u.image AS avatarUrl, s.bio, f.status,
+        `SELECT u.id AS userId, u.name AS displayName, u.image AS avatarUrl, u.verified, s.bio, f.status,
            f.requested_by AS requestedBy, f.created_at AS createdAt, p.last_seen_at AS lastSeenAt,
            s.live_visibility AS visibility, t.timer_status AS timerStatus, l.subject_name AS subjectName,
            l.started_at AS startedAt,
@@ -159,12 +160,12 @@ export async function listFriends(db: D1Database, me: string): Promise<FriendsRe
       .bind(dayStart, me, me, me)
       .all<FriendRow>(),
     db
-      .prepare('SELECT u.id AS userId, u.name AS displayName, u.image AS avatarUrl, NULL AS bio FROM user_blocks b JOIN user u ON u.id = b.blocked_id WHERE b.blocker_id = ?')
+      .prepare('SELECT u.id AS userId, u.name AS displayName, u.image AS avatarUrl, u.verified, NULL AS bio FROM user_blocks b JOIN user u ON u.id = b.blocked_id WHERE b.blocker_id = ?')
       .bind(me)
-      .all<Person>(),
+      .all<Omit<Person, 'verified'> & { verified: number }>(),
   ])
 
-  const person = (row: FriendRow): Person => ({ userId: row.userId, displayName: row.displayName, avatarUrl: row.avatarUrl, bio: row.bio })
+  const person = (row: Omit<Person, 'verified'> & { verified: number }): Person => ({ userId: row.userId, displayName: row.displayName, avatarUrl: row.avatarUrl, verified: row.verified === 1, bio: row.bio })
   const friends: Friend[] = rows.results
     .filter((row) => row.status === 'accepted')
     .map((row) => {
@@ -184,6 +185,6 @@ export async function listFriends(db: D1Database, me: string): Promise<FriendsRe
     friends,
     incoming: pending.filter((row) => row.requestedBy !== me).map(request),
     outgoing: pending.filter((row) => row.requestedBy === me).map(request),
-    blocked: blocked.results,
+    blocked: blocked.results.map(person),
   }
 }

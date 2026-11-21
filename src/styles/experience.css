@@ -1340,3 +1340,13 @@ h6,
   background-repeat: no-repeat;
   image-rendering: pixelated;
 }
+
+/* Admin-granted "authentic account" tick next to a member's name. */
+.verified-badge { display: inline-flex; flex-shrink: 0; vertical-align: -0.15em; margin-inline-start: 0.2em; color: var(--primary-foreground); }
+.verified-badge svg path:first-child { fill: var(--verified, oklch(0.62 0.17 255)); stroke: var(--verified, oklch(0.62 0.17 255)); }
+.verified-badge svg { filter: drop-shadow(0 1px 2px oklch(0.5 0.15 255 / 0.3)); }
+
+/* Profile picture picker on the account page. */
+.avatar-picker { position: relative; border-radius: 1.1rem; outline-offset: 3px; transition: transform 200ms var(--ease-spring, ease); }
+.avatar-picker:active { transform: scale(0.95); }
+.avatar-picker-badge { position: absolute; inset-block-end: -4px; inset-inline-start: -4px; display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 999px; border: 2px solid var(--card); background: var(--primary); color: var(--primary-foreground); box-shadow: var(--glow-primary); }

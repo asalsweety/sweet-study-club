@@ -1,12 +1,13 @@
 import { lazy, Suspense } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import PageHeading from '../components/PageHeading'
-import { AdminOverview, AdminUsers } from '../features/admin/AdminOverview'
+import { AdminOverview } from '../features/admin/AdminOverview'
+const AdminUsers = lazy(() => import('../features/admin/AdminUsers'))
 const AdminContent = lazy(() => import('../features/admin/AdminContent'))
 const AdminSchedule = lazy(() => import('../features/admin/AdminSchedule'))
 const AdminLearning = lazy(() => import('../features/admin/AdminLearning'))
 const AdminFeedback = lazy(() => import('../features/admin/AdminFeedback'))
-const sections = [['overview', 'نمای کلی'], ['schedule', 'برنامۀ باشگاه'], ['learning', 'محتوای آموزشی'], ['users', 'اعضا'], ['content', 'محصولات و پیام‌ها'], ['feedback', 'بازخوردها']] as const
+const sections = [['overview', 'نمای کلی'], ['users', 'مدیریت اعضا'], ['schedule', 'برنامۀ باشگاه'], ['learning', 'محتوای آموزشی'], ['content', 'محصولات و پیام‌ها'], ['feedback', 'بازخوردها']] as const
 export default function AdminPage() {
   const [params] = useSearchParams()
   const requested = params.get('section')

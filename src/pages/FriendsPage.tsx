@@ -8,6 +8,7 @@ import { queryKeys } from '../app/session'
 import type { FriendsResponse } from '../shared/api/social'
 import { fa } from '../shared/lib/format'
 import Avatar from '../components/Avatar'
+import VerifiedBadge from '../components/VerifiedBadge'
 import { Button } from '../components/ui/button'
 import './club-reports.css'
 import AddFriendPanel from '../features/social/AddFriendPanel'
@@ -45,6 +46,7 @@ export default function FriendsPage() {
                 key={friend.userId}
                 name={friend.displayName}
                 avatarUrl={friend.avatarUrl}
+                verified={friend.verified}
                 status={friend.status}
                 subjectName={friend.subjectName}
                 todaySeconds={friend.todaySeconds}
@@ -74,7 +76,7 @@ export default function FriendsPage() {
               {data.incoming.map((request) => (
                 <li key={request.userId} className="flex items-center gap-3 rounded-2xl bg-primary/5 p-3 ring-1 ring-primary/20">
                   <Avatar name={request.displayName} url={request.avatarUrl} size="md" />
-                  <p className="min-w-0 flex-1 truncate font-bold">{request.displayName}</p>
+                  <p className="flex min-w-0 flex-1 items-center gap-1 font-bold"><span className="truncate">{request.displayName}</span><VerifiedBadge verified={request.verified} /></p>
                   <Button size="icon" aria-label="قبول" onClick={() => respond.mutate({ userId: request.userId, accept: true })} className="rounded-xl"><Check size={16} /></Button>
                   <Button size="icon" variant="ghost" aria-label="رد" onClick={() => respond.mutate({ userId: request.userId, accept: false })}><X size={16} /></Button>
                 </li>
@@ -82,7 +84,7 @@ export default function FriendsPage() {
               {data.outgoing.map((request) => (
                 <li key={request.userId} className="flex items-center gap-3 rounded-2xl bg-muted/40 p-3">
                   <Avatar name={request.displayName} url={request.avatarUrl} size="md" />
-                  <p className="min-w-0 flex-1 truncate font-bold">{request.displayName}</p>
+                  <p className="flex min-w-0 flex-1 items-center gap-1 font-bold"><span className="truncate">{request.displayName}</span><VerifiedBadge verified={request.verified} /></p>
                   <span className="text-xs text-muted-foreground">در انتظار</span>
                   <Button size="icon" variant="ghost" aria-label="لغو درخواست" onClick={() => remove.mutate(request.userId)}><X size={16} /></Button>
                 </li>

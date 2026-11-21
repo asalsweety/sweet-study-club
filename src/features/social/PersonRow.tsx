@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import type { PresenceStatus } from '../../shared/api/social'
 import { formatDuration } from '../../shared/lib/format'
 import Avatar from '../../components/Avatar'
+import VerifiedBadge from '../../components/VerifiedBadge'
 
 const statusText: Record<PresenceStatus, string> = {
   studying: 'در حال مطالعه',
@@ -13,6 +14,7 @@ const statusText: Record<PresenceStatus, string> = {
 type PersonRowProps = {
   name: string
   avatarUrl: string | null
+  verified?: boolean
   status: PresenceStatus
   subjectName: string | null
   todaySeconds: number
@@ -21,11 +23,11 @@ type PersonRowProps = {
   actions?: ReactNode
 }
 
-export default function PersonRow({ name, avatarUrl, status, subjectName, todaySeconds, liveSeconds, liveRow, actions }: PersonRowProps) {
+export default function PersonRow({ name, avatarUrl, verified, status, subjectName, todaySeconds, liveSeconds, liveRow, actions }: PersonRowProps) {
   if (liveRow) return <li className="flex min-h-[72px] items-center gap-3 rounded-2xl border border-border bg-background px-3.5 py-2.5">
     <Avatar name={name} url={avatarUrl} status={status} size="sm" />
     <div className="min-w-0 flex-1">
-      <p className="text-sm font-bold">{name} · {statusText[status]} {subjectName && status !== 'offline' && subjectName}</p>
+      <p className="text-sm font-bold">{name}<VerifiedBadge verified={verified} size={14} /> · {statusText[status]} {subjectName && status !== 'offline' && subjectName}</p>
       <p className="mt-1 text-xs text-muted-foreground">امروز {formatDuration(todaySeconds)}{liveSeconds ? ` · این جلسه ${formatDuration(liveSeconds)}` : ''}</p>
     </div>
     {actions}
@@ -34,7 +36,7 @@ export default function PersonRow({ name, avatarUrl, status, subjectName, todayS
     <li className="flex items-center gap-3 rounded-2xl bg-muted/40 p-3 transition hover:bg-muted/70">
       <Avatar name={name} url={avatarUrl} status={status} size="md" />
       <div className="min-w-0 flex-1">
-        <p className="truncate font-bold">{name}</p>
+        <p className="flex min-w-0 items-center gap-1 font-bold"><span className="truncate">{name}</span><VerifiedBadge verified={verified} /></p>
         <p className="truncate text-xs text-muted-foreground">
           {statusText[status]}
           {subjectName && status !== 'offline' && ` · ${subjectName}`}

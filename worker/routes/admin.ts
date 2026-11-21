@@ -3,7 +3,9 @@ import { z } from 'zod'
 import { createOverrideInputSchema, isoDateSchema, upsertStudyPartInputSchema } from '../../src/shared/api/schedule'
 import { answerPlanRequestInputSchema, upsertProductInputSchema } from '../../src/shared/api/shop'
 import { startOfTehranDay, tehranClock } from '../../src/shared/lib/tehran'
-import { invalidInput } from '../http/errors'
+import { createAuth } from '../auth'
+import { invalidInput, notFound } from '../http/errors'
+import { removeAvatar } from '../profile/avatar'
 import { listFeedback } from '../feedback/repository'
 import { readBody, readQuery, requireAdmin, userId } from '../http/validation'
 import * as schedule from '../schedule/service'
@@ -50,22 +52,73 @@ export function adminRoutes(requireSession: MiddlewareHandler<WorkerEnvironment>
   app.get('/admin/users', async (c) => {
     const { q } = readQuery(c, z.object({ q: z.string().trim().max(80).optional() }))
     const like = `%${(q ?? '').replace(/[%_]/g, '')}%`
-    const result = await c.env.DB.prepare(
-      `SELECT u.id, u.name AS displayName, u.email, u.role, u.createdAt,
-         (SELECT COALESCE(SUM(duration_seconds), 0) FROM study_logs WHERE user_id = u.id AND ended_at IS NOT NULL) AS totalSeconds,
-         p.last_seen_at AS lastSeenAt
-       FROM user u LEFT JOIN user_presence p ON p.user_id = u.id
-       WHERE u.name LIKE ? OR u.email LIKE ? ORDER BY u.createdAt DESC LIMIT 100`,
-    )
-      .bind(like, like)
-      .all()
-    return c.json({ users: result.results })
+    const weekAgo = Date.now() - 7 * 86_400_000
+    const [result, totals] = await Promise.all([
+      c.env.DB.prepare(
+        `SELECT u.id, u.name AS displayName, u.email, u.role, u.verified, u.image AS avatarUrl, u.createdAt,
+           (SELECT COALESCE(SUM(duration_seconds), 0) FROM study_logs WHERE user_id = u.id AND ended_at IS NOT NULL) AS totalSeconds,
+           (SELECT COUNT(*) FROM session WHERE userId = u.id AND expiresAt > ?2) AS sessions,
+           p.last_seen_at AS lastSeenAt
+         FROM user u LEFT JOIN user_presence p ON p.user_id = u.id
+         WHERE u.name LIKE ?1 OR u.email LIKE ?1 ORDER BY u.createdAt DESC LIMIT 200`,
+      ).bind(like, new Date().toISOString()).all<Record<string, unknown> & { verified: number; createdAt: number | string }>(),
+      c.env.DB.prepare(
+        `SELECT COUNT(*) AS total, SUM(role = 'admin') AS admins, SUM(verified = 1) AS verified,
+           SUM(createdAt >= ?) AS newThisWeek FROM user`,
+      ).bind(new Date(weekAgo).toISOString()).first<{ total: number; admins: number | null; verified: number | null; newThisWeek: number | null }>(),
+    ])
+    c.header('Cache-Control', 'private, no-store')
+    return c.json({
+      users: result.results.map((row) => ({ ...row, verified: row.verified === 1, createdAt: new Date(row.createdAt).getTime() })),
+      totals: {
+        total: totals?.total ?? 0,
+        admins: totals?.admins ?? 0,
+        verified: totals?.verified ?? 0,
+        newThisWeek: totals?.newThisWeek ?? 0,
+      },
+    })
   })
 
   app.post('/admin/users/:id/role', async (c) => {
     const { role } = await readBody(c, z.object({ role: z.enum(['member', 'admin']) }))
     if (c.req.param('id') === userId(c) && role !== 'admin') throw invalidInput('You cannot remove your own admin role.')
     await c.env.DB.prepare('UPDATE user SET role = ?, updatedAt = ? WHERE id = ?').bind(role, Date.now(), c.req.param('id')).run()
+    return c.body(null, 204)
+  })
+
+  app.post('/admin/users/:id/verified', async (c) => {
+    const { verified } = await readBody(c, z.object({ verified: z.boolean() }))
+    const result = await c.env.DB.prepare('UPDATE user SET verified = ?, updatedAt = ? WHERE id = ?')
+      .bind(verified ? 1 : 0, Date.now(), c.req.param('id')).run()
+    if (!result.meta.changes) throw notFound('This member does not exist.')
+    return c.body(null, 204)
+  })
+
+  // Password recovery without email: the admin hands the member a one-off
+  // password, every device is signed out, and the member changes it after.
+  app.post('/admin/users/:id/reset-password', async (c) => {
+    const id = c.req.param('id')
+    if (id === userId(c)) throw invalidInput('Change your own password from your account settings.')
+    const context = await createAuth(c.env).$context
+    const user = await context.internalAdapter.findUserById(id)
+    if (!user) throw notFound('This member does not exist.')
+    const temporaryPassword = generateTemporaryPassword()
+    if (!(await context.internalAdapter.findCredentialAccount(id))) throw invalidInput('This member does not sign in with a password.')
+    await context.internalAdapter.updatePassword(id, await context.password.hash(temporaryPassword))
+    await context.internalAdapter.deleteUserSessions(id)
+    c.header('Cache-Control', 'private, no-store')
+    return c.json({ temporaryPassword })
+  })
+
+  app.post('/admin/users/:id/sign-out', async (c) => {
+    const id = c.req.param('id')
+    if (id === userId(c)) throw invalidInput('Use the sign-out button for your own account.')
+    await c.env.DB.prepare('DELETE FROM session WHERE userId = ?').bind(id).run()
+    return c.body(null, 204)
+  })
+
+  app.delete('/admin/users/:id/avatar', async (c) => {
+    await removeAvatar(c.env.DB, c.req.param('id'))
     return c.body(null, 204)
   })
 
@@ -125,4 +178,12 @@ export function adminRoutes(requireSession: MiddlewareHandler<WorkerEnvironment>
   })
 
   return app
+}
+
+/** 12 characters without look-alikes (0/O, 1/l/I), easy to read out loud. */
+export function generateTemporaryPassword() {
+  const alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  const bytes = crypto.getRandomValues(new Uint8Array(12))
+  const characters = Array.from(bytes, (byte) => alphabet[byte % alphabet.length])
+  return `${characters.slice(0, 4).join('')}-${characters.slice(4, 8).join('')}-${characters.slice(8).join('')}`
 }

@@ -5,6 +5,7 @@ import { api } from '../../app/api'
 import { queryKeys } from '../../app/session'
 import { appRoutes } from '../../app/navigation/routes'
 import Avatar from '../../components/Avatar'
+import VerifiedBadge from '../../components/VerifiedBadge'
 import { fa, formatDuration } from '../../shared/lib/format'
 import { cn } from '../../shared/lib/utils'
 
@@ -27,7 +28,7 @@ export function LiveNowStrip({ className }: { className?: string }) {
             {studying.slice(0, 8).map((person) => (
               <li key={person.userId} className="flex shrink-0 items-center gap-2 rounded-full border border-border bg-card py-1 pe-3 ps-1">
                 <span className="relative"><Avatar name={person.displayName} url={person.avatarUrl} size="sm" /><span aria-hidden className="absolute -bottom-0.5 -left-0.5 size-3 rounded-full border-2 border-card bg-[var(--success)]" /></span>
-                <span className="text-xs"><span className="font-bold">{person.displayName}</span>{person.subjectName && <span className="text-muted-foreground"> · {person.subjectName}</span>}<span className="text-muted-foreground"> · {formatDuration(person.elapsedSeconds)}</span></span>
+                <span className="text-xs"><span className="font-bold">{person.displayName}</span><VerifiedBadge verified={person.verified} size={13} />{person.subjectName && <span className="text-muted-foreground"> · {person.subjectName}</span>}<span className="text-muted-foreground"> · {formatDuration(person.elapsedSeconds)}</span></span>
               </li>
             ))}
           </ul>

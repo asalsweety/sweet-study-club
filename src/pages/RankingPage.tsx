@@ -13,6 +13,7 @@ import { fa, formatDuration } from '../shared/lib/format'
 import { cn } from '../shared/lib/utils'
 import './club-reports.css'
 import Avatar from '../components/Avatar'
+import VerifiedBadge from '../components/VerifiedBadge'
 
 const rankColors = ['bg-primary text-primary-foreground', 'bg-[var(--warning-soft)] text-[var(--warning-text)]', 'bg-secondary text-secondary-foreground']
 
@@ -25,7 +26,7 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
           {entry.rank === 1 ? <Crown size={18} aria-hidden /> : <Trophy size={16} aria-hidden />}
           <Avatar name={entry.displayName} url={entry.avatarUrl} size="sm" />
         </div>
-        <p className="truncate font-bold">{entry.displayName}{entry.isMe && ' (تو)'}</p>
+        <p className="flex min-w-0 items-center gap-1 font-bold"><span className="truncate">{entry.displayName}{entry.isMe && ' (تو)'}</span><VerifiedBadge verified={entry.verified} size={14} /></p>
         <p className="text-xs font-bold">{formatDuration(entry.seconds)}</p>
       </div>
     ) : <div key={index} />)}
@@ -73,7 +74,7 @@ export default function RankingPage() {
               <li key={entry.userId} className={cn('flex min-h-[52px] items-center gap-1 rounded-[14px] border border-border bg-background px-3.5 text-sm', entry.isMe && 'bg-primary/10 ring-1 ring-primary/30')}>
                 <span className="font-bold">{fa(entry.rank)} · </span>
                 <Avatar name={entry.displayName} url={entry.avatarUrl} size="sm" />
-                <span className="min-w-0 flex-1 truncate font-bold">{entry.displayName}{entry.isFriend && ' · دوست'}</span>
+                <span className="flex min-w-0 flex-1 items-center gap-1 font-bold"><span className="truncate">{entry.displayName}</span><VerifiedBadge verified={entry.verified} size={14} />{entry.isFriend && <span className="shrink-0"> · دوست</span>}</span>
                 <span className="text-xs font-bold tabular-nums text-primary">{formatDuration(entry.seconds)}</span>
               </li>
             ))}

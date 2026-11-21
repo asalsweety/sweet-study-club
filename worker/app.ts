@@ -17,6 +17,7 @@ import { ApiError } from './http/errors'
 import { readBody, userId } from './http/validation'
 import { submitFeedback } from './feedback/repository'
 import { adminRoutes } from './routes/admin'
+import { avatarRoutes } from './profile/avatar'
 import { progressRoutes } from './routes/progress'
 import { shopRoutes } from './routes/shop'
 import { socialRoutes } from './routes/social'
@@ -73,7 +74,7 @@ export function createWorkerApp(options: WorkerAppOptions = {}) {
         .bind('schema_version')
         .first<{ value: string }>()
 
-      if (metadata?.value !== '15') {
+      if (metadata?.value !== '16') {
         throw new Error('The expected database migration is missing.')
       }
 
@@ -173,6 +174,7 @@ export function createWorkerApp(options: WorkerAppOptions = {}) {
   app.route('/api', socialRoutes(requireSession))
   app.route('/api', shopRoutes(requireSession))
   app.route('/api', adminRoutes(requireSession))
+  app.route('/api', avatarRoutes(requireSession))
   app.route('/api', learningRoutes(requireSession))
 
   app.notFound((context) => {
