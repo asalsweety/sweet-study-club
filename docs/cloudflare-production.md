@@ -1,15 +1,15 @@
 # Production deployment
 
-Deployed November 12, 2026 at https://asal.zendegidarkhavarmiane.lol.
+Production serves [sweetstudy.site](https://sweetstudy.site). The domain cutover on November 21, 2026 reused the live app release, D1 database, and authentication secret.
 
 - Account: `cdbe3c0024e00ce5ba021665569f9af7` (domain owner's account).
 - Worker: `sweet-study-club`; environment: `production`.
 - D1: `sweet-study-club-production`, ID `fde7fb60-983e-4299-80b1-b3d968f9dc8a`.
-- Custom domain is managed directly by Wrangler; no forwarding Worker is needed.
+- Wrangler manages `sweetstudy.site` as the production Worker's custom domain.
+- `asal.zendegidarkhavarmiane.lol` uses the `sweet-study-club-domain-redirect` Worker. It preserves paths and query strings in a 302 redirect to the new domain.
 - Initial release version: `ef3b70d4-7695-443d-96a9-b9a8efd86b2b`.
-- Current release: `691c81af-ed27-49cd-b622-345c8c97e15c`.
-- Previous UI/login release (rollback): `9cc3480b-0e9a-488d-8c22-91420cab747c`.
-- Migrations 1–11 applied. The old Asal test environment/database is separate.
+- Domain cutover version `b7dcfaf6-25d5-4343-9df4-d50b2c512f58` changes `APP_ORIGIN` on version `0f4f9083-2ba6-4dc8-9fb5-bdc1ab9f34ee`.
+- The Asal test deployment uses its own D1 database.
 
 ## Redeploy
 
@@ -26,6 +26,12 @@ that no `.dev.vars` file remains in output. `BETTER_AUTH_SECRET` was generated
 uniquely and uploaded as a Cloudflare encrypted secret, without saving its value.
 Redeployments retain this secret; do not rotate it as a routine deployment step.
 
+To update the old-domain redirect, deploy its Worker with the production account wrapper.
+
+```powershell
+node scripts/run-production-wrangler.mjs deploy --config deployment/wrangler-production-redirect.jsonc
+```
+
 ## Authentication and AI
 
 Email/password is explicitly enabled for this deployment. Login and signup use
@@ -33,6 +39,8 @@ database-backed rate limits and the Cloudflare-provided client IP. Cookies are
 secure and requests use the configured HTTPS origin. Remote signup always starts
 as a member unless the email is already verified and matches the configured admin
 list; a claimed email address alone cannot confer admin access.
+
+Existing users sign in again on `sweetstudy.site` because session cookies are scoped to their original host.
 
 Outbound email verification and password recovery have no mail provider yet.
 Payments remain disabled outside the local development stand-in. Workers AI is
@@ -55,6 +63,12 @@ importer. Residency and publisher weekly papers still require a content source.
 
 ## Verification and rollback
 
+The domain cutover passed live HTTPS checks for the homepage, static assets, database readiness, and signed-out session. Sign-in accepted the new origin and rejected invalid credentials. The old hostname redirected to the new domain over HTTP and HTTPS with paths and query strings preserved.
+
+Use a Worker version with `APP_ORIGIN=https://sweetstudy.site` for rollbacks on the new domain. The pre-cutover version trusts the old hostname for sign-in.
+
+### November 12 verification history
+
 The November 12 release passed lint, 108 tests in 22 files, TypeScript, the
 production Worker/PWA build, artifact checks, and performance budgets. Account
 entry JavaScript is 402,969 bytes (130,306 gzip); CSS is 127,588 bytes. The
@@ -66,7 +80,7 @@ entry asset hash, `/` 200, `/api/health` 200, `/api/ready` 200,
 `/api/auth/get-session` 200 with a null session, and `/api/profile` 401.
 Playwright navigation to the custom domain timed out from this workstation;
 live browser behavior could not be verified. No production test data was
-created. The prior November 8 version remains the rollback target above.
+created. The rollback target at the time was version `9cc3480b-0e9a-488d-8c22-91420cab747c`.
 
 ### November 8 verification history
 

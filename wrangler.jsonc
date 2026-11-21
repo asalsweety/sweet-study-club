@@ -33,11 +33,11 @@
       "workers_dev": true,
       "preview_urls": false,
       "routes": [
-        { "pattern": "asal.zendegidarkhavarmiane.lol", "custom_domain": true }
+        { "pattern": "sweetstudy.site", "custom_domain": true }
       ],
       "vars": {
         "APP_ENVIRONMENT": "production",
-        "APP_ORIGIN": "https://asal.zendegidarkhavarmiane.lol",
+        "APP_ORIGIN": "https://sweetstudy.site",
         "EMAIL_PASSWORD_AUTH_ENABLED": "true"
       },
       "d1_databases": [
