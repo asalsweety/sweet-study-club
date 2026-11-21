@@ -74,7 +74,7 @@ export function createWorkerApp(options: WorkerAppOptions = {}) {
         .bind('schema_version')
         .first<{ value: string }>()
 
-      if (metadata?.value !== '16') {
+      if (metadata?.value !== '17') {
         throw new Error('The expected database migration is missing.')
       }
 

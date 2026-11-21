@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import CommandPalette from './CommandPalette'
 import LiveSessionCapsule from './LiveSessionCapsule'
 import StudyHelper from '../features/helper/StudyHelper'
+import ThemeToggle from '../features/theme/ThemeToggle'
+import InstallAppButton from '../features/pwa/InstallAppButton'
 
 /** While a full-focus session runs, every other page points back to the focus room. */
 function FocusLockBanner() {
@@ -38,9 +40,11 @@ export default function AppShell({ profile, children }: { profile: UserProfile; 
         <button type="button" className="workspace-menu" aria-label="همۀ بخش‌ها" onClick={() => setMenuOpen(true)}>
           {location.pathname === appRoutes.home ? <><img src="/images/figma/club-logo.webp" width={41} height={41} alt="" className="dark:hidden" /><Flower2 className="hidden dark:block" size={24} /></> : <Menu size={20} />}
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <InstallAppButton />
+          <ThemeToggle />
           <button type="button" className="header-chip workspace-search" onClick={() => setPaletteOpen(true)} aria-label="جست‌وجو و فرمان‌ها" aria-keyshortcuts="Control+K Meta+K /">
-            <Search size={16} /><span className="hidden sm:inline">جست‌وجو و فرمان‌ها</span><span className="sm:hidden">جست‌وجو</span><kbd dir="ltr">{isMac ? '⌘K' : 'Ctrl K'}</kbd>
+            <Search size={16} /><span className="hidden sm:inline">جست‌وجو و فرمان‌ها</span><span className="sm:hidden">جست‌وجو</span><kbd dir="ltr" className="hidden sm:inline">{isMac ? '⌘K' : 'Ctrl K'}</kbd>
           </button>
           <Link to={appRoutes.profile} aria-label="حساب و تنظیمات" className="grid size-11 place-items-center rounded-full lg:hidden"><Avatar name={profile.displayName} url={profile.avatarUrl} size="sm" /></Link>
         </div>
@@ -60,6 +64,6 @@ export default function AppShell({ profile, children }: { profile: UserProfile; 
     <BottomNavigation displayName={profile.displayName} onMore={() => setMenuOpen(true)} expanded={menuOpen} />
     <StudyHelper key={location.pathname} open={guideOpen} onOpenChange={setGuideOpen} />
     <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onOpenHelper={() => setGuideOpen(true)} isAdmin={profile.role === 'admin'} displayName={profile.displayName} />
-    <Dialog open={menuOpen} onOpenChange={setMenuOpen}><DialogContent dir="rtl" className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>فضای تو</DialogTitle><DialogDescription>همۀ بخش‌های باشگاه، یک‌جا.</DialogDescription></DialogHeader><nav aria-label="همۀ بخش‌ها" className="stagger grid gap-1">{destinations.map(({ path, label, icon: Icon }) => <Link key={path} to={path} viewTransition onClick={() => setMenuOpen(false)} aria-current={location.pathname === path ? 'page' : undefined} className="nav-item"><Icon size={19} /><span className="min-w-0 flex-1 wrap-anywhere">{label}</span><ArrowLeft size={16} /></Link>)}</nav></DialogContent></Dialog>
+    <Dialog open={menuOpen} onOpenChange={setMenuOpen}><DialogContent dir="rtl" className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>فضای تو</DialogTitle><DialogDescription>همۀ بخش‌های باشگاه، یک‌جا.</DialogDescription></DialogHeader><InstallAppButton variant="card" className="mb-2" onDone={() => setMenuOpen(false)} /><nav aria-label="همۀ بخش‌ها" className="stagger grid gap-1">{destinations.map(({ path, label, icon: Icon }) => <Link key={path} to={path} viewTransition onClick={() => setMenuOpen(false)} aria-current={location.pathname === path ? 'page' : undefined} className="nav-item"><Icon size={19} /><span className="min-w-0 flex-1 wrap-anywhere">{label}</span><ArrowLeft size={16} /></Link>)}</nav></DialogContent></Dialog>
   </div>
 }

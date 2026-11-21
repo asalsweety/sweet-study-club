@@ -12,6 +12,7 @@ import type { UpdateSettingsInput } from '../../shared/api/settings'
 import { examForProfile, profileLabel } from '../../shared/lib/education'
 import { daysUntil, fa, jalaliFullDate } from '../../shared/lib/format'
 import { cn } from '../../shared/lib/utils'
+import { setThemePreference, type ThemePreference } from '../theme/model'
 import { DateInput } from '../../components/ui/date-input'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
@@ -52,6 +53,12 @@ export default function SettingsPanel({ profile, compact = false }: { profile: U
       return api.settings.update({ ...input, bio: bio.trim() || null })
     },
     onSuccess: (next) => client.setQueryData(queryKeys.settings, next),
+  })
+  const theme = useMutation({
+    mutationFn: (next: ThemePreference) => api.profile.update({ theme: next }),
+    onMutate: (next) => setThemePreference(next),
+    onSuccess: (next) => client.setQueryData(queryKeys.profile, next),
+    onError: () => setThemePreference(profile.theme),
   })
   const s = settings.data
   if (settings.isError && !s) return <QueryError error={settings.error} retry={() => void settings.refetch()} />
@@ -114,6 +121,15 @@ export default function SettingsPanel({ profile, compact = false }: { profile: U
           ))}
         </div>
       </Row>
+      <Row title="ظاهر برنامه" hint="روشن، تیره، یا هماهنگ با تنظیم گوشی">
+        <div className="flex rounded-xl bg-card p-1 text-xs font-bold" role="group" aria-label="ظاهر برنامه">
+          {([['light', 'روشن'], ['dark', 'تیره'], ['system', 'مثل دستگاه']] as const).map(([value, label]) => (
+            <button key={value} type="button" disabled={theme.isPending} aria-pressed={profile.theme === value} onClick={() => theme.mutate(value)} className={cn('rounded-lg px-3 py-1.5', profile.theme === value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </Row>
       <Row title="نمایش تایمر" hint="تایمر ساده یا اتاق چیبی با والپیپر">
         <div className="flex rounded-xl bg-card p-1 text-xs font-bold">
           {([['digital', 'ساده'], ['chibi', 'چیبی']] as const).map(([value, label]) => (
@@ -128,7 +144,7 @@ export default function SettingsPanel({ profile, compact = false }: { profile: U
       </Row>
 
       </>}
-      {(update.isError || rename.isError) && <p role="alert" className="text-sm text-destructive">{errorMessage(update.error ?? rename.error)}</p>}
+      {(update.isError || rename.isError || theme.isError) && <p role="alert" className="text-sm text-destructive">{errorMessage(update.error ?? rename.error ?? theme.error)}</p>}
     </section>
   )
 }

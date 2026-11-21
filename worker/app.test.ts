@@ -40,7 +40,7 @@ describe('system routes', () => {
     const response = await createWorkerApp().request(
       '/api/ready',
       undefined,
-      createBindings('16'),
+      createBindings('17'),
     )
     const payload = serviceStatusSchema.parse(await response.json())
 

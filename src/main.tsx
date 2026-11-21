@@ -1,7 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import ApplicationRoot from './app/ApplicationRoot'
-import { followSystemColorMode } from './features/theme/model'
+import { startThemeSync } from './features/theme/model'
+import { listenForInstallPrompt } from './features/pwa/install'
 import '@fontsource-variable/estedad'
 import '@fontsource/lalezar/arabic-400.css'
 import '@fontsource/lalezar/latin-400.css'
@@ -14,8 +15,9 @@ if (import.meta.env.PROD && location.protocol === 'http:' && !/^(localhost|127\.
   location.replace(`https://${location.host}${location.pathname}${location.search}${location.hash}`)
 }
 
-const stopFollowingColorMode = followSystemColorMode()
-if (import.meta.hot) import.meta.hot.dispose(stopFollowingColorMode)
+listenForInstallPrompt()
+const stopThemeSync = startThemeSync()
+if (import.meta.hot) import.meta.hot.dispose(stopThemeSync)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

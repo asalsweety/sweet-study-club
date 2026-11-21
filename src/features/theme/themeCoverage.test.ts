@@ -2,7 +2,7 @@
 
 import { readFileSync } from 'node:fs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { followSystemColorMode } from './model'
+import { setThemePreference, startThemeSync } from './model'
 
 // Only the product UI layer appended at the end of index.css is guarded:
 // the token definitions above it legitimately contain literal colors.
@@ -20,20 +20,31 @@ describe('theme coverage', () => {
     expect(productStyles.match(fixedColorPattern)).toBeNull()
   })
 
-  it('applies the device color mode at startup and follows changes', () => {
+  it('starts light even on a dark device, and follows the device only when asked', () => {
     const preference = Object.assign(new EventTarget(), { matches: true })
     const toggle = vi.fn()
-    vi.stubGlobal('window', { matchMedia: () => preference })
-    vi.stubGlobal('document', { documentElement: { classList: { toggle } } })
+    const store = new Map<string, string>()
+    vi.stubGlobal('window', {
+      matchMedia: () => preference,
+      localStorage: { getItem: (key: string) => store.get(key) ?? null, setItem: (key: string, value: string) => store.set(key, value) },
+      setTimeout: () => 0,
+    })
+    vi.stubGlobal('document', { documentElement: { classList: { toggle, add: vi.fn(), remove: vi.fn() } }, querySelector: () => null })
 
-    const stop = followSystemColorMode()
-    expect(toggle).toHaveBeenCalledWith('dark', true)
+    const stop = startThemeSync()
+    expect(toggle).toHaveBeenLastCalledWith('theme-dark', false)
+    preference.dispatchEvent(new Event('change'))
+    expect(toggle).toHaveBeenLastCalledWith('theme-dark', false)
+
+    setThemePreference('system')
+    expect(toggle).toHaveBeenLastCalledWith('theme-dark', true)
     preference.matches = false
     preference.dispatchEvent(new Event('change'))
-    expect(toggle).toHaveBeenCalledWith('dark', false)
+    expect(toggle).toHaveBeenLastCalledWith('theme-dark', false)
+
+    setThemePreference('dark')
+    expect(toggle).toHaveBeenLastCalledWith('theme-dark', true)
+    expect(store.get('sweet-study-theme')).toBe('dark')
     stop()
-    toggle.mockClear()
-    preference.dispatchEvent(new Event('change'))
-    expect(toggle).not.toHaveBeenCalled()
   })
 })

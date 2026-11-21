@@ -1350,3 +1350,24 @@ h6,
 .avatar-picker { position: relative; border-radius: 1.1rem; outline-offset: 3px; transition: transform 200ms var(--ease-spring, ease); }
 .avatar-picker:active { transform: scale(0.95); }
 .avatar-picker-badge { position: absolute; inset-block-end: -4px; inset-inline-start: -4px; display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 999px; border: 2px solid var(--card); background: var(--primary); color: var(--primary-foreground); box-shadow: var(--glow-primary); }
+
+
+/* Round icon buttons in the top bar (theme, install). */
+.header-icon-button { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 999px; border: 1px solid var(--border); background: var(--card); color: var(--foreground); transition: transform 180ms var(--ease-spring, ease), background-color 200ms ease; }
+.header-icon-button:active { transform: scale(0.9); }
+@media (hover: hover) { .header-icon-button:hover { background: var(--muted); } }
+.theme-toggle { position: relative; overflow: hidden; }
+.theme-toggle svg { position: absolute; transition: transform 420ms var(--ease-spring, ease), opacity 220ms ease; }
+.theme-toggle .theme-toggle-moon { color: var(--primary-ink, var(--primary)); }
+.theme-toggle .theme-toggle-sun { color: oklch(0.72 0.16 65); }
+.theme-toggle[data-mode="light"] .theme-toggle-sun { transform: translateY(22px) rotate(-90deg); opacity: 0; }
+.theme-toggle[data-mode="dark"] .theme-toggle-moon { transform: translateY(-22px) rotate(90deg); opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .theme-toggle svg { transition: opacity 150ms ease; } }
+/* Switching themes cross-fades instead of flashing. */
+html.theme-switching, html.theme-switching * { transition: background-color 260ms ease, color 260ms ease, border-color 260ms ease !important; }
+
+/* "Add to home screen" invitation and its step list. */
+.install-card { display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem; border-radius: 1.1rem; border: 1px solid color-mix(in oklab, var(--primary) 30%, var(--border)); background: color-mix(in oklab, var(--secondary) 70%, var(--card)); }
+.install-steps { display: grid; gap: 0.65rem; }
+.install-steps li { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border-radius: 1rem; background: var(--muted); font-size: 0.875rem; line-height: 1.9; }
+.install-steps li > span { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; flex-shrink: 0; border-radius: 999px; background: var(--primary); color: var(--primary-foreground); font-weight: 700; font-size: 0.8rem; }

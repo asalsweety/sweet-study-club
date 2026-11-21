@@ -10,6 +10,7 @@ import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { cn } from '../../shared/lib/utils'
+import InstallAppButton from '../pwa/InstallAppButton'
 
 type Mode = 'sign-in' | 'sign-up'
 
@@ -109,6 +110,7 @@ export default function AuthScreen() {
           {mode === 'sign-up' && <p className="text-xs leading-6 text-muted-foreground">با ساخت حساب، <a href="/terms" className="font-bold text-[var(--primary-ink)] underline-offset-4 hover:underline">قوانین استفاده</a> و <a href="/privacy" className="font-bold text-[var(--primary-ink)] underline-offset-4 hover:underline">حریم خصوصی</a> را می‌پذیری.</p>}
           <Button size="lg" disabled={submit.isPending || (mode === 'sign-up' && name.trim().length < 2)} type="submit" className="h-13 w-full rounded-2xl text-base">{submit.isPending ? <LoaderCircle className="animate-spin" /> : null}{submit.isPending ? (mode === 'sign-in' ? 'در حال ورود…' : 'در حال ساخت حساب…') : mode === 'sign-in' ? 'ورود به فضای مطالعه' : 'ساخت حساب و شروع'}{!submit.isPending && <ArrowLeft />}</Button>
         </form>
+        <InstallAppButton variant="card" className="mt-6" />
         {mode === 'sign-in' && <details className="forgot-password mt-5 text-sm">
           <summary className="cursor-pointer font-bold text-[var(--primary-ink)]">رمزت را فراموش کردی؟</summary>
           <p className="mt-2 leading-7 text-muted-foreground">به مدیر باشگاه پیام بده و ایمیل حسابت را بگو. یک رمز موقت برایت می‌سازد؛ بعد از ورود، از «پروفایل ← تنظیمات» رمز خودت را بگذار.</p>

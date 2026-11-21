@@ -91,7 +91,7 @@ export function createAuth(bindings: WorkerBindings) {
         theme: {
           type: ['light', 'dark', 'system'],
           required: false,
-          defaultValue: 'system',
+          defaultValue: 'light',
           input: false,
         },
       },

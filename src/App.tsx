@@ -9,6 +9,7 @@ import StudySticker from './components/StudySticker'
 import Toaster from './components/Toaster'
 import { confirmStore } from './shared/lib/confirm'
 import { useSessionCelebration } from './features/study/sessionCelebrationStore'
+import { setThemePreference } from './features/theme/model'
 
 const loadShell = () => import('./components/AppShell')
 const loadHome = () => import('./pages/HomePage')
@@ -95,6 +96,10 @@ function AppContent() {
   const isFocus = pathname === appRoutes.focus
   usePrefetchStudyData(signedIn && (isToday || isFocus),
     isToday || settings.data?.timerDisplay === 'chibi' || (isFocus && new URLSearchParams(search).get('room') === 'pixel'))
+  const accountTheme = profile.data?.theme
+  useEffect(() => {
+    if (accountTheme) setThemePreference(accountTheme)
+  }, [accountTheme])
   useEffect(() => {
     if (!signedIn || pathname === '/welcome') return
     // Load the destination's code while the account reads are in flight.

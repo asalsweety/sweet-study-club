@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from 'react'
-import { readSystemColorMode, subscribeToColorMode } from './model'
+import { readAppliedColorMode, subscribeToAppliedColorMode } from './model'
 
+/** The light/dark mode currently applied to the app (not the device setting). */
 export function useTheme() {
-  const mode = useSyncExternalStore(subscribeToColorMode, readSystemColorMode, () => 'light' as const)
+  const mode = useSyncExternalStore(subscribeToAppliedColorMode, readAppliedColorMode, () => 'light' as const)
   return { mode }
 }
