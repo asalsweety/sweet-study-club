@@ -1,0 +1,15 @@
+[Unit]
+Description=Back up the Sweet Study production SQLite database to Google Drive
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=/etc/sweetstudy-db-backup/rclone.conf
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/sweetstudy-db-backup
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+NoNewPrivileges=true
+ReadWritePaths=/etc/sweetstudy-db-backup /run/lock /opt/sweet-study-club-production/data/d1
+TimeoutStartSec=20min

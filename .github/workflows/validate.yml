@@ -6,13 +6,14 @@ on:
     branches:
       - main
       - hesam-dev
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
   group: validate-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   application:
@@ -43,3 +44,41 @@ jobs:
 
       - name: Reject high-severity dependency advisories
         run: npm audit --audit-level=high
+
+  production:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: application
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Build the VPS release
+        run: |
+          npm ci --ignore-scripts
+          npm run cf:build:production
+          bash deployment/vps-production/build-release.sh "$GITHUB_SHA" "$RUNNER_TEMP/sweetstudy-release.tar.gz"
+
+      - name: Deploy the verified main revision
+        env:
+          VPS_RELEASE_KEY: ${{ secrets.SWEETSTUDY_VPS_RELEASE_KEY }}
+        run: |
+          test -n "$VPS_RELEASE_KEY"
+          umask 077
+          key=$(mktemp)
+          hosts=$(mktemp)
+          trap 'rm -f -- "$key" "$hosts"' EXIT
+          printf '%s\n' "$VPS_RELEASE_KEY" > "$key"
+          printf '%s\n' '91.220.113.109 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB+NyHDIcEGgRbLHNdMgw56y3ef1ZgxJAYeM/gjrrDGa' > "$hosts"
+          ssh -T -i "$key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$hosts" \
+            root@91.220.113.109 "$GITHUB_SHA" < "$RUNNER_TEMP/sweetstudy-release.tar.gz"
+          published=$(curl --fail --silent --show-error https://sweetstudy.site/revision.txt)
+          test "$published" = "$GITHUB_SHA"

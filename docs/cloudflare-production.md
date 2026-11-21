@@ -1,5 +1,7 @@
 # Production deployment
 
+The live domain now uses the [VPS production deployment](vps-production.md). The Cloudflare details below record the earlier Worker deployment and its rollback references.
+
 Production serves [sweetstudy.site](https://sweetstudy.site). The domain cutover on November 21, 2026 reused the live app release, D1 database, and authentication secret.
 
 - Account: `cdbe3c0024e00ce5ba021665569f9af7` (domain owner's account).

@@ -1,11 +1,12 @@
 import { Hono, type MiddlewareHandler } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { z } from 'zod'
-import { annotationInputSchema, answerInputSchema, assistantInputSchema, importPackSchema, prepInputSchema, scoreInputSchema, startAttemptSchema, trackSchema } from '../../src/shared/api/learning'
+import { annotationInputSchema, answerInputSchema, assistantInputSchema, importPackSchema, packMetadataInputSchema, prepInputSchema, questionInputSchema, scoreInputSchema, startAttemptSchema, trackSchema } from '../../src/shared/api/learning'
 import { readBody, readQuery, requireAdmin, userId } from '../http/validation'
 import { notFound } from '../http/errors'
 import { answerQuestion, attemptHistory, finishAttempt, loadAttempt, startAttempt } from '../learning/attempts'
 import { getCatalog, importPack, listTopics, questionFilter } from '../learning/content'
+import { listPackQuestions, retirePackQuestion, savePack, savePackQuestion, setPackArchived } from '../learning/admin-content'
 import { assistantMessages, askAssistant } from '../learning/assistant'
 import { createPrep, createScore, learningSummary, listPrep, listScores, notebook, saveAnnotation, togglePrep } from '../learning/personal'
 import { practiceFilterSchema } from '../../src/shared/api/learning'
@@ -64,11 +65,36 @@ export function learningRoutes(requireSession: MiddlewareHandler<WorkerEnvironme
   app.post('/admin/learning/import', async (c) => {
     return c.json(await importPack(c.env.DB, await readBody(c, importPackSchema)), 201)
   })
+  app.post('/admin/learning/packs', async (c) => c.json(await savePack(c.env.DB, await readBody(c, packMetadataInputSchema)), 201))
+  app.put('/admin/learning/packs/:id', async (c) =>
+    c.json(await savePack(c.env.DB, await readBody(c, packMetadataInputSchema), c.req.param('id'))))
+  app.delete('/admin/learning/packs/:id', async (c) => {
+    await setPackArchived(c.env.DB, c.req.param('id'), true)
+    return c.body(null, 204)
+  })
+  app.post('/admin/learning/packs/:id/restore', async (c) => {
+    await setPackArchived(c.env.DB, c.req.param('id'), false)
+    return c.body(null, 204)
+  })
   app.patch('/admin/learning/packs/:id', async (c) => {
     const input = await readBody(c, z.object({ isActive: z.boolean(), availableAt: z.iso.datetime() }).strict())
-    const result = await c.env.DB.prepare('UPDATE learning_packs SET is_active = ?, available_at = ? WHERE id = ?')
+    const result = await c.env.DB.prepare('UPDATE learning_packs SET is_active = ?, available_at = ? WHERE id = ? AND archived_at IS NULL')
       .bind(Number(input.isActive), Date.parse(input.availableAt), c.req.param('id')).run()
     if (!result.meta.changes) throw notFound()
+    return c.body(null, 204)
+  })
+  app.get('/admin/learning/packs/:id/questions', async (c) => {
+    const { q, page } = readQuery(c, z.object({
+      q: z.string().trim().max(160).default(''), page: z.coerce.number().int().min(0).max(10_000).default(0),
+    }))
+    return c.json(await listPackQuestions(c.env.DB, c.req.param('id'), q, page))
+  })
+  app.post('/admin/learning/packs/:id/questions', async (c) =>
+    c.json(await savePackQuestion(c.env.DB, c.req.param('id'), await readBody(c, questionInputSchema)), 201))
+  app.put('/admin/learning/packs/:id/questions/:questionId', async (c) =>
+    c.json(await savePackQuestion(c.env.DB, c.req.param('id'), await readBody(c, questionInputSchema), c.req.param('questionId'))))
+  app.delete('/admin/learning/packs/:id/questions/:questionId', async (c) => {
+    await retirePackQuestion(c.env.DB, c.req.param('id'), c.req.param('questionId'))
     return c.body(null, 204)
   })
   return app

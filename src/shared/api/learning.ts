@@ -19,11 +19,11 @@ export const topicSchema = z.object({
   microLesson: z.string().trim().max(12000),
   branches: z.array(z.object({ title: text(150), points: z.array(text(500)).min(1).max(15) })).min(1).max(12),
 })
-export const questionInputSchema = z.object({
+const questionFields = z.object({
   key: identifier,
   subjectId: identifier,
   chapter: text(160),
-  prompt: text(6000),
+  prompt: z.string().trim().max(6000),
   options: z.array(text(2000)).length(4),
   correctIndex: z.number().int().min(0).max(3),
   explanation: text(12000),
@@ -33,7 +33,10 @@ export const questionInputSchema = z.object({
   images: questionImagesSchema,
   source: questionSourceSchema.nullable().default(null),
 }).strict()
-const packInputObject = z.object({
+export const questionInputSchema = questionFields.refine((question) => question.prompt || question.images.length > 0, {
+  path: ['prompt'], message: 'متن یا تصویر سؤال لازم است.',
+})
+const packFields = z.object({
   key: identifier,
   title: text(200),
   track: trackSchema,
@@ -45,20 +48,24 @@ const packInputObject = z.object({
   availableAt: z.iso.datetime(),
   isSample: z.boolean(),
   attribution: text(500),
-  questions: z.array(questionInputSchema).min(1).max(200),
 }).strict()
-export const importPackSchema = packInputObject.superRefine((pack, ctx) => {
+function validatePackMetadata(pack: z.infer<typeof packFields>, ctx: z.RefinementCtx) {
   if (pack.grade && !pack.track.startsWith('konkur')) ctx.addIssue({ code: 'custom', message: 'پایه برای مسیرهای دبیرستان و کنکور است.', path: ['grade'] })
-  if (new Set(pack.questions.map((q) => q.key)).size !== pack.questions.length) ctx.addIssue({ code: 'custom', message: 'کلید سؤال‌ها باید یکتا باشد.', path: ['questions'] })
   if (pack.bank === 'national' && !['national', 'konkur'].includes(pack.provider)) ctx.addIssue({ code: 'custom', message: 'منبع بانک کشوری باید آزمون رسمی باشد.', path: ['provider'] })
   if (pack.bank === 'authored' && pack.provider !== 'authored') ctx.addIssue({ code: 'custom', message: 'منبع سؤال تألیفی را تألیفی انتخاب کنید.', path: ['provider'] })
+}
+export const packMetadataInputSchema = packFields.extend({ isActive: z.boolean() }).superRefine(validatePackMetadata)
+export const importPackSchema = packFields.extend({ questions: z.array(questionInputSchema).min(1).max(200) }).superRefine((pack, ctx) => {
+  validatePackMetadata(pack, ctx)
+  if (new Set(pack.questions.map((q) => q.key)).size !== pack.questions.length) ctx.addIssue({ code: 'custom', message: 'کلید سؤال‌ها باید یکتا باشد.', path: ['questions'] })
 })
 export type ImportPack = z.infer<typeof importPackSchema>
 export type QuestionInput = z.infer<typeof questionInputSchema>
 export type Track = z.infer<typeof trackSchema>
 export type Provider = z.infer<typeof providerSchema>
+export type PackMetadataInput = z.infer<typeof packMetadataInputSchema>
 
-export const packSchema = packInputObject.omit({ questions: true }).extend({
+export const packSchema = packFields.extend({
   id: z.string(), questionCount: z.number().int(), isActive: z.boolean(),
   grade: learningGradeSchema.nullable().default(null),
   language: z.enum(['fa', 'en']).default('fa'), sourceUrl: z.url().nullable().default(null),
@@ -68,6 +75,19 @@ export const catalogResponseSchema = z.object({
   packs: z.array(packSchema),
   chapters: z.array(z.object({ packId: z.string(), track: trackSchema, subjectId: z.string(), chapter: z.string(), difficulty: difficultySchema.optional(), count: z.number().int() })),
 })
+export const adminPackSchema = packSchema.extend({ archivedAt: z.iso.datetime().nullable() })
+export const adminPacksSchema = z.object({ packs: z.array(adminPackSchema) })
+export const adminQuestionsSchema = z.object({
+  questions: z.array(z.object({
+    id: z.string(),
+    content: questionFields.extend({
+      prompt: z.string().default(''), options: z.array(z.string()), explanation: z.string().default(''),
+    }).strip(),
+  })),
+  hasMore: z.boolean(),
+})
+export type AdminPack = z.infer<typeof adminPackSchema>
+export type AdminQuestion = z.infer<typeof adminQuestionsSchema>['questions'][number]
 export const practiceFilterSchema = z.object({
   track: trackSchema,
   bank: bankSchema.optional(),

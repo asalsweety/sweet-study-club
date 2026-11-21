@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily Sweet Study database backup
+
+[Timer]
+OnCalendar=*-*-* 03:00:00 Asia/Tehran
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -3,7 +3,8 @@ import { DatabaseSync } from 'node:sqlite'
 import { readFileSync, readdirSync } from 'node:fs'
 import { URL as NodeURL } from 'node:url'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { attemptResponseSchema, catalogResponseSchema, importPackSchema, practiceFilterSchema, type Attempt, type ImportPack, type PrepPack, type ScoreInput } from '../../src/shared/api/learning'
+import { adminPacksSchema, adminQuestionsSchema, attemptResponseSchema, catalogResponseSchema, importPackSchema, practiceFilterSchema, type Attempt, type ImportPack, type PrepPack, type ScoreInput } from '../../src/shared/api/learning'
+import { adminProductsResponseSchema, productsResponseSchema } from '../../src/shared/api/shop'
 import { createWorkerApp } from '../app'
 import type { WorkerBindings } from '../types'
 
@@ -70,6 +71,30 @@ beforeEach(() => {
 afterEach(() => { sqlite.close(); vi.restoreAllMocks() })
 
 describe('learning content and publication', () => {
+  it('manages a pack and revises questions without changing past answers', async () => {
+    const { questions, ...pack } = importFixture()
+    const draft = { ...pack, key: 'admin-crud', availableAt: new Date(now - 1000).toISOString(), isSample: false, isActive: true }
+    const path = `/admin/learning/packs/${draft.key}`
+    const admin = { user: 'admin' }
+    expect((await request('/admin/learning/packs', { ...admin, method: 'POST', body: draft })).status).toBe(201)
+    const question = questions[0]!
+    expect((await request(`${path}/questions`, { method: 'POST', body: question })).status).toBe(403)
+    const old = await json(`${path}/questions`, { ...admin, method: 'POST', body: question })
+    const attempt = await start({ packIds: [draft.key], count: 1 })
+    await answer(attempt, old.id, question.correctIndex)
+    const revision = await json(`${path}/questions/${old.id}`, {
+      ...admin, method: 'PUT', body: { ...question, correctIndex: (question.correctIndex + 1) % 4 },
+    })
+    expect((await finish(attempt)).result?.correct).toBe(1)
+    const managed = adminQuestionsSchema.parse(await json(`${path}/questions`, admin))
+    expect(managed.questions.map(({ id }) => id)).toEqual([revision.id])
+    expect((await request(path, { ...admin, method: 'PUT', body: { ...draft, title: 'نسخۀ جدید' } })).status).toBe(200)
+    expect((await request(path, { ...admin, method: 'DELETE' })).status).toBe(204)
+    expect((await json('/learning/count', { method: 'POST', body: filter({ packIds: [draft.key] }) })).count).toBe(0)
+    expect((await request(`${path}/restore`, { ...admin, method: 'POST' })).status).toBe(204)
+    expect((await request(`${path}/questions/${revision.id}`, { ...admin, method: 'DELETE' })).status).toBe(204)
+    expect((await json(`${path}/questions`, admin))).toMatchObject({ questions: [], hasMore: false })
+  })
   it('requires a session and server-owned admin role', async () => {
     expect((await request('/learning/catalog?track=konkur', { user: null })).status).toBe(401)
     expect((await request('/admin/learning/import', { method: 'POST', body: { role: 'admin' } })).status).toBe(403)
@@ -87,7 +112,7 @@ describe('learning content and publication', () => {
     const pack = { ...importFixture(), key: 'weekly-maz', isSample: false, bank: 'weekly', provider: 'maz', availableAt: new Date(now + 86400000).toISOString() }
     expect((await request('/admin/learning/import', { user: 'admin', method: 'POST', body: pack })).status).toBe(201)
     expect((await json('/learning/count', { method: 'POST', body: filter({ includeSamples: false }) })).count).toBe(0)
-    const catalog = catalogResponseSchema.parse(await json('/admin/learning/packs?track=konkur', { user: 'admin' }))
+    const catalog = adminPacksSchema.parse(await json('/admin/learning/packs?track=konkur', { user: 'admin' }))
     expect(catalog.packs.find((item) => item.id === pack.key)).toMatchObject({ questionCount: 5, availableAt: pack.availableAt })
     expect((await request('/admin/learning/import', { user: 'admin', method: 'POST', body: pack })).status).toBe(409)
     expect(sqlite.prepare('SELECT COUNT(*) AS count FROM learning_questions WHERE pack_id = ?').get(pack.key)?.count).toBe(5)
@@ -123,6 +148,30 @@ describe('learning content and publication', () => {
     expect(attempt.items).toHaveLength(4)
     expect(attempt.items.every((q) => q.grade === 'grade-10')).toBe(true)
     expect(attempt.items.find((q) => q.questionId === 'statistics-sci-10-2')?.images).toEqual(['/question-media/scan.jpg'])
+  })
+})
+
+describe('admin shop catalog', () => {
+  it('publishes edits and archives products without removing existing access', async () => {
+    const product = {
+      slug: 'daily-planner', kind: 'planner', title: 'پلنر تازه', summary: 'توضیح', description: '',
+      priceToman: 1000, durationDays: null, isActive: true, position: 34, requiresDelivery: true,
+    }
+    expect((await request('/admin/products', { method: 'POST', body: product })).status).toBe(403)
+    const admin = { user: 'admin' }
+    const { id } = await json('/admin/products', { ...admin, method: 'POST', body: product })
+    const memberCatalog = async () => productsResponseSchema.parse(await json('/shop/products')).products.find((item) => item.id === id)
+    expect(await memberCatalog()).toMatchObject({ priceToman: 1000, requiresDelivery: true })
+    expect((await request(`/admin/products/${id}`, { ...admin, method: 'PUT', body: { ...product, priceToman: 2000 } })).status).toBe(200)
+    expect(await memberCatalog()).toMatchObject({ priceToman: 2000 })
+    sqlite.prepare('INSERT INTO entitlements (user_id, product_id, granted_at) VALUES (?, ?, ?)').run('learner', id, now)
+    expect((await request(`/admin/products/${id}`, { ...admin, method: 'DELETE' })).status).toBe(204)
+    expect(await memberCatalog()).toBeUndefined()
+    expect(sqlite.prepare('SELECT product_id FROM entitlements WHERE product_id = ?').get(id)?.product_id).toBe(id)
+    const managed = adminProductsResponseSchema.parse(await json('/admin/products', admin)).products.find((item) => item.id === id)
+    expect(managed).toMatchObject({ position: 34, isActive: false, archivedAt: expect.any(String) })
+    expect((await request(`/admin/products/${id}/restore`, { ...admin, method: 'POST' })).status).toBe(204)
+    expect(await memberCatalog()).toBeUndefined()
   })
 })
 

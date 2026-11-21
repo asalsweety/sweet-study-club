@@ -8,6 +8,7 @@ import { queryKeys } from '../app/session'
 import { formatToman, jalaliShort } from '../shared/lib/format'
 import PlanRequestsPanel from '../features/shop/PlanRequestsPanel'
 import ChibiStudio from '../features/shop/ChibiStudio'
+import ProductCard from '../features/shop/ProductCard'
 
 const orderStatus = { pending: 'در انتظار پرداخت', paid: 'پرداخت شد', cancelled: 'لغو شد', failed: 'ناموفق' } as const
 const stickerSheets = [
@@ -29,17 +30,19 @@ const individualStickers = [
 export default function ShopPage() {
   const [collection, setCollection] = useState('')
   const orders = useQuery({ queryKey: queryKeys.orders, queryFn: api.shop.orders })
+  const catalog = useQuery({ queryKey: queryKeys.shop, queryFn: api.shop.products })
 
   return (
     <div className="shop-reference flex flex-col gap-5">
       <PageHeading eyebrow="برای قدم بعدی" title="فروشگاه باشگاه" description="با مطالعه سکه جمع کن و اتاق چیبی‌ات را بچین." />
-      <section className="shop-launch surface relative flex items-center gap-3 p-4 sm:p-6" aria-labelledby="shop-launch">
-        <img src="/images/figma/shop-asal.webp" alt="" width={120} height={128} className="shop-asal hidden" />
-        <div>
-          <h2 id="shop-launch" className="text-lg font-bold">فروشگاه به‌زودی باز می‌شود</h2>
-          <p className="mt-1 text-sm text-muted-foreground">به‌زودی محصولات مورد علاقه‌ی شما را اضافه می‌کنیم.</p>
-        </div>
-      </section>
+      {catalog.isError && <QueryError error={catalog.error} retry={() => void catalog.refetch()} />}
+      {catalog.data && <section className="grid gap-3" aria-labelledby="shop-catalog">
+        <h2 id="shop-catalog" className="text-lg font-bold">محصولات باشگاه</h2>
+        {catalog.data.products.length > 0
+          ? <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{catalog.data.products.map((product) =>
+            <ProductCard key={product.id} product={product} paymentsMode={catalog.data.paymentsMode} />)}</div>
+          : <p className="surface p-4 text-sm text-muted-foreground">محصولی برای نمایش نیست.</p>}
+      </section>}
       <ChibiStudio />
       <details className="surface p-4 sm:p-6">
         <summary className="min-h-11 cursor-pointer rounded-lg py-2 text-base font-bold focus-visible:outline-2 focus-visible:outline-ring">برگه‌های برچسب</summary>

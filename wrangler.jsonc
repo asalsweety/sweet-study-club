@@ -30,11 +30,9 @@
     "production": {
       "name": "sweet-study-club",
       "account_id": "cdbe3c0024e00ce5ba021665569f9af7",
-      "workers_dev": true,
+      "workers_dev": false,
       "preview_urls": false,
-      "routes": [
-        { "pattern": "sweetstudy.site", "custom_domain": true }
-      ],
+      "routes": [],
       "vars": {
         "APP_ENVIRONMENT": "production",
         "APP_ORIGIN": "https://sweetstudy.site",

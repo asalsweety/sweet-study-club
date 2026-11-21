@@ -1,6 +1,6 @@
 import { Hono, type MiddlewareHandler } from 'hono'
 import { buyChibiItemSchema, updateChibiSchema } from '../../src/shared/api/chibi'
-import { createOrderInputSchema, createPlanRequestInputSchema } from '../../src/shared/api/shop'
+import { createOrderInputSchema, createPlanRequestInputSchema, productSchema } from '../../src/shared/api/shop'
 import { ApiError } from '../http/errors'
 import { readBody, userId } from '../http/validation'
 import * as chibi from '../shop/chibi'
@@ -13,7 +13,7 @@ export function shopRoutes(requireSession: MiddlewareHandler<WorkerEnvironment>)
 
   app.get('/shop/products', async (c) =>
     c.json({
-      products: c.env.APP_ENVIRONMENT === 'local' ? await shop.listProducts(c.env.DB, userId(c)) : [],
+      products: (await shop.listProducts(c.env.DB, userId(c))).map((product) => productSchema.parse(product)),
       paymentsMode: shop.paymentsMode(c.env.APP_ENVIRONMENT),
     }))
 

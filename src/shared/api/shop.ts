@@ -41,6 +41,11 @@ export const productsResponseSchema = z.object({
   products: z.array(productSchema),
   paymentsMode: z.enum(['dev', 'unavailable']),
 })
+export const adminProductSchema = productSchema.extend({
+  position: z.number().int(),
+  archivedAt: z.iso.datetime().nullable(),
+})
+export const adminProductsResponseSchema = z.object({ products: z.array(adminProductSchema) })
 
 export const createOrderInputSchema = z.object({
   productId: z.string().min(1).max(64),
@@ -60,7 +65,13 @@ export const orderSchema = z.object({
 })
 
 export const orderResponseSchema = z.object({ order: orderSchema })
-export const deliveryOrdersResponseSchema = z.object({ orders: z.array(orderSchema.extend({ buyerName: z.string(), buyerEmail: z.string() })) })
+export const deliveryOrdersResponseSchema = z.object({
+  orders: z.array(orderSchema.extend({
+    buyerName: z.string(),
+    buyerEmail: z.string(),
+    fulfilledAt: z.iso.datetime().nullable(),
+  })),
+})
 export const ordersResponseSchema = z.object({ orders: z.array(orderSchema) })
 
 export const entitlementsResponseSchema = z.object({
@@ -105,10 +116,22 @@ export const upsertProductInputSchema = z.object({
   durationDays: z.number().int().min(1).max(3650).nullable(),
   isActive: z.boolean(),
   position: z.number().int().min(0).max(1000),
+  requiresDelivery: z.boolean().optional(),
+})
+
+export const broadcastFieldsSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  body: z.string().trim().min(1).max(2000),
+})
+export const broadcastInputSchema = broadcastFieldsSchema.extend({ expiresAt: z.iso.datetime().nullable() })
+export const adminBroadcastsSchema = z.object({
+  broadcasts: z.array(broadcastInputSchema.extend({ id: z.string(), createdAt: z.iso.datetime() })),
 })
 
 export type Delivery = z.infer<typeof deliverySchema>
 export type Product = z.infer<typeof productSchema>
+export type AdminProduct = z.infer<typeof adminProductSchema>
+export type BroadcastInput = z.infer<typeof broadcastInputSchema>
 export type ProductKind = z.infer<typeof productKindSchema>
 export type Order = z.infer<typeof orderSchema>
 export type PlanRequest = z.infer<typeof planRequestSchema>

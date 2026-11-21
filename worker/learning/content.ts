@@ -5,10 +5,10 @@ import { conflict, invalidInput, notFound } from '../http/errors'
 export type QuestionRow = { id: string; content: string; subjectId: string; chapter: string; difficulty: 'easy' | 'medium' | 'hard'; packTitle: string; isSample: number; grade: LearningGrade | null }
 export const questionColumns = `q.id, q.content, q.subject_id AS subjectId, q.chapter, q.difficulty, p.title AS packTitle, p.is_sample AS isSample, p.grade`
 export const contentOf = (row: { content: string }): QuestionInput => JSON.parse(row.content) as QuestionInput
-export const visibility = 'p.is_active = 1 AND p.available_at <= ?'
+export const visibility = 'p.is_active = 1 AND p.archived_at IS NULL AND p.available_at <= ?'
 // Legacy question rows can contain an empty stem or answer choices. Keep
 // existing attempts intact and apply the same eligibility rule to new practice.
-export const usableQuestion = `((
+export const readableQuestion = `((
   json_type(q.content, '$.prompt') = 'text' AND length(trim(json_extract(q.content, '$.prompt'), char(9,10,13,32))) > 0
   OR json_array_length(q.content, '$.images') > 0
 ) AND json_array_length(q.content, '$.options') = 4
@@ -16,6 +16,7 @@ AND NOT EXISTS (
   SELECT 1 FROM json_each(q.content, '$.options') AS opt
   WHERE opt.type != 'text' OR length(trim(opt.value, char(9,10,13,32))) = 0
 ))`
+export const usableQuestion = `q.retired_at IS NULL AND ${readableQuestion}`
 
 export function questionFilter(input: PracticeFilter, user: string, now = Date.now()) {
   const clauses = [visibility, 'p.track = ?', usableQuestion]
@@ -53,7 +54,7 @@ export async function getCatalog(db: D1Database, track: Track, admin = false) {
       LEFT JOIN learning_questions q ON q.pack_id = p.id AND ${usableQuestion} WHERE ${conditions}
       GROUP BY p.id ${admin ? '' : 'HAVING COUNT(q.id) > 0'} ORDER BY p.available_at DESC, p.id`).bind(...values).all<{
         id: string; title: string; track: Track; bank: string; provider: string; grade: LearningGrade | null; year: number | null; period: string;
-        available_at: number; is_sample: number; attribution: string; is_active: number; questionCount: number; sourceUrl: string | null; language: string;
+        available_at: number; is_sample: number; attribution: string; is_active: number; archived_at: number | null; questionCount: number; sourceUrl: string | null; language: string;
       }>(),
     db.prepare(`SELECT p.id AS packId, p.track, q.subject_id AS subjectId, q.chapter, q.difficulty, COUNT(*) AS count FROM learning_questions q
       JOIN learning_packs p ON p.id = q.pack_id WHERE ${conditions} AND ${usableQuestion}
@@ -63,7 +64,8 @@ export async function getCatalog(db: D1Database, track: Track, admin = false) {
   return {
     packs: packs.results.map((p) => ({ id: p.id, key: p.id, title: p.title, track: p.track, bank: p.bank, provider: p.provider,
       grade: p.grade, year: p.year, period: p.period, availableAt: new Date(p.available_at).toISOString(), isSample: Boolean(p.is_sample),
-      attribution: p.attribution, isActive: Boolean(p.is_active), questionCount: p.questionCount, sourceUrl: p.sourceUrl, language: p.language })),
+      attribution: p.attribution, isActive: Boolean(p.is_active), questionCount: p.questionCount, sourceUrl: p.sourceUrl, language: p.language,
+      ...(admin ? { archivedAt: p.archived_at === null ? null : new Date(p.archived_at).toISOString() } : {}) })),
     chapters: chapters.results,
   }
 }

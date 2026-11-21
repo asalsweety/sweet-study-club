@@ -1,8 +1,8 @@
 import { z } from 'zod'
 import {
-  assistantMessagesSchema, attemptHistorySchema, attemptResponseSchema, catalogResponseSchema, learningSummarySchema,
+  adminPacksSchema, adminQuestionsSchema, assistantMessagesSchema, attemptHistorySchema, attemptResponseSchema, catalogResponseSchema, learningSummarySchema,
   notebookSchema, prepPacksSchema, scoresResponseSchema, topicsResponseSchema,
-  type AssistantInput, type ImportPack, type PracticeFilter, type PrepInput, type ScoreInput, type StartAttempt, type Track,
+  type AssistantInput, type ImportPack, type PackMetadataInput, type PracticeFilter, type PrepInput, type QuestionInput, type ScoreInput, type StartAttempt, type Track,
 } from '../../shared/api/learning'
 import { del, get, http, post, put } from '../../shared/api/http'
 
@@ -31,8 +31,18 @@ export const learningApi = {
   messages: () => get('/api/learning/assistant', assistantMessagesSchema),
   ask: (input: AssistantInput) => post('/api/learning/assistant', assistantMessagesSchema, input),
   admin: {
-    packs: (track: Track) => get(`/api/admin/learning/packs${query({ track })}`, catalogResponseSchema),
+    packs: (track: Track) => get(`/api/admin/learning/packs${query({ track })}`, adminPacksSchema),
     import: (input: ImportPack) => post('/api/admin/learning/import', idSchema, input),
-    update: (id: string, isActive: boolean, availableAt: string) => http('PATCH', `/api/admin/learning/packs/${path(id)}`, null, { isActive, availableAt }),
+    savePack: (id: string | null, input: PackMetadataInput) => id
+      ? put(`/api/admin/learning/packs/${path(id)}`, idSchema, input)
+      : post('/api/admin/learning/packs', idSchema, input),
+    archivePack: (id: string) => del(`/api/admin/learning/packs/${path(id)}`, null),
+    restorePack: (id: string) => post(`/api/admin/learning/packs/${path(id)}/restore`, null),
+    questions: (pack: string, q: string, page: number) =>
+      get(`/api/admin/learning/packs/${path(pack)}/questions${query({ q, page: String(page) })}`, adminQuestionsSchema),
+    saveQuestion: (pack: string, id: string | null, input: QuestionInput) => id
+      ? put(`/api/admin/learning/packs/${path(pack)}/questions/${path(id)}`, idSchema, input)
+      : post(`/api/admin/learning/packs/${path(pack)}/questions`, idSchema, input),
+    removeQuestion: (pack: string, id: string) => del(`/api/admin/learning/packs/${path(pack)}/questions/${path(id)}`, null),
   },
 }

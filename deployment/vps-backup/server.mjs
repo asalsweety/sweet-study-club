@@ -5,6 +5,7 @@ import { unstable_splitSqlQuery as splitSqlQuery } from 'wrangler'
 
 const origin = new URL(process.env.APP_ORIGIN)
 const secret = process.env.BETTER_AUTH_SECRET
+const environment = process.env.APP_ENVIRONMENT ?? 'backup'
 if (origin.protocol !== 'https:' || origin.href !== `${origin.origin}/` || !secret || secret.length < 32) {
   throw new Error('Set a dedicated HTTPS origin and an authentication secret of at least 32 characters.')
 }
@@ -26,7 +27,7 @@ const runtime = new Miniflare(convertV4MiniflareOptions({
   d1Databases: { DB: 'sweet-study-club-vps-backup' },
   resourcePersistencePath: process.env.BACKUP_DB_PATH ?? '/data',
   bindings: {
-    APP_ENVIRONMENT: 'backup',
+    APP_ENVIRONMENT: environment,
     APP_ORIGIN: origin.origin,
     BETTER_AUTH_SECRET: secret,
     EMAIL_PASSWORD_AUTH_ENABLED: 'true',
@@ -49,7 +50,7 @@ try {
   }
   const response = await runtime.dispatchFetch(`${origin.origin}/api/ready`)
   if (!response.ok) throw new Error(`Worker readiness check returned HTTP ${response.status}.`)
-  console.info('Sweet Study Club backup API ready')
+  console.info(`Sweet Study Club ${environment} API ready`)
   for (const signal of ['SIGINT', 'SIGTERM']) {
     process.once(signal, async () => {
       await runtime.dispose()

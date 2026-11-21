@@ -1,7 +1,7 @@
 import {
   orderSchema,
   planRequestSchema,
-  productSchema,
+  adminProductSchema,
   type Delivery,
   type Order,
   type PlanRequest,
@@ -13,6 +13,8 @@ import { ApiError, conflict, forbidden, notFound } from '../http/errors'
 const DAY_MS = 86_400_000
 
 type ProductRow = Omit<Product, 'isActive' | 'owned' | 'ownedUntil' | 'requiresDelivery'> & {
+  position: number
+  archivedAt: number | null
   requiresDelivery: number
   isActive: number
   ownedAt: number | null
@@ -28,17 +30,19 @@ export async function listProducts(db: D1Database, me: string, includeInactive =
     .prepare(
       `SELECT p.id, p.slug, p.kind, p.title, p.summary, p.description, p.price_toman AS priceToman,
          p.duration_days AS durationDays, p.is_active AS isActive, p.requires_delivery AS requiresDelivery,
+         p.position, p.archived_at AS archivedAt,
          e.granted_at AS ownedAt, e.expires_at AS expiresAt
        FROM shop_products p
        LEFT JOIN entitlements e ON e.product_id = p.id AND e.user_id = ? AND (e.expires_at IS NULL OR e.expires_at > ?)
-       ${includeInactive ? '' : 'WHERE p.is_active = 1'}
+       ${includeInactive ? '' : 'WHERE p.is_active = 1 AND p.archived_at IS NULL'}
        ORDER BY p.position, p.title`,
     )
     .bind(me, now)
     .all<ProductRow>()
-  return result.results.map(({ ownedAt, expiresAt, ...row }) =>
-    productSchema.parse({
+  return result.results.map(({ ownedAt, expiresAt, archivedAt, ...row }) =>
+    adminProductSchema.parse({
       ...row,
+      archivedAt: archivedAt === null ? null : new Date(archivedAt).toISOString(),
       isActive: row.isActive === 1,
       requiresDelivery: row.requiresDelivery === 1,
       owned: ownedAt !== null,
@@ -85,7 +89,7 @@ export async function createOrder(db: D1Database, me: string, productId: string,
   if (existing) return findOrder(db, me, existing.id)
 
   const product = await db
-    .prepare('SELECT id, price_toman AS price, duration_days AS days, requires_delivery AS physical FROM shop_products WHERE id = ? AND is_active = 1')
+    .prepare('SELECT id, price_toman AS price, duration_days AS days, requires_delivery AS physical FROM shop_products WHERE id = ? AND is_active = 1 AND archived_at IS NULL')
     .bind(productId)
     .first<{ id: string; price: number; days: number | null; physical: number }>()
   if (product === null) throw notFound('The product is not available.')
@@ -168,16 +172,14 @@ export async function listPlanRequests(db: D1Database, me: string | null) {
 }
 
 export async function createPlanRequest(db: D1Database, me: string, goal: string, details: string) {
-  const summary = await entitlementSummary(db, me)
-  if (!summary.kinds.includes('plan_by_asal') && !summary.kinds.includes('dna_plan')) {
-    throw forbidden('Buy a personal plan first.')
-  }
   const now = Date.now()
-  const product = summary.kinds.includes('plan_by_asal') ? 'prod-plan-asal' : 'prod-dna-plan'
-  await db
-    .prepare('INSERT INTO plan_requests (id, user_id, product_id, goal, details, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-    .bind(crypto.randomUUID(), me, product, goal, details, 'submitted', now, now)
-    .run()
+  const result = await db.prepare(
+    `INSERT INTO plan_requests (id, user_id, product_id, goal, details, status, created_at, updated_at)
+     SELECT ?, e.user_id, p.id, ?, ?, 'submitted', ?, ? FROM entitlements e JOIN shop_products p ON p.id = e.product_id
+     WHERE e.user_id = ? AND (e.expires_at IS NULL OR e.expires_at > ?) AND p.kind IN ('plan_by_asal', 'dna_plan')
+     ORDER BY p.kind = 'plan_by_asal' DESC, e.granted_at DESC, p.id LIMIT 1`,
+  ).bind(crypto.randomUUID(), goal, details, now, now, me, now).run()
+  if (!result.meta.changes) throw forbidden('Buy a personal plan first.')
   return listPlanRequests(db, me)
 }
 
@@ -191,31 +193,61 @@ export async function answerPlanRequest(db: D1Database, id: string, status: stri
 
 export async function upsertProduct(db: D1Database, id: string | null, input: UpsertProductInput) {
   const now = Date.now()
-  const productId = id ?? `prod-${crypto.randomUUID().slice(0, 8)}`
-  await db
-    .prepare(
-      `INSERT INTO shop_products (id, slug, kind, title, summary, description, price_toman, duration_days, is_active, position, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT (id) DO UPDATE SET slug = excluded.slug, kind = excluded.kind, title = excluded.title,
-         summary = excluded.summary, description = excluded.description, price_toman = excluded.price_toman,
-         duration_days = excluded.duration_days, is_active = excluded.is_active, position = excluded.position,
-         updated_at = excluded.updated_at`,
-    )
-    .bind(productId, input.slug, input.kind, input.title, input.summary, input.description, input.priceToman,
-      input.durationDays, input.isActive ? 1 : 0, input.position, now, now)
-    .run()
-    .catch(() => {
-      throw conflict('SLUG_TAKEN', 'Another product already uses this slug.')
-    })
+  const productId = id ?? crypto.randomUUID()
+  const values = [
+    input.slug, input.kind, input.title, input.summary, input.description, input.priceToman,
+    input.durationDays, Number(input.isActive), input.position,
+    input.requiresDelivery === undefined ? null : Number(input.requiresDelivery),
+  ] as const
+  try {
+    const result = id === null
+      ? await db.prepare(`INSERT INTO shop_products
+        (id, slug, kind, title, summary, description, price_toman, duration_days, is_active, position, requires_delivery, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, 0), ?, ?)`).bind(productId, ...values, now, now).run()
+      : await db.prepare(`UPDATE shop_products SET slug = ?, kind = ?, title = ?, summary = ?, description = ?,
+        price_toman = ?, duration_days = ?, is_active = ?, position = ?, requires_delivery = COALESCE(?, requires_delivery), updated_at = ?
+        WHERE id = ? AND archived_at IS NULL AND (kind = ? OR (
+          NOT EXISTS (SELECT 1 FROM shop_orders WHERE product_id = shop_products.id)
+          AND NOT EXISTS (SELECT 1 FROM entitlements WHERE product_id = shop_products.id)
+          AND NOT EXISTS (SELECT 1 FROM plan_requests WHERE product_id = shop_products.id)
+        ))`).bind(...values, now, id, input.kind).run()
+    if (!result.meta.changes) {
+      const product = await db.prepare('SELECT archived_at AS archivedAt FROM shop_products WHERE id = ?').bind(productId).first<{ archivedAt: number | null }>()
+      if (!product || product.archivedAt !== null) throw notFound('The editable product does not exist.')
+      throw conflict('PRODUCT_KIND_IN_USE', 'نوع محصولی که سفارش یا دسترسی دارد قابل تغییر نیست.')
+    }
+  } catch (error) {
+    if (String(error).includes('UNIQUE constraint failed: shop_products.slug')) {
+      throw conflict('SLUG_TAKEN', 'این شناسه قبلاً برای محصول دیگری استفاده شده است.')
+    }
+    throw error
+  }
   return productId
+}
+
+export async function setProductArchived(db: D1Database, id: string, archived: boolean) {
+  const now = Date.now()
+  const result = await db.prepare(`UPDATE shop_products SET archived_at = ?, is_active = 0, updated_at = ?
+    WHERE id = ? AND archived_at IS ${archived ? '' : 'NOT '}NULL`).bind(archived ? now : null, now, id).run()
+  if (!result.meta.changes && !await db.prepare('SELECT id FROM shop_products WHERE id = ?').bind(id).first()) throw notFound()
 }
 
 /** Orders that need handing over or posting, newest first, for the admin studio. */
 export async function listDeliveryOrders(db: D1Database) {
   const result = await db
-    .prepare(`SELECT ${orderColumns}, u.name AS buyerName, u.email AS buyerEmail FROM shop_orders o
+    .prepare(`SELECT ${orderColumns}, u.name AS buyerName, u.email AS buyerEmail, o.fulfilled_at AS fulfilledAt FROM shop_orders o
        JOIN shop_products p ON p.id = o.product_id JOIN "user" u ON u.id = o.user_id
        WHERE o.delivery_method IS NOT NULL ORDER BY o.created_at DESC LIMIT 100`)
-    .all<OrderRow & { buyerName: string; buyerEmail: string }>()
-  return result.results.map(({ buyerName, buyerEmail, ...row }) => ({ ...toOrder(row), buyerName, buyerEmail }))
+    .all<OrderRow & { buyerName: string; buyerEmail: string; fulfilledAt: number | null }>()
+  return result.results.map(({ buyerName, buyerEmail, fulfilledAt, ...row }) => ({
+    ...toOrder(row), buyerName, buyerEmail,
+    fulfilledAt: fulfilledAt === null ? null : new Date(fulfilledAt).toISOString(),
+  }))
+}
+
+export async function setOrderFulfilled(db: D1Database, id: string, fulfilled: boolean) {
+  const now = Date.now()
+  const result = await db.prepare(`UPDATE shop_orders SET fulfilled_at = CASE WHEN ? THEN COALESCE(fulfilled_at, ?) ELSE NULL END,
+    updated_at = ? WHERE id = ? AND delivery_method IS NOT NULL AND status = 'paid'`).bind(Number(fulfilled), now, now, id).run()
+  if (!result.meta.changes) throw notFound('سفارش پرداخت‌شده با تحویل فیزیکی پیدا نشد.')
 }

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { chibiResponseSchema, type ChibiItemId, type ChibiUpdate } from '../shared/api/chibi'
-import { del, get, patch, post, put } from '../shared/api/http'
+import { del, get, http, patch, post, put } from '../shared/api/http'
 import {
   createPlannerItemInputSchema,
   plannerItemResponseSchema,
@@ -26,10 +26,13 @@ import {
 } from '../shared/api/schedule'
 import { settingsResponseSchema, subjectsResponseSchema, type UpdateSettingsInput, type UpsertSubjectInput } from '../shared/api/settings'
 import {
+  adminBroadcastsSchema,
+  adminProductsResponseSchema,
   entitlementsResponseSchema,
   orderResponseSchema,
   ordersResponseSchema,
   deliveryOrdersResponseSchema,
+  type BroadcastInput,
   type Delivery,
   planRequestsResponseSchema,
   productsResponseSchema,
@@ -189,14 +192,20 @@ export const api = {
     overrides: (from: string, to: string) => get(`/api/admin/overrides${query({ from, to })}`, overridesResponseSchema).then((r) => r.overrides),
     createOverride: (input: CreateOverrideInput) => post('/api/admin/overrides', idSchema, input),
     deleteOverride: (id: string) => del(`/api/admin/overrides/${encodeURIComponent(id)}`, null),
-    products: () => get('/api/admin/products', productsResponseSchema.pick({ products: true })).then((r) => r.products),
+    products: () => get('/api/admin/products', adminProductsResponseSchema).then((r) => r.products),
     saveProduct: (id: string | null, input: UpsertProductInput) =>
       id ? put(`/api/admin/products/${encodeURIComponent(id)}`, idSchema, input) : post('/api/admin/products', idSchema, input),
+    archiveProduct: (id: string) => del(`/api/admin/products/${encodeURIComponent(id)}`, null),
+    restoreProduct: (id: string) => post(`/api/admin/products/${encodeURIComponent(id)}/restore`, null),
     planRequests: () => get('/api/admin/plan-requests', planRequestsResponseSchema).then((r) => r.requests),
     deliveryOrders: () => get('/api/admin/delivery-orders', deliveryOrdersResponseSchema).then((r) => r.orders),
+    setDeliveryFulfilled: (id: string, fulfilled: boolean) => http('PATCH', `/api/admin/delivery-orders/${encodeURIComponent(id)}`, null, { fulfilled }),
     answerPlan: (id: string, status: 'in_progress' | 'delivered', response: string | null) =>
       post(`/api/admin/plan-requests/${encodeURIComponent(id)}`, planRequestsResponseSchema, { status, response }).then((r) => r.requests),
-    broadcast: (title: string, body: string, expiresInDays: number | null) =>
-      post('/api/admin/broadcasts', null, { title, body, expiresInDays }),
+    broadcasts: () => get('/api/admin/broadcasts', adminBroadcastsSchema).then((r) => r.broadcasts),
+    saveBroadcast: (id: string | null, input: BroadcastInput) => id
+      ? http('PUT', `/api/admin/broadcasts/${encodeURIComponent(id)}`, null, input)
+      : post('/api/admin/broadcasts', null, input),
+    deleteBroadcast: (id: string) => del(`/api/admin/broadcasts/${encodeURIComponent(id)}`, null),
   },
 }

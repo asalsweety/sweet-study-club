@@ -1,7 +1,7 @@
 import { Hono, type MiddlewareHandler } from 'hono'
 import { z } from 'zod'
 import { createOverrideInputSchema, isoDateSchema, upsertStudyPartInputSchema } from '../../src/shared/api/schedule'
-import { answerPlanRequestInputSchema, upsertProductInputSchema } from '../../src/shared/api/shop'
+import { answerPlanRequestInputSchema, broadcastFieldsSchema, broadcastInputSchema, upsertProductInputSchema } from '../../src/shared/api/shop'
 import { startOfTehranDay, tehranClock } from '../../src/shared/lib/tehran'
 import { createAuth } from '../auth'
 import { invalidInput, notFound } from '../http/errors'
@@ -12,9 +12,7 @@ import * as schedule from '../schedule/service'
 import * as shop from '../shop/service'
 import type { WorkerEnvironment } from '../types'
 
-const broadcastInput = z.object({
-  title: z.string().trim().min(1).max(120),
-  body: z.string().trim().min(1).max(2000),
+const legacyBroadcastInput = broadcastFieldsSchema.extend({
   expiresInDays: z.number().int().min(1).max(365).nullable(),
 })
 
@@ -150,11 +148,24 @@ export function adminRoutes(requireSession: MiddlewareHandler<WorkerEnvironment>
   })
 
   app.get('/admin/delivery-orders', async (c) => c.json({ orders: await shop.listDeliveryOrders(c.env.DB) }))
+  app.patch('/admin/delivery-orders/:id', async (c) => {
+    const { fulfilled } = await readBody(c, z.object({ fulfilled: z.boolean() }))
+    await shop.setOrderFulfilled(c.env.DB, c.req.param('id'), fulfilled)
+    return c.body(null, 204)
+  })
   app.get('/admin/products', async (c) => c.json({ products: await shop.listProducts(c.env.DB, userId(c), true) }))
   app.post('/admin/products', async (c) =>
     c.json({ id: await shop.upsertProduct(c.env.DB, null, await readBody(c, upsertProductInputSchema)) }, 201))
   app.put('/admin/products/:id', async (c) =>
     c.json({ id: await shop.upsertProduct(c.env.DB, c.req.param('id'), await readBody(c, upsertProductInputSchema)) }))
+  app.delete('/admin/products/:id', async (c) => {
+    await shop.setProductArchived(c.env.DB, c.req.param('id'), true)
+    return c.body(null, 204)
+  })
+  app.post('/admin/products/:id/restore', async (c) => {
+    await shop.setProductArchived(c.env.DB, c.req.param('id'), false)
+    return c.body(null, 204)
+  })
 
   app.get('/admin/plan-requests', async (c) => c.json({ requests: await shop.listPlanRequests(c.env.DB, null) }))
   app.post('/admin/plan-requests/:id', async (c) => {
@@ -163,14 +174,29 @@ export function adminRoutes(requireSession: MiddlewareHandler<WorkerEnvironment>
     return c.json({ requests: await shop.listPlanRequests(c.env.DB, null) })
   })
 
+  app.get('/admin/broadcasts', async (c) => {
+    const { results } = await c.env.DB.prepare(`SELECT id, title, body, created_at AS createdAt, expires_at AS expiresAt
+      FROM broadcasts ORDER BY created_at DESC LIMIT 200`).all<{ id: string; title: string; body: string; createdAt: number; expiresAt: number | null }>()
+    return c.json({ broadcasts: results.map(({ createdAt, expiresAt, ...row }) => ({
+      ...row, createdAt: new Date(createdAt).toISOString(), expiresAt: expiresAt === null ? null : new Date(expiresAt).toISOString(),
+    })) })
+  })
   app.post('/admin/broadcasts', async (c) => {
-    const input = await readBody(c, broadcastInput)
+    const input = await readBody(c, z.union([broadcastInputSchema, legacyBroadcastInput]))
     const now = Date.now()
+    const expiresAt = 'expiresAt' in input ? input.expiresAt && Date.parse(input.expiresAt)
+      : input.expiresInDays === null ? null : now + input.expiresInDays * 86_400_000
     await c.env.DB.prepare('INSERT INTO broadcasts (id, title, body, created_by, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)')
-      .bind(crypto.randomUUID(), input.title, input.body, userId(c), now,
-        input.expiresInDays === null ? null : now + input.expiresInDays * 86_400_000)
+      .bind(crypto.randomUUID(), input.title, input.body, userId(c), now, expiresAt)
       .run()
     return c.body(null, 201)
+  })
+  app.put('/admin/broadcasts/:id', async (c) => {
+    const input = await readBody(c, broadcastInputSchema)
+    const result = await c.env.DB.prepare('UPDATE broadcasts SET title = ?, body = ?, expires_at = ? WHERE id = ?')
+      .bind(input.title, input.body, input.expiresAt === null ? null : Date.parse(input.expiresAt), c.req.param('id')).run()
+    if (!result.meta.changes) throw notFound()
+    return c.body(null, 204)
   })
   app.delete('/admin/broadcasts/:id', async (c) => {
     await c.env.DB.prepare('DELETE FROM broadcasts WHERE id = ?').bind(c.req.param('id')).run()

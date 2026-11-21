@@ -7,7 +7,8 @@ const AdminContent = lazy(() => import('../features/admin/AdminContent'))
 const AdminSchedule = lazy(() => import('../features/admin/AdminSchedule'))
 const AdminLearning = lazy(() => import('../features/admin/AdminLearning'))
 const AdminFeedback = lazy(() => import('../features/admin/AdminFeedback'))
-const sections = [['overview', 'نمای کلی'], ['users', 'مدیریت اعضا'], ['schedule', 'برنامۀ باشگاه'], ['learning', 'محتوای آموزشی'], ['content', 'محصولات و پیام‌ها'], ['feedback', 'بازخوردها']] as const
+const AdminBroadcasts = lazy(() => import('../features/admin/AdminBroadcasts'))
+const sections = [['overview', 'نمای کلی'], ['users', 'مدیریت اعضا'], ['schedule', 'برنامۀ باشگاه'], ['learning', 'آزمون‌ها و سؤال‌ها'], ['content', 'فروشگاه و سفارش‌ها'], ['broadcasts', 'اطلاعیه‌ها'], ['feedback', 'بازخوردها']] as const
 export default function AdminPage() {
   const [params] = useSearchParams()
   const requested = params.get('section')
@@ -23,6 +24,7 @@ export default function AdminPage() {
       {section === 'learning' && <AdminLearning />}
       {section === 'users' && <AdminUsers />}
       {section === 'content' && <AdminContent />}
+      {section === 'broadcasts' && <AdminBroadcasts />}
       {section === 'feedback' && <AdminFeedback />}
     </Suspense>
   </div>

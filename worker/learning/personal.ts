@@ -1,7 +1,7 @@
 import type { PrepInput, PrepPack, ScoreInput, Track } from '../../src/shared/api/learning'
 import { validSubjects } from '../../src/shared/lib/learning-catalog'
 import { conflict, invalidInput, notFound } from '../http/errors'
-import { availableQuestion, contentOf, usableQuestion, visibility } from './content'
+import { availableQuestion, contentOf, readableQuestion, usableQuestion, visibility } from './content'
 
 export async function saveAnnotation(db: D1Database, user: string, questionId: string, input: { saved: boolean; note: string; highlight: string }) {
   const row = await availableQuestion(db, questionId)
@@ -14,9 +14,9 @@ export async function notebook(db: D1Database, user: string, track: Track) {
   const rows = await db.prepare(`SELECT n.question_id AS questionId, n.saved, n.note, n.highlight, n.updated_at AS updatedAt,
     COALESCE(json_extract(q.content, '$.prompt'), '') AS prompt, p.track, q.subject_id AS subjectId, q.chapter
     FROM learning_annotations n JOIN learning_questions q ON q.id = n.question_id JOIN learning_packs p ON p.id = q.pack_id
-    WHERE n.user_id = ? AND p.track = ? AND ${visibility} AND ${usableQuestion}
+    WHERE n.user_id = ? AND p.track = ? AND ${readableQuestion}
       AND (n.saved = 1 OR n.note != '' OR n.highlight != '') ORDER BY n.updated_at DESC`)
-    .bind(user, track, Date.now()).all<{ questionId: string; saved: number; note: string; highlight: string; updatedAt: number; prompt: string; track: Track; subjectId: string; chapter: string }>()
+    .bind(user, track).all<{ questionId: string; saved: number; note: string; highlight: string; updatedAt: number; prompt: string; track: Track; subjectId: string; chapter: string }>()
   return { entries: rows.results.map((r) => ({ ...r, saved: Boolean(r.saved) })) }
 }
 export async function learningSummary(db: D1Database, user: string, track: Track) {
