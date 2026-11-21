@@ -1,5 +1,5 @@
-import { Check as CheckIcon, Star } from 'lucide-react'
-import { createContext, useContext, type ComponentType, type ReactNode } from 'react'
+import { Check as CheckIcon, Heart, Star } from 'lucide-react'
+import { createContext, useContext, useSyncExternalStore, type ComponentType, type ReactNode } from 'react'
 import type { SheetData, SheetValue } from '../../shared/api/sheets'
 import { cn } from '../../shared/lib/utils'
 
@@ -32,11 +32,13 @@ const persianDigits = (value: number | string) => String(value).replace(/\d/g, (
 export const fa = persianDigits
 
 /** A writable line, like the dotted lines on the printed page. */
-export function Line({ k, label, placeholder, className, multiline = false, rows = 3, inputMode, dir, maxLength = 400 }: {
-  k: string; label?: string | undefined; placeholder?: string | undefined; className?: string; multiline?: boolean; rows?: number
+export function Line({ k, label, placeholder, fallback, className, multiline = false, rows = 3, inputMode, dir, maxLength = 400 }: {
+  k: string; label?: string | undefined; placeholder?: string | undefined; fallback?: string; className?: string; multiline?: boolean; rows?: number
   inputMode?: 'text' | 'numeric' | 'decimal'; dir?: 'rtl' | 'ltr' | 'auto'; maxLength?: number
 }) {
-  const [value, setValue] = useText(k)
+  const [stored, setValue] = useText(k)
+  // Printed defaults (e.g. habit names) show until the member writes their own.
+  const value = stored || (fallback ?? '')
   const field = multiline
     ? <textarea aria-label={label ?? placeholder} value={value} onChange={(e) => setValue(e.target.value)} placeholder={placeholder} rows={rows} maxLength={maxLength * 4} className="sheet-line sheet-area" dir={dir} />
     : <input aria-label={label ?? placeholder} value={value} onChange={(e) => setValue(e.target.value)} placeholder={placeholder} maxLength={maxLength} inputMode={inputMode} className="sheet-line" dir={dir} />
@@ -66,8 +68,8 @@ export function Tick({ k, label, children, className }: { k: string; label?: str
 }
 
 /** A checkbox with a writable line next to it. */
-export function TickLine({ k, placeholder, label }: { k: string; placeholder?: string | undefined; label?: string | undefined }) {
-  return <div className="sheet-tick-line"><Tick k={`${k}.done`} label={`انجام شد: ${label ?? placeholder ?? ''}`.trim()} /><Line k={`${k}.text`} placeholder={placeholder} label={undefined} /></div>
+export function TickLine({ k, placeholder, fallback, label }: { k: string; placeholder?: string | undefined; fallback?: string; label?: string | undefined }) {
+  return <div className="sheet-tick-line"><Tick k={`${k}.done`} label={`انجام شد: ${label ?? fallback ?? placeholder ?? ''}`.trim()} /><Line k={`${k}.text`} placeholder={placeholder} {...(fallback === undefined ? {} : { fallback })} /></div>
 }
 
 export function Stars({ k, max = 5, label = 'امتیاز' }: { k: string; max?: number; label?: string }) {
@@ -138,5 +140,26 @@ export function Panel({ title, tone = 'pink', children, className }: { title?: R
       {title && <div className="sheet-panel-head">{title}</div>}
       <div className="sheet-panel-body">{children}</div>
     </div>
+  )
+}
+
+/** A heart that fills in when the goal is reached (monthly goals). */
+export function HeartTick({ k, label, tone = 'pink' }: { k: string; label: string; tone?: 'pink' | 'green' }) {
+  const [on, setOn] = useFlag(k)
+  return <button type="button" aria-pressed={on} aria-label={label} className={cn('sheet-heart', on && 'is-on')} data-tone={tone} onClick={() => setOn(!on)}><Heart size={20} /></button>
+}
+
+/** One of the bee, heart and flower stickers from the printed sheets. */
+export function Sticker({ name, className, size = 28 }: { name: string; className?: string; size?: number }) {
+  return <img src={`/images/study-stickers/${name}.webp`} alt="" width={size} height={size} loading="lazy" decoding="async" draggable={false} className={cn('sheet-sticker', className)} />
+}
+
+const phoneQuery = '(max-width: 899px)'
+/** Phones get their own layouts for the widest tables. */
+export function useIsPhone() {
+  return useSyncExternalStore(
+    (listener) => { const query = window.matchMedia(phoneQuery); query.addEventListener('change', listener); return () => query.removeEventListener('change', listener) },
+    () => window.matchMedia(phoneQuery).matches,
+    () => false,
   )
 }

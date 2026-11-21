@@ -67,7 +67,7 @@ export default defineConfig(async ({ command, mode }) => {
     },
     test: {
       // apps/* are separate projects with their own (node:test) runners.
-      exclude: ['**/node_modules/**', '**/dist/**', 'apps/**'],
+      exclude: ['**/node_modules/**', '**/dist/**', 'apps/**', '.wrangler/**'],
     },
   }
 })

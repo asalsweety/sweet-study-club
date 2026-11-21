@@ -1,0 +1,9 @@
+{
+  "name": "sweet-study-club-backup-runtime",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "miniflare": "5.20260825.0-alpha",
+    "wrangler": "4.126.0"
+  }
+}

@@ -111,7 +111,7 @@ function SheetEditor({ id, onClose }: { id: string; onClose: () => void }) {
 }
 
 function BackButton({ onClose }: { onClose: () => void }) {
-  return <Button variant="ghost" onClick={onClose} className="w-fit"><ArrowRight />همۀ صفحه‌ها</Button>
+  return <Button variant="ghost" onClick={onClose} className="sheet-back w-fit" aria-label="همۀ صفحه‌ها"><ArrowRight /><span className="sheet-back-text">همۀ صفحه‌ها</span></Button>
 }
 
 function LoadedEditor({ sheet, onClose }: { sheet: Sheet; onClose: () => void }) {
@@ -187,8 +187,9 @@ function LoadedEditor({ sheet, onClose }: { sheet: Sheet; onClose: () => void })
   }
 
   const { Body } = templates[sheet.kind]
+  const paper = useRef<HTMLElement>(null)
   return (
-    <div className="grid gap-4">
+    <div className="sheet-editor grid min-w-0 gap-4">
       <div className="sheet-toolbar">
         <BackButton onClose={onClose} />
         <input className="sheet-title-input" value={title} maxLength={80} aria-label="نام صفحه" onChange={(event) => { setTitle(event.target.value); schedule(data, event.target.value) }} />
@@ -200,12 +201,37 @@ function LoadedEditor({ sheet, onClose }: { sheet: Sheet; onClose: () => void })
         <Button variant="outline" size="icon" aria-label="چاپ این صفحه" title="چاپ" onClick={() => window.print()}><Printer /></Button>
         <Button variant="outline" size="icon" aria-label="حذف این صفحه" title="حذف" onClick={() => void askRemove()} disabled={remove.isPending}><Trash2 /></Button>
       </div>
+      <SectionJump target={paper} version={sheet.kind} />
       <SheetProvider value={store}>
-        <article className="sheet-paper" data-kind={sheet.kind}>
-          <SheetHeader kind={sheet.kind} />
-          <Body />
-        </article>
+        <div className="sheet-frame">
+          <i className="sheet-edge is-top" aria-hidden /><i className="sheet-edge is-bottom" aria-hidden />
+          <i className="sheet-edge is-start" aria-hidden /><i className="sheet-edge is-end" aria-hidden />
+          {(['top-start', 'top-end', 'bottom-start', 'bottom-end'] as const).map((corner, index) => (
+            <img key={corner} className={`sheet-corner is-${corner}`} src={`/images/study-stickers/${index % 3 === 0 ? 'cute-heart-1' : 'cute-flower-1'}.webp`} alt="" aria-hidden width={44} height={44} />
+          ))}
+          <article ref={paper} className="sheet-paper" data-kind={sheet.kind}>
+            <SheetHeader kind={sheet.kind} />
+            <Body />
+          </article>
+        </div>
       </SheetProvider>
     </div>
+  )
+}
+
+/** Phones: a sticky row of section chips to jump around a long sheet. */
+function SectionJump({ target, version }: { target: React.RefObject<HTMLElement | null>; version: string }) {
+  const [sections, setSections] = useState<{ title: string; element: HTMLElement }[]>([])
+  useEffect(() => {
+    const headings = [...(target.current?.querySelectorAll<HTMLElement>('.sheet-section-head h3') ?? [])]
+    setSections(headings.map((element) => ({ title: (element.textContent ?? '').replace(/\s*\(.*$/, '').replace(/^[۰-۹]+\.\s*/, '').trim(), element })))
+  }, [target, version])
+  if (sections.length < 2) return null
+  return (
+    <nav className="sheet-jump" aria-label="بخش‌های این صفحه">
+      {sections.map((section) => (
+        <button key={section.title} type="button" onClick={() => section.element.scrollIntoView({ behavior: 'smooth', block: 'start' })}>{section.title}</button>
+      ))}
+    </nav>
   )
 }
