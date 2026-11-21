@@ -9,6 +9,7 @@ import {
   type UpdatePlannerItemInput,
 } from '../shared/api/planner'
 import { profileResponseSchema } from '../shared/api/profile'
+import { sheetResponseSchema, sheetsResponseSchema, type SheetKind, type UpdateSheetInput } from '../shared/api/sheets'
 import {
   gamificationResponseSchema,
   heatmapResponseSchema,
@@ -86,6 +87,13 @@ const idSchema = z.object({ id: z.string() })
 const query = (values: Record<string, string>) => `?${new URLSearchParams(values).toString()}`
 
 export const api = {
+  sheets: {
+    list: () => get('/api/planner-sheets', sheetsResponseSchema).then((r) => r.sheets),
+    get: (id: string) => get(`/api/planner-sheets/${encodeURIComponent(id)}`, sheetResponseSchema).then((r) => r.sheet),
+    create: (kind: SheetKind) => post('/api/planner-sheets', sheetResponseSchema, { kind }).then((r) => r.sheet),
+    update: (id: string, input: UpdateSheetInput) => put(`/api/planner-sheets/${encodeURIComponent(id)}`, z.object({ updatedAt: z.number() }), input),
+    remove: (id: string) => del(`/api/planner-sheets/${encodeURIComponent(id)}`, null),
+  },
   profile: {
     get: () => get('/api/profile', profileResponseSchema).then((r) => r.profile),
     update: (input: { displayName?: string; theme?: 'light' | 'dark' | 'system' }) =>

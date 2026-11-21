@@ -47,7 +47,7 @@ if (process.argv.includes('--check')) {
   const budgets = [
     ['Account entry JavaScript', report.entryJavaScript.bytes, 430_000],
     ['Account entry JavaScript (gzip)', report.entryJavaScript.gzipBytes, 140_000],
-    ['Stylesheet', report.cssBytes, 150_000],
+    ['Stylesheet', report.cssBytes, 170_000],
     ['Onboarding imagery', report.onboardingImageBytes, 150_000],
   ]
   for (const [label, actual, budget] of budgets) {

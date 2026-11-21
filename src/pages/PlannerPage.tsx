@@ -2,8 +2,8 @@ import PageHeading from '../components/PageHeading'
 import QueryError from '../components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Bell, ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '../app/api'
 import { plannerTitle } from '../app/navigation/items'
 import { queryKeys } from '../app/session'
@@ -17,8 +17,28 @@ import { Button } from '../components/ui/button'
 import PlannerItemEditor, { type PlannerDraft } from '../features/planner/PlannerItemEditor'
 
 const weekdays = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج']
+const SheetsView = lazy(() => import('../features/sheets/SheetsView'))
 
+/** Two views: day-to-day tasks, and the fillable Sweet Study planner sheets. */
 export default function PlannerPage({ displayName }: { displayName: string }) {
+  const [params] = useSearchParams()
+  const sheets = params.get('view') === 'sheets' || params.has('sheet')
+  const tabs = (
+    <nav className="section-tabs" aria-label="بخش‌های برنامه">
+      <Link to="?view=tasks" aria-current={sheets ? undefined : 'page'}>کارها و تقویم</Link>
+      <Link to="?view=sheets" aria-current={sheets ? 'page' : undefined}>دفتر پلنر</Link>
+    </nav>
+  )
+  if (!sheets) return <PlannerTasks displayName={displayName} tabs={tabs} />
+  return (
+    <div className="grid gap-6">
+      {!params.has('sheet') && <PageHeading eyebrow="دفتر برنامه‌ریزی Sweet Study" title="دفتر پلنر" description="برگه‌های پلنر را همین‌جا پر کن؛ هر صفحه خودکار ذخیره می‌شود." action={tabs} />}
+      <Suspense fallback={<div className="skeleton h-96 rounded-2xl" aria-label="در حال بارگذاری" />}><SheetsView /></Suspense>
+    </div>
+  )
+}
+
+function PlannerTasks({ displayName, tabs }: { displayName: string; tabs: ReactNode }) {
   const client = useQueryClient()
   const today = tehranClock(Date.now()).date
   const [selected, setSelected] = useState(today)
@@ -70,7 +90,7 @@ export default function PlannerPage({ displayName }: { displayName: string }) {
 
   return (
     <div className="grid gap-6">
-      <PageHeading eyebrow="یک روز، یک قدم" title={plannerTitle(displayName)} description="کارهای مهم را مشخص کن؛ برای استراحت هم جا بگذار." action={<Button onClick={() => setEditing('new')}><Plus />کار جدید</Button>} />
+      <PageHeading eyebrow="یک روز، یک قدم" title={plannerTitle(displayName)} description="کارهای مهم را مشخص کن؛ برای استراحت هم جا بگذار." action={<div className="flex flex-wrap items-center gap-2">{tabs}<Button onClick={() => setEditing('new')}><Plus />کار جدید</Button></div>} />
       {items.isError && <QueryError error={items.error} retry={() => void items.refetch()} />}
       <div className="grid items-start gap-5 xl:grid-cols-[1fr_1.15fr]">
       <section className="glass rise rounded-2xl p-5 sm:p-6">
