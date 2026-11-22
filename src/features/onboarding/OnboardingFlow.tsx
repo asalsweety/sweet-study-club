@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, ArrowRight, Check, LoaderCircle, Sparkles } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../../app/api'
 import { queryKeys } from '../../app/session'
 import StudySticker from '../../components/StudySticker'
@@ -35,6 +35,7 @@ const dailyGoals = [60, 120, 180, 240, 300, 360]
 export default function OnboardingFlow({ settings, editing = false }: { settings: UserSettings; editing?: boolean }) {
   const client = useQueryClient()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const [params] = useSearchParams()
   const replay = editing && params.get('tour') === '1'
   const [currentStep, setStep] = useState(editing ? 1 : 0)
@@ -68,7 +69,7 @@ export default function OnboardingFlow({ settings, editing = false }: { settings
       void client.invalidateQueries({ queryKey: ['progress'] })
       celebrate({ particles: 120, origin: { x: 0.5, y: 0.3 } })
       if (editing) navigate('/me?section=settings', { replace: true })
-      else navigate('/', { replace: true })
+      else if (pathname !== '/feedback') navigate('/', { replace: true })
     },
   })
 

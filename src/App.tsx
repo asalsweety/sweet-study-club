@@ -132,7 +132,7 @@ function AccountContent({ online }: { online: boolean }) {
   if (session.isPending) return <FullScreenLoader label="در حال آماده‌سازی اتاق مطالعه..." />
   if (session.isError && !signedIn) return <ConnectionProblem retry={() => void session.refetch()} pending={session.isFetching} />
   const expired = profile.error instanceof ApiClientError && profile.error.status === 401
-  if (!signedIn || expired) return <AuthScreen />
+  if (!signedIn || expired) return <><AuthScreen /><Suspense fallback={null}><BroadcastPopups userId={null} /></Suspense></>
   if (profile.isError && !profile.data) return <ConnectionProblem profile retry={() => void profile.refetch()} pending={profile.isFetching} />
   if (!profile.data) return <FullScreenLoader label="در حال آماده‌کردن پروفایل..." />
   if (settings.isPending) return <FullScreenLoader label="در حال آماده‌کردن پروفایل..." />

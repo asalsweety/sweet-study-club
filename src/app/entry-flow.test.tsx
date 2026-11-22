@@ -18,7 +18,7 @@ vi.mock('./session', () => ({
 vi.mock('../components/AppShell', () => ({ default: ({ children }: { children: React.ReactNode }) => <div data-testid="workspace">{children}</div> }))
 vi.mock('../features/auth/AuthScreen', () => ({ default: () => <h1>Account entry</h1> }))
 vi.mock('../features/presence/BackgroundServices', () => ({ default: () => null }))
-vi.mock('../features/broadcasts/BroadcastPopups', () => ({ default: ({ userId }: { userId: string }) => <div data-notice-user={userId} /> }))
+vi.mock('../features/broadcasts/BroadcastPopups', () => ({ default: ({ userId }: { userId: string | null }) => <div data-notice-user={userId ?? 'guest'} /> }))
 vi.mock('../pages/HomePage', () => ({ default: () => <h1>Today workspace</h1> }))
 vi.mock('../pages/LearningPage', () => ({ default: () => <h1>Learning destination</h1> }))
 vi.mock('../pages/OfflineLearningPage', () => ({ default: () => <h1>Offline library</h1> }))
@@ -45,11 +45,18 @@ describe('session-first routing', () => {
     state.session = { isPending: false, data: null }
     const html = await render('/learn?tab=notebook')
     expect(html).toContain('Account entry')
-    expect(html).not.toContain('data-notice-user')
+    expect(html).toContain('data-notice-user="guest"')
   })
   it('opens the offline library without waiting for a session', async () => {
     state.session = { isPending: true }
-    expect(await render('/offline')).toContain('Offline library')
+    const html = await render('/offline')
+    expect(html).toContain('Offline library')
+    expect(html).not.toContain('data-notice-user')
+  })
+  it('leaves public legal documents readable without a popup', async () => {
+    state.session = { isPending: false, data: null }
+    expect(await render('/privacy')).not.toContain('data-notice-user')
+    expect(await render('/terms')).not.toContain('data-notice-user')
   })
   it('starts settings and pixel-room data while the signed-in profile is loading', async () => {
     state.profile = { isPending: true, data: undefined }

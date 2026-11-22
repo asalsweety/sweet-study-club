@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest'
-import { acknowledgeNotice, hasSeenNotice, noticeKey } from './acknowledgement'
+import { acknowledgeNotice, acknowledgeRelease, hasReadRelease, hasSeenNotice, noticeKey, pendingGuestRelease } from './acknowledgement'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -21,4 +21,26 @@ it('can close a notice when the browser blocks storage', () => {
   expect(hasSeenNotice('private', 'migration', 1)).toBe(false)
   acknowledgeNotice('private', 'migration', 1)
   expect(hasSeenNotice('private', 'migration', 1)).toBe(true)
+})
+
+it('carries a guest release acknowledgement into the first sign-in and still offers the update to another account', () => {
+  const id = 'release:current'
+  expect(hasReadRelease(null, id)).toBe(false)
+  acknowledgeRelease(null, id)
+  expect(hasReadRelease(null, id)).toBe(true)
+  expect(hasReadRelease('first-member', id)).toBe(true)
+  expect(pendingGuestRelease(id)).toBe(true)
+  acknowledgeRelease('first-member', id)
+  expect(pendingGuestRelease(id)).toBe(false)
+  expect(hasReadRelease('first-member', id)).toBe(true)
+  expect(hasReadRelease('second-member', id)).toBe(false)
+  expect(hasReadRelease('first-member', 'release:next')).toBe(false)
+})
+
+it('preserves a signed-in acknowledgement when returning to login without marking other accounts as read', () => {
+  const id = 'release:member-first'
+  acknowledgeRelease('first-member', id)
+  expect(hasReadRelease(null, id)).toBe(true)
+  expect(hasReadRelease('first-member', id)).toBe(true)
+  expect(hasReadRelease('second-member', id)).toBe(false)
 })

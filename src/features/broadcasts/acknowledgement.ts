@@ -23,3 +23,23 @@ export function acknowledgeNotice(userId: string, id: string, revision: number) 
   seenInTab.set(key, newest)
   try { localStorage.setItem(key, String(newest)) } catch { /* The tab has the revision. */ }
 }
+
+const guestRelease = 'release-notes:guest'
+const guestClaimed = 'release-notes:claimed'
+
+/** Carry a signed-out reader's acknowledgement into their first account on this browser. */
+export function pendingGuestRelease(id: string) {
+  return hasSeenNotice(guestRelease, id, 1) && !hasSeenNotice(guestClaimed, id, 1)
+}
+
+export function hasReadRelease(userId: string | null, id: string) {
+  return userId === null ? hasSeenNotice(guestRelease, id, 1) : hasSeenNotice(userId, id, 1) || pendingGuestRelease(id)
+}
+
+export function acknowledgeRelease(userId: string | null, id: string) {
+  acknowledgeNotice(guestRelease, id, 1)
+  if (userId !== null) {
+    acknowledgeNotice(userId, id, 1)
+    acknowledgeNotice(guestClaimed, id, 1)
+  }
+}
