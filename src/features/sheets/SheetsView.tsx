@@ -3,13 +3,15 @@ import { ArrowRight, Check, CloudOff, LoaderCircle, Plus, Printer, Trash2 } from
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../../app/api'
+import { useSession } from '../../app/session'
 import QueryError from '../../components/QueryError'
 import { Button } from '../../components/ui/button'
 import { errorMessage } from '../../shared/api/http'
-import { sheetKinds, type Sheet, type SheetData, type SheetKind, type SheetValue } from '../../shared/api/sheets'
+import { sheetKinds, sheetSummarySchema, type Sheet, type SheetKind, type SheetSummary, type SheetValue } from '../../shared/api/sheets'
 import { confirmAction } from '../../shared/lib/confirm'
 import { toast } from '../../shared/lib/toast'
 import { SheetProvider } from './kit'
+import { clearSheetDraft, createSheetSaveQueue, keepSheetDraft, readSheetDraft, type SheetDraft, type SheetSaveStatus } from './sheet-save'
 import { SheetHeader, templates } from './templates'
 import './sheets.css'
 
@@ -19,27 +21,31 @@ const dateFormat = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { month: 'long'
 
 export default function SheetsView() {
   const [params, setParams] = useSearchParams()
+  const memberId = useSession().data?.user.id
   const openId = params.get('sheet')
   const open = useCallback((id: string | null) => setParams((current) => {
-    if (id) current.set('sheet', id)
-    else current.delete('sheet')
-    current.set('view', 'sheets')
-    return current
+    const next = new URLSearchParams(current)
+    if (id) next.set('sheet', id)
+    else next.delete('sheet')
+    next.set('view', 'sheets')
+    return next
   }), [setParams])
-  return openId ? <SheetEditor id={openId} onClose={() => open(null)} /> : <SheetLibrary onOpen={open} />
+  return openId && memberId ? <SheetEditor id={openId} memberId={memberId} onClose={() => open(null)} /> : <SheetLibrary onOpen={open} />
 }
 
 function SheetLibrary({ onOpen }: { onOpen: (id: string) => void }) {
   const client = useQueryClient()
   const sheets = useQuery({ queryKey: sheetsKey, queryFn: api.sheets.list })
   const create = useMutation({
-    mutationFn: (kind: SheetKind) => api.sheets.create(kind),
+    mutationFn: api.sheets.create,
+    networkMode: 'always',
     onSuccess: (sheet) => {
       client.setQueryData(sheetKey(sheet.id), sheet)
-      void client.invalidateQueries({ queryKey: sheetsKey })
+      client.setQueryData<SheetSummary[]>(sheetsKey, (current) =>
+        current && [sheetSummarySchema.parse(sheet), ...current.filter((item) => item.id !== sheet.id)])
+      void client.invalidateQueries({ queryKey: sheetsKey, exact: true })
       onOpen(sheet.id)
     },
-    onError: (error) => toast(errorMessage(error), { icon: '⚠️' }),
   })
   return (
     <div className="grid gap-6">
@@ -51,17 +57,18 @@ function SheetLibrary({ onOpen }: { onOpen: (id: string) => void }) {
             const template = templates[kind]
             const Icon = template.icon
             return (
-              <button key={kind} type="button" className="sheet-template" disabled={create.isPending} onClick={() => create.mutate(kind)}>
+              <button key={kind} type="button" className="sheet-template" disabled={create.isPending} onClick={() => create.mutate({ kind, id: crypto.randomUUID() })}>
                 <span className="sheet-template-icon"><Icon size={20} /></span>
                 <span className="min-w-0 flex-1 text-right">
                   <span className="block text-sm font-bold">{defaultTitle(kind)}</span>
                   <span className="block text-xs leading-6 text-muted-foreground">{template.description}</span>
                 </span>
-                {create.isPending && create.variables === kind ? <LoaderCircle size={18} className="animate-spin" /> : <Plus size={18} className="text-[var(--primary-ink)]" />}
+                {create.isPending && create.variables?.kind === kind ? <LoaderCircle size={18} className="animate-spin" /> : <Plus size={18} className="text-[var(--primary-ink)]" />}
               </button>
             )
           })}
         </div>
+        {create.isError && <div className="mt-3"><QueryError error={create.error} retry={() => create.mutate(create.variables)} /></div>}
       </section>
 
       <section className="glass rise rounded-2xl p-5 sm:p-6">
@@ -101,82 +108,89 @@ const defaultTitles: Record<SheetKind, string> = {
 }
 const defaultTitle = (kind: SheetKind) => defaultTitles[kind]
 
-type SaveState = 'saved' | 'saving' | 'dirty' | 'error'
-
-function SheetEditor({ id, onClose }: { id: string; onClose: () => void }) {
+function SheetEditor({ id, memberId, onClose }: { id: string; memberId: string; onClose: () => void }) {
   const sheet = useQuery({ queryKey: sheetKey(id), queryFn: () => api.sheets.get(id), staleTime: Infinity })
   if (sheet.isError) return <div className="grid gap-4"><BackButton onClose={onClose} /><QueryError error={sheet.error} retry={() => void sheet.refetch()} /></div>
   if (!sheet.data) return <div className="skeleton h-[70vh] rounded-3xl" aria-label="در حال بارگذاری" />
-  return <LoadedEditor key={sheet.data.id} sheet={sheet.data} onClose={onClose} />
+  const draftKey = `planner-sheet-draft:${memberId}:${id}`
+  return <LoadedEditor key={draftKey} sheet={sheet.data} draftKey={draftKey} onClose={onClose} />
 }
 
 function BackButton({ onClose }: { onClose: () => void }) {
   return <Button variant="ghost" onClick={onClose} className="sheet-back w-fit" aria-label="همۀ صفحه‌ها"><ArrowRight /><span className="sheet-back-text">همۀ صفحه‌ها</span></Button>
 }
 
-function LoadedEditor({ sheet, onClose }: { sheet: Sheet; onClose: () => void }) {
+function LoadedEditor({ sheet, draftKey, onClose }: { sheet: Sheet; draftKey: string; onClose: () => void }) {
   const client = useQueryClient()
-  const [data, setData] = useState<SheetData>(sheet.data)
-  const [title, setTitle] = useState(sheet.title)
-  const [state, setState] = useState<SaveState>('saved')
-  const pending = useRef<{ data: SheetData; title: string } | null>(null)
+  const [initial] = useState(() => readSheetDraft(draftKey))
+  const [draft, setDraft] = useState<SheetDraft>(initial ?? { data: sheet.data, title: sheet.title })
+  const [status, setStatus] = useState<SheetSaveStatus>({ kind: initial ? 'dirty' : 'saved' })
+  const latest = useRef(draft)
+  const deleted = useRef(false)
+  const kept = useRef(Boolean(initial))
   const timer = useRef<number | undefined>(undefined)
 
-  const flush = useCallback(async () => {
-    window.clearTimeout(timer.current)
-    const next = pending.current
-    if (!next) return
-    pending.current = null
-    setState('saving')
-    try {
-      await api.sheets.update(sheet.id, { data: next.data, title: next.title.trim() || defaultTitle(sheet.kind) })
-      client.setQueryData(sheetKey(sheet.id), { ...sheet, data: next.data, title: next.title, updatedAt: Date.now() })
-      setState(pending.current ? 'dirty' : 'saved')
-    } catch {
-      pending.current ??= next
-      setState('error')
-    }
-  }, [client, sheet])
+  const [saves] = useState(() => createSheetSaveQueue(initial, async (next) => {
+    const title = next.title.trim() || defaultTitle(sheet.kind)
+    const { updatedAt } = await api.sheets.update(sheet.id, { data: next.data, title })
+    if (deleted.current) return
+    client.setQueryData(sheetKey(sheet.id), { ...sheet, data: next.data, title, updatedAt })
+    client.setQueryData<SheetSummary[]>(sheetsKey, (current) => {
+      const updated = current?.find((item) => item.id === sheet.id)
+      return updated && current ? [{ ...updated, title, updatedAt }, ...current.filter((item) => item.id !== sheet.id)] : current
+    })
+  }, setStatus, (saved) => clearSheetDraft(draftKey, saved)))
 
-  const schedule = useCallback((nextData: SheetData, nextTitle: string) => {
-    pending.current = { data: nextData, title: nextTitle }
-    setState('dirty')
+  const schedule = useCallback((next: SheetDraft) => {
+    latest.current = next
+    setDraft(next)
+    kept.current = keepSheetDraft(draftKey, next)
+    saves.replace(next)
     window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(() => void flush(), 700)
-  }, [flush])
+    timer.current = window.setTimeout(() => void saves.flush(), 700)
+  }, [draftKey, saves])
 
-  // Save whatever is left when leaving the page or closing the tab.
   useEffect(() => {
-    const onHide = () => { if (pending.current) void flush() }
-    window.addEventListener('pagehide', onHide)
+    const flush = () => {
+      window.clearTimeout(timer.current)
+      void saves.flush()
+    }
+    const onHide = () => { if (document.visibilityState === 'hidden') flush() }
+    if (initial) flush()
+    window.addEventListener('online', flush)
+    window.addEventListener('pagehide', flush)
     document.addEventListener('visibilitychange', onHide)
     return () => {
-      window.removeEventListener('pagehide', onHide)
+      window.removeEventListener('online', flush)
+      window.removeEventListener('pagehide', flush)
       document.removeEventListener('visibilitychange', onHide)
-      if (pending.current) void flush()
-      void client.invalidateQueries({ queryKey: sheetsKey })
+      flush()
     }
-  }, [client, flush])
+  }, [initial, saves])
 
   const store = useMemo(() => ({
-    data,
+    data: draft.data,
     set: (key: string, value: SheetValue | undefined) => {
-      setData((current) => {
-        const next = { ...current }
-        if (value === undefined || value === '') delete next[key]
-        else next[key] = value
-        schedule(next, title)
-        return next
-      })
+      const data = { ...latest.current.data }
+      if (value === undefined || value === '') delete data[key]
+      else data[key] = value
+      schedule({ data, title: latest.current.title })
     },
-  }), [data, schedule, title])
+  }), [draft.data, schedule])
+
+  const close = async () => {
+    window.clearTimeout(timer.current)
+    if (await saves.flush() || kept.current) onClose()
+  }
 
   const remove = useMutation({
     mutationFn: () => api.sheets.remove(sheet.id),
     onSuccess: () => {
-      pending.current = null
+      deleted.current = true
+      saves.discard()
+      clearSheetDraft(draftKey)
       client.removeQueries({ queryKey: sheetKey(sheet.id) })
-      void client.invalidateQueries({ queryKey: sheetsKey })
+      void client.invalidateQueries({ queryKey: sheetsKey, exact: true })
       toast('صفحه حذف شد.')
       onClose()
     },
@@ -191,16 +205,17 @@ function LoadedEditor({ sheet, onClose }: { sheet: Sheet; onClose: () => void })
   return (
     <div className="sheet-editor grid min-w-0 gap-4">
       <div className="sheet-toolbar">
-        <BackButton onClose={onClose} />
-        <input className="sheet-title-input" value={title} maxLength={80} aria-label="نام صفحه" onChange={(event) => { setTitle(event.target.value); schedule(data, event.target.value) }} />
-        <span className="sheet-save" role="status" data-state={state}>
-          {state === 'saved' && <><Check size={14} />ذخیره شد</>}
-          {(state === 'saving' || state === 'dirty') && <><LoaderCircle size={14} className="animate-spin" />در حال ذخیره…</>}
-          {state === 'error' && <button type="button" onClick={() => void flush()}><CloudOff size={14} />ذخیره نشد؛ دوباره</button>}
+        <BackButton onClose={() => void close()} />
+        <input className="sheet-title-input" value={draft.title} maxLength={80} aria-label="نام صفحه" onChange={(event) => schedule({ data: latest.current.data, title: event.target.value })} />
+        <span className="sheet-save" role="status" data-state={status.kind}>
+          {status.kind === 'saved' && <><Check size={14} />ذخیره شد</>}
+          {(status.kind === 'saving' || status.kind === 'dirty') && <><LoaderCircle size={14} className="animate-spin" />در حال ذخیره…</>}
+          {status.kind === 'error' && <button type="button" onClick={() => void saves.flush()} aria-label="تلاش دوباره برای ذخیره"><CloudOff size={14} />تلاش دوباره</button>}
         </span>
         <Button variant="outline" size="icon" aria-label="چاپ این صفحه" title="چاپ" onClick={() => window.print()}><Printer /></Button>
         <Button variant="outline" size="icon" aria-label="حذف این صفحه" title="حذف" onClick={() => void askRemove()} disabled={remove.isPending}><Trash2 /></Button>
       </div>
+      {status.kind === 'error' && <p role="alert" className="text-sm text-destructive">{errorMessage(status.error)}</p>}
       <SectionJump target={paper} version={sheet.kind} />
       <SheetProvider value={store}>
         <div className="sheet-frame">

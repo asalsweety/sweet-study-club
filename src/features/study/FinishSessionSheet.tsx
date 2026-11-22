@@ -8,6 +8,7 @@ import AsalMood from '../../components/AsalMood'
 import { moodLabels } from '../../shared/lib/moods'
 import { Button } from '../../components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../components/ui/dialog'
+import { Input } from '../../components/ui/input'
 import { Textarea } from '../../components/ui/textarea'
 import { showSessionCelebration } from './sessionCelebrationStore'
 import './session-panels.css'
@@ -54,13 +55,18 @@ export default function FinishSessionSheet({ open, onOpenChange, timer, onFinish
   const [blank, setBlank] = useState(0)
   const [rating, setRating] = useState<number | null>(null)
   const [note, setNote] = useState('')
+  const [title, setTitle] = useState<string | null>(null)
   const total = correct + wrong + blank
   const percent = konkurPercent(correct, wrong, total)
   const elapsed = elapsedSecondsOf(timer.timer)
 
   const finish = () => {
     timer.stop.mutate(
-      { testCount: total, testsCorrect: correct, testsWrong: wrong, focusRating: rating, note: note.trim() || null },
+      {
+        testCount: total, testsCorrect: correct, testsWrong: wrong,
+        focusRating: rating, note: note.trim() || null,
+        ...(title !== null && { title: title.trim() || null }),
+      },
       {
         onSuccess: (log) => {
           showSessionCelebration({ subjectName: log.subjectName, durationSeconds: log.durationSeconds, percent, tests: total, rating })
@@ -72,6 +78,7 @@ export default function FinishSessionSheet({ open, onOpenChange, timer, onFinish
           setBlank(0)
           setRating(null)
           setNote('')
+          setTitle(null)
         },
       },
     )
@@ -109,6 +116,10 @@ export default function FinishSessionSheet({ open, onOpenChange, timer, onFinish
           </div>
         </section>
 
+        <label className="finish-note">
+          عنوان جلسه (اختیاری)
+          <Input value={title ?? timer.timer?.title ?? ''} maxLength={120} onChange={(event) => setTitle(event.target.value)} placeholder="مثلاً مرور فصل اول" />
+        </label>
         <label className="finish-note">
           یادداشت کوتاه جلسه (اختیاری)
           <Textarea aria-label="یادداشت جلسه" value={note} maxLength={500} onChange={(event) => setNote(event.target.value)} placeholder="مثلاً مرور ژنتیک جمعیت کامل شد…" rows={1} />

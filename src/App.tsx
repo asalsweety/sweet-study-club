@@ -1,7 +1,8 @@
 import { lazy, Suspense, useEffect, useSyncExternalStore } from 'react'
 import { RefreshCw } from 'lucide-react'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { appRoutes } from './app/navigation/routes'
+import { useOnlineStatus } from './app/pwa/online-status'
 import { usePrefetchStudyData, useProfile, useSession, useSettings } from './app/session'
 import { ApiClientError } from './shared/api/api-client-error'
 import { Button } from './components/ui/button'
@@ -26,6 +27,7 @@ const FocusPage = lazy(loadFocus)
 const PlannerPage = lazy(() => import('./pages/PlannerPage'))
 const ProgressPage = lazy(() => import('./pages/ProgressPage'))
 const LearningPage = lazy(() => import('./pages/LearningPage'))
+const OfflineLearningPage = lazy(() => import('./pages/OfflineLearningPage'))
 const FriendsPage = lazy(() => import('./pages/FriendsPage'))
 const RankingPage = lazy(() => import('./pages/RankingPage'))
 const ShopPage = lazy(() => import('./pages/ShopPage'))
@@ -68,7 +70,10 @@ function ConnectionProblem({ profile = false, retry, pending }: { profile?: bool
       <RefreshCw className="mx-auto mb-5 text-primary" size={28} />
       <h1 className="text-xl font-bold">{profile ? 'اطلاعات حسابت بارگذاری نشد' : 'اتصال برقرار نشد'}</h1>
       <p className="my-4 text-sm leading-7 text-muted-foreground">اتصال اینترنت را بررسی کن و دوباره تلاش کن. نیازی به ساخت حساب جدید نیست.</p>
-      <Button disabled={pending} onClick={retry}>{pending ? 'در حال بررسی…' : 'تلاش دوباره'}</Button>
+      <div className="flex flex-wrap justify-center gap-2">
+        <Button disabled={pending} onClick={retry}>{pending ? 'در حال بررسی…' : 'تلاش دوباره'}</Button>
+        <Button asChild variant="outline"><Link to={appRoutes.offline}>کتابخانۀ آفلاین</Link></Button>
+      </div>
     </section>
   </main>
 }
@@ -87,6 +92,14 @@ function SessionDialogs() {
 }
 
 function AppContent() {
+  const { pathname } = useLocation()
+  const online = useOnlineStatus()
+  return pathname === appRoutes.offline
+    ? <Suspense fallback={<FullScreenLoader label="در حال بازکردن کتابخانۀ آفلاین..." />}><OfflineLearningPage online={online} /></Suspense>
+    : <AccountContent online={online} />
+}
+
+function AccountContent({ online }: { online: boolean }) {
   const session = useSession()
   const signedIn = Boolean(session.data)
   const profile = useProfile(signedIn)
@@ -112,6 +125,9 @@ function AppContent() {
   }, [signedIn, pathname])
   // Privacy and terms are public: readable before signing in.
   if (pathname === '/privacy' || pathname === '/terms') return <Suspense fallback={<FullScreenLoader label="در حال بارگذاری..." />}><LegalPage kind={pathname === '/privacy' ? 'privacy' : 'terms'} /></Suspense>
+  if (!online && (!signedIn || !profile.data || settings.isPending || pathname === appRoutes.learning)) {
+    return <Navigate to={appRoutes.offline} replace />
+  }
   if (session.isPending) return <FullScreenLoader label="در حال آماده‌سازی اتاق مطالعه..." />
   if (session.isError && !signedIn) return <ConnectionProblem retry={() => void session.refetch()} pending={session.isFetching} />
   const expired = profile.error instanceof ApiClientError && profile.error.status === 401

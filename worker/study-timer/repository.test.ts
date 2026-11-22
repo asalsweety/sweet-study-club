@@ -5,6 +5,7 @@ const baseRow = {
   logId: 'log-123',
   mode: 'free',
   subjectName: 'Physics',
+  title: null,
   sessionId: null,
   timerStatus: 'running',
   startedAt: 1_787_743_800_000,
@@ -20,6 +21,7 @@ const baseRow = {
   phase: null,
   round: null,
   phaseStartedAt: null,
+  interruptedFocusSeconds: null,
   version: 3,
 }
 
@@ -37,6 +39,7 @@ describe('study timer repository', () => {
       logId: 'log-123',
       mode: 'free',
       subjectName: 'Physics',
+      title: null,
       sessionId: null,
       timerStatus: 'running',
       startedAt: '2026-08-26T11:30:00.000Z',
@@ -73,6 +76,7 @@ describe('study timer repository', () => {
       phase: 'break',
       round: 2,
       phaseStartedAt: '2026-08-26T11:55:00.000Z',
+      interruptedFocusSeconds: null,
     })
   })
 

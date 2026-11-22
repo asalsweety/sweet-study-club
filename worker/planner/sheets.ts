@@ -1,6 +1,6 @@
 import { Hono, type MiddlewareHandler } from 'hono'
-import { createSheetInputSchema, sheetDataSchema, sheetKindSchema, updateSheetInputSchema, type SheetKind } from '../../src/shared/api/sheets'
-import { conflict, notFound } from '../http/errors'
+import { createSheetInputSchema, maxSheetDataLength, sheetDataSchema, sheetKindSchema, updateSheetInputSchema, type SheetKind } from '../../src/shared/api/sheets'
+import { ApiError, conflict, notFound } from '../http/errors'
 import { readBody, userId } from '../http/validation'
 import type { WorkerEnvironment } from '../types'
 
@@ -17,6 +17,7 @@ export const defaultSheetTitles: Record<SheetKind, string> = {
 }
 
 type SheetRow = { id: string; kind: string; title: string; data?: string; createdAt: number; updatedAt: number }
+const sheetColumns = 'id, kind, title, data, created_at AS createdAt, updated_at AS updatedAt'
 
 function summary(row: SheetRow) {
   return { id: row.id, kind: sheetKindSchema.parse(row.kind), title: row.title, createdAt: row.createdAt, updatedAt: row.updatedAt }
@@ -48,18 +49,31 @@ export function sheetRoutes(requireSession: MiddlewareHandler<WorkerEnvironment>
 
   app.post('/planner-sheets', async (c) => {
     const input = await readBody(c, createSheetInputSchema)
-    const count = await c.env.DB.prepare('SELECT COUNT(*) AS total FROM planner_sheets WHERE user_id = ?').bind(userId(c)).first<{ total: number }>()
-    if ((count?.total ?? 0) >= maxSheetsPerMember) throw conflict('SHEET_LIMIT', 'You already have the maximum number of planner pages.')
+    const member = userId(c)
+    const id = input.id ?? crypto.randomUUID()
     const now = Date.now()
-    const row: SheetRow = { id: crypto.randomUUID(), kind: input.kind, title: input.title ?? defaultSheetTitles[input.kind], data: '{}', createdAt: now, updatedAt: now }
-    await c.env.DB.prepare('INSERT INTO planner_sheets (id, user_id, kind, title, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
-      .bind(row.id, userId(c), row.kind, row.title, row.data, now, now).run()
-    return c.json({ sheet: withData(row) }, 201)
+    const row = await c.env.DB.prepare(
+      `INSERT INTO planner_sheets (id, user_id, kind, title, created_at, updated_at)
+       SELECT ?, ?, ?, ?, ?, ?
+       WHERE (SELECT COUNT(*) FROM planner_sheets WHERE user_id = ?) < ?
+       ON CONFLICT (id) DO NOTHING RETURNING ${sheetColumns}`,
+    ).bind(id, member, input.kind, input.title ?? defaultSheetTitles[input.kind], now, now, member, maxSheetsPerMember).first<SheetRow>()
+    if (row) return c.json({ sheet: withData(row) }, 201)
+
+    const existing = await c.env.DB.prepare(`SELECT ${sheetColumns} FROM planner_sheets WHERE id = ? AND user_id = ?`)
+      .bind(id, member).first<SheetRow>()
+    if (existing?.kind === input.kind) return c.json({ sheet: withData(existing) })
+    const count = await c.env.DB.prepare('SELECT COUNT(*) AS total FROM planner_sheets WHERE user_id = ?')
+      .bind(member).first<{ total: number }>()
+    if (!existing && (count?.total ?? 0) >= maxSheetsPerMember) {
+      throw conflict('SHEET_LIMIT', 'تعداد برگه‌ها به سقف رسیده است. برای ساخت برگهٔ تازه، یکی از برگه‌ها را حذف کن.')
+    }
+    throw conflict('SHEET_CREATE_CONFLICT', 'این شناسه قبلاً استفاده شده است. دوباره نوع برگه را انتخاب کن.')
   })
 
   app.get('/planner-sheets/:id', async (c) => {
     const row = await c.env.DB.prepare(
-      'SELECT id, kind, title, data, created_at AS createdAt, updated_at AS updatedAt FROM planner_sheets WHERE id = ? AND user_id = ?',
+      `SELECT ${sheetColumns} FROM planner_sheets WHERE id = ? AND user_id = ?`,
     ).bind(c.req.param('id'), userId(c)).first<SheetRow>()
     if (!row) throw notFound('This planner page does not exist.')
     c.header('Cache-Control', 'private, no-store')
@@ -68,11 +82,16 @@ export function sheetRoutes(requireSession: MiddlewareHandler<WorkerEnvironment>
 
   app.put('/planner-sheets/:id', async (c) => {
     const input = await readBody(c, updateSheetInputSchema)
+    const data = input.data === undefined ? null : JSON.stringify(input.data)
+    // Match SQLite's TEXT length, which counts Unicode code points.
+    if (data !== null && data.length > maxSheetDataLength && [...data].length > maxSheetDataLength) {
+      throw new ApiError(413, 'SHEET_TOO_LARGE', 'ظرفیت برگه پر شده است. بخشی از نوشته‌ها را به برگهٔ دیگری منتقل کن.')
+    }
     const now = Date.now()
     const result = await c.env.DB.prepare(
       `UPDATE planner_sheets SET title = COALESCE(?, title), data = COALESCE(?, data), updated_at = ?
        WHERE id = ? AND user_id = ?`,
-    ).bind(input.title ?? null, input.data === undefined ? null : JSON.stringify(input.data), now, c.req.param('id'), userId(c)).run()
+    ).bind(input.title ?? null, data, now, c.req.param('id'), userId(c)).run()
     if (!result.meta.changes) throw notFound('This planner page does not exist.')
     return c.json({ updatedAt: now })
   })

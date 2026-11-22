@@ -133,7 +133,11 @@ mkdirSync(directory, { recursive: true })
 const file = resolve(directory, 'seed-demo.sql')
 writeFileSync(file, statements.join('\n'))
 
-const result = spawnSync(process.execPath, [resolve('scripts/run-wrangler.mjs'), 'd1', 'execute', 'DB', '--local', `--file=${file}`], { stdio: 'inherit' })
+const localState = process.env.SWEETSTUDY_LOCAL_STATE
+const result = spawnSync(process.execPath, [
+  resolve('scripts/run-wrangler.mjs'), 'd1', 'execute', 'DB', '--local', `--file=${file}`,
+  ...(localState ? ['--persist-to', localState] : []),
+], { stdio: 'inherit' })
 if (result.status !== 0) process.exit(result.status ?? 1)
 console.log(`\nDemo data ready (${statements.length} statements). Sign in locally as ${email}.`)
 console.log('The password is DEMO_PASSWORD, or the default documented in README.md.')

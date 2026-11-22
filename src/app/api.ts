@@ -9,7 +9,7 @@ import {
   type UpdatePlannerItemInput,
 } from '../shared/api/planner'
 import { profileResponseSchema } from '../shared/api/profile'
-import { sheetResponseSchema, sheetsResponseSchema, type SheetKind, type UpdateSheetInput } from '../shared/api/sheets'
+import { sheetResponseSchema, sheetsResponseSchema, type CreateSheetInput, type UpdateSheetInput } from '../shared/api/sheets'
 import {
   gamificationResponseSchema,
   heatmapResponseSchema,
@@ -49,6 +49,7 @@ import {
   stopTimerResponseSchema,
   studyLogListResponseSchema,
   studyTimerStateResponseSchema,
+  type ManualStudyLogInput,
   type StartTimerInput,
   type StopTimerInput,
   type TimerCommandInput,
@@ -93,7 +94,7 @@ export const api = {
   sheets: {
     list: () => get('/api/planner-sheets', sheetsResponseSchema).then((r) => r.sheets),
     get: (id: string) => get(`/api/planner-sheets/${encodeURIComponent(id)}`, sheetResponseSchema).then((r) => r.sheet),
-    create: (kind: SheetKind) => post('/api/planner-sheets', sheetResponseSchema, { kind }).then((r) => r.sheet),
+    create: (input: CreateSheetInput) => post('/api/planner-sheets', sheetResponseSchema, input).then((r) => r.sheet),
     update: (id: string, input: UpdateSheetInput) => put(`/api/planner-sheets/${encodeURIComponent(id)}`, z.object({ updatedAt: z.number() }), input),
     remove: (id: string) => del(`/api/planner-sheets/${encodeURIComponent(id)}`, null),
   },
@@ -112,6 +113,8 @@ export const api = {
     update: (input: UpdateTimerInput) => patch('/api/study/timer', timer, input).then((r) => r.timer),
     stop: (input: StopTimerInput) => post('/api/study/timer/stop', stopTimerResponseSchema, input).then((r) => r.log),
     logs: (from: string, to: string) => get(`/api/study/logs${query({ from, to })}`, studyLogListResponseSchema).then((r) => r.logs),
+    recordLog: (input: ManualStudyLogInput) => post('/api/study/logs', stopTimerResponseSchema, input).then((r) => r.log),
+    removeLog: (id: string) => del(`/api/study/logs/${encodeURIComponent(id)}`, null),
   },
   schedule: {
     day: (date?: string) => get(`/api/schedule/day${date ? query({ date }) : ''}`, dayScheduleResponseSchema).then((r) => r.schedule),

@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef } from 'react'
-import { chibiItems, defaultChibi, type ChibiAppearance } from '../../shared/api/chibi'
+import { chibiItems, chibiShirtPalette, defaultChibi, type ChibiAppearance } from '../../shared/api/chibi'
 import { createDeskSpriteCache } from './chibiSprite'
 import { chibiSkin, drawCustomChibi, drawDeskDecor } from './customChibi'
 import { sceneThemes, type ChibiScene as SceneId } from './scenes'
@@ -375,7 +375,7 @@ function PixelStudyScene({ scene, isNight, state, appearance = defaultChibi, stu
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const repaintRef = useRef<((retryFailed?: boolean) => void) | null>(null)
   const art = studyRoomArt(scene, state, appearance)
-  const current = { scene, isNight, state, appearance, roomUrl: studyBackdrop ?? art.room, spriteUrl: art.sprite }
+  const current = { scene, isNight, state, appearance, roomUrl: studyBackdrop ?? art.room, spriteUrl: art.sprite, containsAsal: art.containsAsal }
   const props = useRef(current)
   props.current = current
 
@@ -409,24 +409,25 @@ function PixelStudyScene({ scene, isNight, state, appearance = defaultChibi, stu
     }
 
     const render = (t: number) => {
-      const { scene: id, isNight: night, state: mood, appearance: look, roomUrl, spriteUrl } = props.current
+      const { scene: id, isNight: night, state: mood, appearance: look, roomUrl, spriteUrl, containsAsal } = props.current
       const isAsal = look.companion === 'asal'
       const boy = look.companion === 'boy'
+      const custom = isAsal ? null : look.customization
       const palette = boy ? boyPalette : girlPalette
-      const base = isAsal || look.skin === 'warm' ? palette : { ...palette, ...chibiSkin[look.skin] }
-      const sleeve = look.outfit ? chibiItems[look.outfit].color : null
+      const base = isAsal || (look.skin === 'warm' && !custom) ? palette : { ...palette, ...chibiSkin[look.skin] }
+      const sleeve = look.outfit ? chibiItems[look.outfit].color : custom ? chibiShirtPalette[custom.shirt] : null
       const colors = sleeve ? { ...base, sleeve, sleeveShade: mix(sleeve, -0.22), sleeveLight: mix(sleeve, 0.18) } : base
       const bob = mood === 'studying' ? Math.floor(t / 0.75) % 2 : mood === 'paused' && Math.sin(t * 1.3) > 0.5 ? 1 : 0
       const frame = mood === 'break' ? 2 : mood === 'paused' || t % 3.6 < 0.16 ? 1 : 0
       const roomImage = loadImage(roomUrl)
       const room = roomImage.complete && roomImage.naturalWidth > 0 ? roomImage : null
       const failedRoom = roomImage.complete && !room
-      const spriteImage = spriteUrl ? loadImage(spriteUrl) : failedRoom ? loadImage(deskSprites.girl) : null
+      const spriteImage = spriteUrl ? loadImage(spriteUrl) : failedRoom && containsAsal ? loadImage(deskSprites.girl) : null
       // Switch the whole preview at once. A late image from a previous choice
       // only triggers a repaint with the currently selected URLs.
       if (hasPainted && (!roomImage.complete || (spriteImage && !spriteImage.complete))) return
       hasPainted = true
-      const roomHasCharacter = room && !spriteUrl
+      const roomHasCharacter = room && containsAsal
       const sprite = spriteImage?.complete && spriteImage.naturalWidth > 0 ? spriteImage : null
       // Sit the shorter cardigan at the desktop with both shoulders visible.
       const spriteY = SPRITE_Y - (boy && sprite ? 6 : 0)

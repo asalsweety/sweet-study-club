@@ -9,7 +9,7 @@ it('earns from completed study, prevents overspending and equips only owned item
   const sqlite = new DatabaseSync(':memory:')
   const root = new URL('../../migrations/', import.meta.url)
   try {
-    for (const name of ['0001_foundation', '0002_auth_foundation', '0003_study_timer_foundation', '0014_chibi_studio']) {
+    for (const name of ['0001_foundation', '0002_auth_foundation', '0003_study_timer_foundation', '0014_chibi_studio', '0021_custom_chibi']) {
       sqlite.exec(readFileSync(new URL(`${name}.sql`, root), 'utf8'))
     }
     sqlite.exec(`
@@ -38,7 +38,12 @@ it('earns from completed study, prevents overspending and equips only owned item
     expect(await buyChibiItem(db, 'a', 'desk-plant')).toMatchObject({ coins: 0, owned: ['desk-plant'] })
     expect((await updateChibi(db, 'a', { action: 'equip', item: 'desk-plant', use: true })).appearance.decor).toBe('desk-plant')
     expect((await updateChibi(db, 'a', { action: 'look', look: { companion: 'boy', skin: 'deep', hair: 'black' } })).appearance)
-      .toEqual({ companion: 'boy', skin: 'deep', hair: 'black', decor: 'desk-plant', outfit: null })
+      .toEqual({ companion: 'boy', skin: 'deep', hair: 'black', decor: 'desk-plant', outfit: null, customization: null })
+    const customization = { hairStyle: 'buns', eyes: 'green', shirt: 'mint', accessory: 'glasses' } as const
+    const look = { companion: 'girl', skin: 'light', hair: 'auburn', customization } as const
+    expect((await updateChibi(db, 'a', { action: 'look', look })).appearance).toMatchObject({ customization, decor: 'desk-plant' })
+    expect((await updateChibi(db, 'a', { action: 'look', look: { companion: 'girl', skin: 'warm', hair: 'brown' } })).appearance.customization).toEqual(customization)
+    expect((await updateChibi(db, 'a', { action: 'look', look: { ...look, customization: null } })).appearance.customization).toBeNull()
     expect(await getChibi(db, 'b')).toEqual({ appearance: defaultChibi, coins: 0, owned: [] })
   } finally {
     sqlite.close()

@@ -14,6 +14,7 @@ import GoalRing from '../components/GoalRing'
 import PageHeading from '../components/PageHeading'
 import QueryError from '../components/QueryError'
 import ActiveTimerCard from '../features/study/ActiveTimerCard'
+import DailyStudyLog from '../features/study/DailyStudyLog'
 import FinishSessionSheet from '../features/study/FinishSessionSheet'
 import StartStudySheet from '../features/study/StartStudySheet'
 import TodayParts from '../features/study/TodayParts'
@@ -117,7 +118,10 @@ export default function HomePage({ profile }: { profile: UserProfile }) {
       <div className="today-top">
         {timer.isLoading ? <div className="skeleton min-h-52 rounded-2xl" aria-label="در حال بررسی جلسۀ فعال" /> : active ? <ActiveTimerCard timer={timer} onStop={() => setFinishing(true)} /> : <>
           <div className="today-launch">
-            <div className="today-mobile-preview"><TodayStudyRoom className="today-mobile-room" /></div>
+            <button type="button" className="today-mobile-preview" aria-label="شروع مطالعه در اتاق پیکسلی"
+              onClick={() => { setStartIntent('pixel'); setStarting(true) }}>
+              <TodayStudyRoom className="today-mobile-room" />
+            </button>
             <StartStudySheet key={`${selectedPartId ?? ''}-${startIntent ?? ''}`} open={starting} onOpenChange={toggleStart} openPart={sheetPart} timer={timer} intent={startIntent} onStarted={() => toggleStart(false)} />
           </div>
           <section className="surface today-goal">
@@ -145,6 +149,7 @@ export default function HomePage({ profile }: { profile: UserProfile }) {
       {progress.isError ? <QueryError error={progress.error} retry={() => void progress.refetch()} /> : <WeekChart today={today} week={progress.data} />}
       {schedule.isError ? <QueryError error={schedule.error} retry={() => void schedule.refetch()} /> : <TodayParts schedule={schedule.data} now={now} activeSessionId={active?.sessionId ?? null} onStart={active || timer.isLoading || timer.error ? undefined : startPart} />}
     </div>
+    <DailyStudyLog today={today} className="surface p-4 sm:p-5" />
     <section aria-label="پیشرفت مطالعۀ امروز" className={'grid gap-3 sm:grid-cols-3 ' + (active ? '' : 'md:hidden')}>
       {levelMetric}
       <Metric icon={Flame} title="بیشترین روزهای پیوسته" value={streak ? fa(streak.best) + ' روز' : '—'} hint={streak && 'رشتۀ فعلی: ' + fa(streak.current) + ' روز'} />

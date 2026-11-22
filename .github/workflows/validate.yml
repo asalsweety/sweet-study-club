@@ -7,6 +7,11 @@ on:
       - main
       - hesam-dev
   workflow_dispatch:
+    inputs:
+      deploy_to_vps:
+        type: boolean
+        description: Deploy the verified main revision
+        default: false
 
 permissions:
   contents: read
@@ -43,10 +48,15 @@ jobs:
         run: npm run cf:dry-run
 
       - name: Reject high-severity dependency advisories
-        run: npm audit --audit-level=high
+        run: |
+          npm audit --audit-level=high
+          npm --prefix deployment/vps-backup audit --omit=dev --audit-level=high
 
   production:
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      vars.SWEETSTUDY_VPS_DEPLOY_ENABLED == 'true' &&
+      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy_to_vps))
     needs: application
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -70,15 +80,23 @@ jobs:
       - name: Deploy the verified main revision
         env:
           VPS_RELEASE_KEY: ${{ secrets.SWEETSTUDY_VPS_RELEASE_KEY }}
+          VPS_HOST: ${{ vars.SWEETSTUDY_VPS_HOST }}
+          VPS_KNOWN_HOSTS: ${{ vars.SWEETSTUDY_VPS_KNOWN_HOSTS }}
+          HEALTH_ORIGIN: ${{ vars.SWEETSTUDY_VPS_HEALTH_ORIGIN || 'https://sweetstudy.site' }}
         run: |
-          test -n "$VPS_RELEASE_KEY"
+          test -n "$VPS_RELEASE_KEY" && test -n "$VPS_HOST" && test -n "$VPS_KNOWN_HOSTS"
+          health_host=${HEALTH_ORIGIN#https://}
+          health_host=${health_host%/}
+          [[ "$HEALTH_ORIGIN" == https://* && "$health_host" =~ ^[A-Za-z0-9.-]+$ ]]
+          target="$health_host:443:$VPS_HOST:443"
           umask 077
           key=$(mktemp)
           hosts=$(mktemp)
           trap 'rm -f -- "$key" "$hosts"' EXIT
           printf '%s\n' "$VPS_RELEASE_KEY" > "$key"
-          printf '%s\n' '91.220.113.109 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB+NyHDIcEGgRbLHNdMgw56y3ef1ZgxJAYeM/gjrrDGa' > "$hosts"
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > "$hosts"
           ssh -T -i "$key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$hosts" \
-            root@91.220.113.109 "$GITHUB_SHA" < "$RUNNER_TEMP/sweetstudy-release.tar.gz"
-          published=$(curl --fail --silent --show-error https://sweetstudy.site/revision.txt)
+            "root@$VPS_HOST" "$GITHUB_SHA" < "$RUNNER_TEMP/sweetstudy-release.tar.gz"
+          published=$(curl --fail --silent --show-error --max-time 15 --connect-to "$target" "${HEALTH_ORIGIN%/}/revision.txt")
           test "$published" = "$GITHUB_SHA"
+          curl --fail --silent --show-error --max-time 15 --connect-to "$target" "${HEALTH_ORIGIN%/}/api/ready"

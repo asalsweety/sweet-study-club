@@ -13,6 +13,7 @@ const hairColors = {
   black: ['#302c36', '#595063'],
   auburn: ['#713929', '#ae5d43'],
 } as const
+const eyes = { brown: '#65412f', green: '#56734d', blue: '#486c98' } as const
 
 export function drawCustomChibi(look: ChibiLook, sleeve: string, frame: number, bob: number, r: Rect) {
   const { skin, skinShade } = chibiSkin[look.skin]
@@ -20,8 +21,25 @@ export function drawCustomChibi(look: ChibiLook, sleeve: string, frame: number, 
   const outline = '#392830'
   const y = 52 + bob
   const paint: Rect = (x, top, w, h, color) => r(x, y + top, w, h, color)
-  const longHair = look.companion === 'girl'
+  const custom = look.customization
+  const style = custom?.hairStyle ?? (look.companion === 'girl' ? 'bob' : 'short')
+  const longHair = style === 'bob'
 
+  if (style === 'buns') {
+    paint(101, -3, 15, 16, outline)
+    paint(141, -3, 15, 16, outline)
+    paint(103, -1, 11, 11, hair)
+    paint(143, -1, 11, 11, hair)
+    paint(105, 0, 6, 2, highlight)
+    paint(145, 0, 6, 2, highlight)
+  }
+  if (style === 'ponytail') {
+    paint(145, 16, 15, 17, outline)
+    paint(151, 28, 16, 30, outline)
+    paint(154, 27, 10, 28, hair)
+    paint(157, 31, 3, 16, highlight)
+    paint(147, 18, 5, 5, '#d999ac')
+  }
   if (longHair) {
     paint(98, 15, 58, 45, outline)
     paint(101, 18, 52, 42, hair)
@@ -54,13 +72,37 @@ export function drawCustomChibi(look: ChibiLook, sleeve: string, frame: number, 
   for (const x of [117, 135]) {
     paint(x, 25, 6, 2, hair)
     paint(x, 31, 6, frame === 0 ? 6 : 1, outline)
-    if (frame === 0) paint(x + 3, 31, 2, 2, '#fff4e3')
+    if (frame === 0) {
+      if (custom) paint(x + 2, 32, 2, 4, eyes[custom.eyes])
+      paint(x + 3, 31, 2, 2, '#fff4e3')
+    }
   }
   paint(112, 40, 6, 2, skinShade)
   paint(138, 40, 6, 2, skinShade)
   paint(125, 43, 6, 1, '#763d40')
   if (frame !== 1) paint(126, 44, 4, 2, '#a65f61')
   paint(123, 56, 10, 2, '#e9d7c9')
+  if (custom?.accessory === 'glasses') {
+    for (const x of [113, 131]) {
+      paint(x, 29, 14, 2, outline)
+      paint(x, 39, 14, 2, outline)
+      paint(x, 31, 2, 8, outline)
+      paint(x + 12, 31, 2, 8, outline)
+    }
+    paint(126, 33, 6, 2, outline)
+  } else if (custom?.accessory === 'star-clip') {
+    paint(109, 10, 4, 8, '#dd9c53')
+    paint(107, 12, 8, 4, '#f8cd72')
+    paint(110, 12, 2, 2, '#fff0ac')
+  } else if (custom?.accessory === 'headphones') {
+    paint(112, 0, 31, 3, '#a88eb8')
+    paint(105, 4, 7, 3, '#a88eb8')
+    paint(143, 4, 7, 3, '#a88eb8')
+    for (const x of [101, 147]) {
+      paint(x, 22, 8, 17, outline)
+      paint(x + 2, 24, 4, 13, '#a88eb8')
+    }
+  }
 }
 
 export function drawDeskDecor(decor: DecorId | null, r: Rect) {

@@ -10,9 +10,10 @@ export default defineConfig(async ({ command, mode }) => {
   const includeTitleFont = (command === 'serve' || process.env.VITE_TITLE_FONT_LICENSED === 'true')
     && existsSync(resolve('public', titleFont.slice(1)))
   // Tests and ordinary UI edits do not need to load Workbox's build toolchain.
+  const localState = process.env.SWEETSTUDY_LOCAL_STATE
   const runtimePlugins = mode === 'test'
     ? []
-    : (await import('@cloudflare/vite-plugin')).cloudflare()
+    : (await import('@cloudflare/vite-plugin')).cloudflare(localState ? { persistState: { path: localState } } : {})
   const buildPlugins = command === 'build' && mode !== 'test'
     ? (await import('./scripts/pwa.ts')).pwaPlugins()
     : []

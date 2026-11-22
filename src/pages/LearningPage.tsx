@@ -20,12 +20,13 @@ import { learningApi } from '../features/learning/api'
 
 const PrepPanel = lazy(() => import('../features/learning/PrepPanel'))
 const AssistantPanel = lazy(() => import('../features/learning/AssistantPanel'))
+const OfflineLearningDownloads = lazy(() => import('../features/learning/OfflineLearningDownloads'))
 const tabs = [
   { id: 'bank', name: 'بانک سؤال', icon: BookOpen }, { id: 'maps', name: 'نقشۀ یادگیری', icon: GitBranch },
   { id: 'review', name: 'مرور و عملکرد', icon: RotateCcw }, { id: 'notebook', name: 'دفترچۀ من', icon: Bookmark },
   { id: 'assistant', name: 'دستیار مطالعه', icon: Sparkles },
 ] as const
-const tools = [['weekly', 'آزمون‌های هفتگی'], ['micro', 'میکرودرسنامه'], ['prep', 'پک آمادگی'], ['scores', 'روند تراز']] as const
+const tools = [['weekly', 'آزمون‌های هفتگی'], ['micro', 'میکرودرسنامه'], ['prep', 'پک آمادگی'], ['scores', 'روند تراز'], ['offline', 'مطالعۀ آفلاین']] as const
 
 export default function LearningPage() {
   const [params, setParams] = useSearchParams()
@@ -59,6 +60,7 @@ export default function LearningPage() {
     {attemptId ? <AttemptRunner key={attemptId} id={attemptId} initial={initial?.id === attemptId ? initial : undefined} onBack={() => selectTab('review')} onAsk={ask} /> : <>
       <div className="learning-stats grid grid-cols-3 divide-x divide-x-reverse divide-border rounded-2xl border border-border bg-card py-4">{stats.map(({ value, name, icon: Icon }) => <div key={name} className="flex items-center justify-center gap-3 px-2 sm:px-5"><Icon size={21} strokeWidth={1.5} className="hidden text-muted-foreground/70 sm:block" /><div><p className="text-xl font-bold tabular-nums">{catalog.isPending || catalog.isError ? '—' : fa(value)}</p><p className="mt-1 text-[10px] leading-5 text-muted-foreground sm:text-xs">{name}</p></div></div>)}</div>
       <div className="learning-nav flex flex-wrap items-center justify-between gap-3 border-b border-border"><nav aria-label="بخش‌های یادگیری" className="grid w-full grid-cols-3 sm:w-auto sm:flex">{tabs.map(({ id, name, icon: Icon }) => <button key={id} type="button" aria-current={tab === id ? 'page' : undefined} onClick={() => selectTab(id)} className={cn('-mb-px flex min-h-12 items-center justify-center gap-2 border-b-2 px-2 text-[11px] font-bold transition-colors sm:px-4 sm:text-sm', tab === id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}><Icon size={16} className="hidden sm:block" />{name}</button>)}</nav><label className="mb-3 w-full sm:mb-2 sm:w-44"><span className="mb-1 block text-[10px] text-muted-foreground">ابزار مطالعه</span><NativeSelect className="h-9 rounded-lg border-border bg-card text-xs" value={visibleTools.some(([id]) => id === tab) ? tab : ''} onChange={(e) => { if (e.target.value) selectTab(e.target.value) }}><option value="">ابزارهای بیشتر</option>{visibleTools.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</NativeSelect></label></div>
+      <button type="button" onClick={() => selectTab('offline')} className="justify-self-start text-sm font-bold text-primary underline-offset-4 hover:underline" aria-current={tab === 'offline' ? 'page' : undefined}>دانلود برای مطالعۀ آفلاین</button>
       <Suspense fallback={<p role="status" className="py-8 text-center text-sm">در حال بارگذاری…</p>}>
         {tab === 'bank' && <PracticeBuilder key={`${track}-${builderKey}`} track={track} preset={preset} onStart={onStart} />}
         {tab === 'weekly' && <WeeklyPanel key={track} track={track} onPractice={practice} onPrep={() => selectTab('prep')} />}
@@ -68,6 +70,7 @@ export default function LearningPage() {
         {tab === 'prep' && <PrepPanel key={track} track={track} onPractice={practice} onLearn={(subject) => setParams({ track, tab: 'micro', subject })} />}
         {tab === 'scores' && <ScoresPanel onAnalyze={(id) => setParams({ track, tab: 'assistant', score: id })} />}
         {tab === 'assistant' && <AssistantPanel key={JSON.stringify(context)} context={context} onClear={() => selectTab('assistant')} />}
+        {tab === 'offline' && <OfflineLearningDownloads key={track} packs={catalog.data?.packs ?? []} />}
       </Suspense>
     </>}
   </div>

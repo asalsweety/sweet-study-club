@@ -4,6 +4,7 @@ export const appRoutes = {
   planner: '/planner',
   progress: '/progress',
   learning: '/learn',
+  offline: '/offline',
   friends: '/friends',
   ranking: '/ranking',
   shop: '/shop',

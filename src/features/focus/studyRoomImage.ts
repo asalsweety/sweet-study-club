@@ -22,10 +22,12 @@ const weatherRooms: Record<Exclude<ChibiScene, 'night-desk'>, string> = {
 
 export function studyRoomArt(scene: ChibiScene, state: PixelSceneState, look: ChibiAppearance = defaultChibi) {
   const showAsal = look.companion === 'asal' && !look.outfit && (scene === 'night-desk' || state === 'studying')
+  const custom = look.companion !== 'asal' && Boolean(look.customization)
   const image = scene === 'night-desk' ? nightRooms[state] : weatherRooms[scene]
   return {
     room: `/images/pixel/study-rooms/${image}${showAsal ? '' : '-open'}.webp`,
-    sprite: showAsal ? null : deskSprites[look.companion === 'boy' ? 'boy' : 'girl'],
+    sprite: showAsal || custom ? null : deskSprites[look.companion === 'boy' ? 'boy' : 'girl'],
+    containsAsal: showAsal,
   }
 }
 

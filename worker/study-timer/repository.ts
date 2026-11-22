@@ -12,6 +12,7 @@ const activeTimerRowSchema = z.object({
   logId: z.string().min(1),
   mode: z.enum(['free', 'scheduled', 'pomodoro']),
   subjectName: z.string().min(1).max(80),
+  title: z.string().nullable(),
   sessionId: z.string().nullable(),
   timerStatus: z.enum(['running', 'paused']),
   startedAt: z.number().int().nonnegative(),
@@ -27,6 +28,7 @@ const activeTimerRowSchema = z.object({
   phase: z.enum(['focus', 'break']).nullable(),
   round: nullableInt,
   phaseStartedAt: nullableInt,
+  interruptedFocusSeconds: nullableInt,
   version: z.number().int().positive(),
 })
 
@@ -43,7 +45,7 @@ export async function findActiveTimerRow(
   const value = await database
     .prepare(
       `SELECT
-        timer.log_id AS logId, log.mode, log.subject_name AS subjectName,
+        timer.log_id AS logId, log.mode, log.subject_name AS subjectName, log.title,
         log.scheduled_session_id AS sessionId, timer.timer_status AS timerStatus,
         log.started_at AS startedAt,
         timer.current_segment_started_at AS currentSegmentStartedAt,
@@ -54,6 +56,7 @@ export async function findActiveTimerRow(
         log.pomodoro_long_break_minutes AS longBreakMinutes,
         log.pomodoro_rounds AS rounds, timer.pomodoro_phase AS phase,
         timer.pomodoro_round AS round, timer.phase_started_at AS phaseStartedAt,
+        timer.interrupted_focus_seconds AS interruptedFocusSeconds,
         timer.version
       FROM active_study_timers AS timer
       INNER JOIN study_logs AS log ON log.id = timer.log_id
@@ -80,6 +83,7 @@ export function toTimerState(row: ActiveTimerRow): StudyTimerState {
     logId: row.logId,
     mode: row.mode,
     subjectName: row.subjectName,
+    title: row.title,
     sessionId: row.sessionId,
     timerStatus: row.timerStatus,
     startedAt: iso(row.startedAt),
@@ -99,6 +103,7 @@ export function toTimerState(row: ActiveTimerRow): StudyTimerState {
           phase: row.phase,
           round: row.round,
           phaseStartedAt: iso(row.phaseStartedAt as number),
+          interruptedFocusSeconds: row.interruptedFocusSeconds,
         }
       : null,
     version: row.version,
@@ -117,6 +122,8 @@ const logRowSchema = z.object({
   id: z.string(),
   mode: z.enum(['free', 'scheduled', 'pomodoro']),
   subjectName: z.string(),
+  title: z.string().nullable(),
+  recordedManually: z.union([z.literal(0), z.literal(1)]),
   sessionId: z.string().nullable(),
   startedAt: z.number().int(),
   endedAt: z.number().int(),
@@ -128,7 +135,7 @@ const logRowSchema = z.object({
   note: z.string().nullable(),
 })
 
-export const completedLogColumns = `id, mode, subject_name AS subjectName,
+export const completedLogColumns = `id, mode, subject_name AS subjectName, title, recorded_manually AS recordedManually,
   scheduled_session_id AS sessionId, started_at AS startedAt,
   ended_at AS endedAt, duration_seconds AS durationSeconds,
   test_count AS testCount, tests_correct AS testsCorrect,
@@ -138,6 +145,7 @@ export function toCompletedLog(value: unknown): CompletedStudyLog {
   const row = logRowSchema.parse(value)
   return completedStudyLogSchema.parse({
     ...row,
+    recordedManually: row.recordedManually === 1,
     startedAt: iso(row.startedAt),
     endedAt: iso(row.endedAt),
   })

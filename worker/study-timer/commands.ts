@@ -65,22 +65,21 @@ export async function startTimer(db: D1Database, userId: string, input: StartTim
   if ((await findActiveTimerRow(db, userId)) !== null) {
     throw conflict('TIMER_ALREADY_ACTIVE', 'Another study timer is already running.')
   }
-  if (input.mode === 'scheduled' && input.sessionId !== null) {
-    await assertScheduledSessionOpen(db, input.sessionId, now)
-  }
+  const scheduled = input.mode === 'scheduled' && input.sessionId !== null
+    ? await assertScheduledSessionOpen(db, input.sessionId, now) : null
 
   const logId = crypto.randomUUID()
   const plan = input.pomodoro
   const results = await db.batch([
     db
       .prepare(
-        `INSERT INTO study_logs (id, user_id, mode, subject_name, scheduled_session_id, started_at,
+        `INSERT INTO study_logs (id, user_id, mode, subject_name, title, scheduled_session_id, started_at,
            focus_lock_enabled, pomodoro_focus_minutes, pomodoro_break_minutes,
            pomodoro_long_break_minutes, pomodoro_rounds, created_at, updated_at)
-         SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+         SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
          WHERE NOT EXISTS (SELECT 1 FROM active_study_timers WHERE user_id = ?)`,
       )
-      .bind(logId, userId, input.mode, input.subjectName, input.sessionId, now,
+      .bind(logId, userId, input.mode, input.subjectName, input.title ?? scheduled?.title ?? null, input.sessionId, now,
         input.focusLockEnabled ? 1 : 0, plan?.focusMinutes ?? null, plan?.breakMinutes ?? null,
         plan?.longBreakMinutes ?? null, plan?.rounds ?? null, now, now, userId),
     db
@@ -105,17 +104,20 @@ export async function pauseTimer(db: D1Database, userId: string, input: TimerCom
   if (row.timerStatus === 'paused') return findActiveTimerByUserId(db, userId)
 
   const isPomodoro = row.mode === 'pomodoro'
+  const focusSeconds = row.phaseStartedAt === null ? 0 : Math.max(0, Math.floor((now - row.phaseStartedAt) / 1000))
+  const interruptedFocus = isPomodoro && row.focusMinutes !== null && focusSeconds < row.focusMinutes * 60 ? focusSeconds : null
   const results = await db.batch([
     db
       .prepare(
         `UPDATE active_study_timers SET timer_status = 'paused', current_segment_started_at = NULL,
            paused_at = ?, accumulated_seconds = ?, version = version + 1, last_command_id = ?,
            updated_at = ?, pomodoro_phase = CASE WHEN ? THEN 'break' ELSE pomodoro_phase END,
-           phase_started_at = CASE WHEN ? THEN ? ELSE phase_started_at END
+           phase_started_at = CASE WHEN ? THEN ? ELSE phase_started_at END,
+           interrupted_focus_seconds = ?
          WHERE user_id = ? AND version = ?`,
       )
       .bind(now, elapsedSeconds(row, now), input.commandId, now, isPomodoro ? 1 : 0,
-        isPomodoro ? 1 : 0, now, userId, input.expectedVersion),
+        isPomodoro ? 1 : 0, now, interruptedFocus, userId, input.expectedVersion),
   ])
   const state = await settle(db, userId, results, 0)
   await receipt(db, userId, input.commandId, 'pause', state, now).run()
@@ -128,11 +130,12 @@ export async function resumeTimer(db: D1Database, userId: string, input: TimerCo
   const row = await requireTimer(db, userId, input.expectedVersion)
   if (row.timerStatus === 'running') return findActiveTimerByUserId(db, userId)
 
-  // Coming back from a pomodoro break starts the next focus round.
+  // An early break freezes the current focus round. A completed round advances.
   const nextRound =
     row.mode === 'pomodoro' && row.round !== null && row.rounds !== null
-      ? (row.round % row.rounds) + 1
+      ? row.interruptedFocusSeconds === null ? (row.round % row.rounds) + 1 : row.round
       : null
+  const focusStartedAt = now - (row.interruptedFocusSeconds ?? 0) * 1000
   const results = await db.batch([
     db
       .prepare(
@@ -140,10 +143,11 @@ export async function resumeTimer(db: D1Database, userId: string, input: TimerCo
            paused_at = NULL, version = version + 1, last_command_id = ?, updated_at = ?,
            pomodoro_phase = CASE WHEN ? IS NULL THEN pomodoro_phase ELSE 'focus' END,
            pomodoro_round = COALESCE(?, pomodoro_round),
-           phase_started_at = CASE WHEN ? IS NULL THEN phase_started_at ELSE ? END
+           phase_started_at = CASE WHEN ? IS NULL THEN phase_started_at ELSE ? END,
+           interrupted_focus_seconds = NULL
          WHERE user_id = ? AND version = ?`,
       )
-      .bind(now, input.commandId, now, nextRound, nextRound, nextRound, now, userId, input.expectedVersion),
+      .bind(now, input.commandId, now, nextRound, nextRound, nextRound, focusStartedAt, userId, input.expectedVersion),
   ])
   const state = await settle(db, userId, results, 0)
   await receipt(db, userId, input.commandId, 'resume', state, now).run()
@@ -178,12 +182,13 @@ export async function stopTimer(db: D1Database, userId: string, input: StopTimer
     db
       .prepare(
         `UPDATE study_logs SET ended_at = ?, duration_seconds = ?, test_count = ?, tests_correct = ?,
-           tests_wrong = ?, focus_rating = ?, note = ?, updated_at = ?
+           tests_wrong = ?, focus_rating = ?, note = ?, title = CASE WHEN ? THEN ? ELSE title END, updated_at = ?
          WHERE id = ? AND user_id = ? AND ended_at IS NULL
            AND EXISTS (SELECT 1 FROM active_study_timers WHERE user_id = ? AND version = ?)`,
       )
       .bind(now, elapsedSeconds(row, now), input.testCount, input.testsCorrect, input.testsWrong,
-        input.focusRating, input.note || null, now, row.logId, userId, userId, input.expectedVersion),
+        input.focusRating, input.note || null, Number(input.title !== undefined), input.title ?? null,
+        now, row.logId, userId, userId, input.expectedVersion),
     db.prepare('DELETE FROM active_study_timers WHERE user_id = ? AND version = ?').bind(userId, input.expectedVersion),
   ])
   if ((results[0]?.meta.changes ?? 0) === 0) {

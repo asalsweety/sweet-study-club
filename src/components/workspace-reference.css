@@ -71,7 +71,9 @@ html:has(.app-workspace) { scrollbar-gutter: auto; }
   .profile-overview .profile-dna { min-height: 278px; gap: 12px; }
 }
 
+.export-share-card[data-compact] { display: none; }
+
 @media print {
   .profile-overview > :is(section, nav) { display: none; }
-  #export > [aria-hidden="true"][dir] { position: static !important; width: auto !important; }
+  .export-share-card[data-compact] { display: block; }
 }

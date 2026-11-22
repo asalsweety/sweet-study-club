@@ -28,11 +28,11 @@ export default function MePage({ profile }: { profile: UserProfile }) {
   const section = sections.some(([id]) => id === requested) ? requested : 'overview'
   const level = useQuery({ queryKey: queryKeys.gamification, queryFn: api.progress.gamification, enabled: section === 'overview' }).data?.level
   const sectionNav = (
-    <nav className="section-tabs" aria-label="بخش‌های حساب">
+    <nav className="section-tabs min-w-0 max-w-full" aria-label="بخش‌های حساب">
       {sections.map(([id, title]) => <Link key={id} to={`?section=${id}`} aria-current={section === id ? 'page' : undefined}>{title}</Link>)}
     </nav>
   )
-  return <div className={section === 'overview' ? 'profile-overview grid gap-5' : 'grid gap-6'}>
+  return <div className={section === 'overview' ? 'profile-overview grid min-w-0 grid-cols-1 gap-5' : 'grid min-w-0 grid-cols-1 gap-6'}>
     {section === 'overview' ? <>
       <PageHeading action={sectionNav} eyebrow="پروفایل و تنظیمات" title={profile.displayName + (level ? ` · سطح ${fa(level.level)}` : '')} description={level ? `${fa(Math.max(0, level.nextLevelAt - level.experience))} XP تا سطح بعد · هر دقیقه ۱ XP، هر تست درست ۲ XP` : 'مسیر مطالعه و تنظیمات تو'} />
       <ProfileCard profile={profile} />

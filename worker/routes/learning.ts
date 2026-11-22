@@ -10,6 +10,8 @@ import { listPackQuestions, retirePackQuestion, savePack, savePackQuestion, setP
 import { assistantMessages, askAssistant } from '../learning/assistant'
 import { createPrep, createScore, learningSummary, listPrep, listScores, notebook, saveAnnotation, togglePrep } from '../learning/personal'
 import { practiceFilterSchema } from '../../src/shared/api/learning'
+import { offlinePackRequestSchema } from '../../src/shared/api/offline-learning'
+import { offlinePackPage } from '../learning/offline'
 import type { WorkerEnvironment } from '../types'
 
 const trackQuery = z.object({ track: trackSchema })
@@ -19,6 +21,11 @@ export function learningRoutes(requireSession: MiddlewareHandler<WorkerEnvironme
   app.use('/admin/learning/*', requireSession, requireAdmin)
   app.use('/admin/learning/import', bodyLimit({ maxSize: 3_000_000, onError: (c) => c.json({ error: { code: 'VALIDATION_ERROR', message: 'حداکثر اندازهٔ ورودی ۳ مگابایت است.' } }, 413) }))
   app.get('/learning/catalog', async (c) => c.json(await getCatalog(c.env.DB, readQuery(c, trackQuery).track)))
+  app.get('/learning/offline-packs/:id', async (c) => {
+    const { cursor } = readQuery(c, offlinePackRequestSchema)
+    c.header('Cache-Control', 'no-store')
+    return c.json(await offlinePackPage(c.env.DB, c.req.param('id'), cursor))
+  })
   app.post('/learning/count', async (c) => {
     const filter = questionFilter(await readBody(c, practiceFilterSchema), userId(c))
     const count = await c.env.DB.prepare(`SELECT COUNT(*) AS count FROM learning_questions q JOIN learning_packs p ON p.id = q.pack_id WHERE ${filter.sql}`)

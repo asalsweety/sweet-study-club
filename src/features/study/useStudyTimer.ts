@@ -4,7 +4,7 @@ import { api } from '../../app/api'
 import { invalidateStudyData, queryKeys } from '../../app/session'
 import { ApiClientError } from '../../shared/api/api-client-error'
 import { subscribeVisibleClock } from '../../shared/lib/visible-clock'
-import type { PomodoroPlan, StartTimerInput, StudyTimerState } from '../../shared/api/study-timer'
+import type { PomodoroPlan, StartTimerInput, StopTimerInput, StudyTimerState } from '../../shared/api/study-timer'
 
 export function elapsedSecondsOf(timer: StudyTimerState | null | undefined, now = Date.now()) {
   if (!timer) return 0
@@ -17,10 +17,11 @@ export function pomodoroRemaining(timer: StudyTimerState | null | undefined, now
   const pomodoro = timer?.pomodoro
   if (!pomodoro) return null
   const plan: PomodoroPlan = pomodoro.plan
-  const isLongBreak = pomodoro.phase === 'break' && pomodoro.round % plan.rounds === 0
+  const resumesCurrentRound = pomodoro.phase === 'break' && pomodoro.interruptedFocusSeconds !== null
+  const isLongBreak = pomodoro.phase === 'break' && !resumesCurrentRound && pomodoro.round % plan.rounds === 0
   const length = (pomodoro.phase === 'focus' ? plan.focusMinutes : isLongBreak ? plan.longBreakMinutes : plan.breakMinutes) * 60
   const spent = Math.floor((now - Date.parse(pomodoro.phaseStartedAt)) / 1000)
-  return { phase: pomodoro.phase, round: pomodoro.round, rounds: plan.rounds, length, remaining: length - spent, isLongBreak }
+  return { phase: pomodoro.phase, round: pomodoro.round, rounds: plan.rounds, length, remaining: length - spent, isLongBreak, resumesCurrentRound }
 }
 
 /** Read wall-clock time only as often as the visible UI needs it. */
@@ -65,7 +66,7 @@ export function useStudyTimer() {
     onError: onConflict,
   })
   const stop = useMutation({
-    mutationFn: (input: { testCount: number; testsCorrect: number; testsWrong: number; focusRating: number | null; note: string | null }) =>
+    mutationFn: (input: Omit<StopTimerInput, 'commandId' | 'expectedVersion'>) =>
       api.timer.stop({ ...command(), ...input }),
     onSuccess: async () => {
       await settle(null)

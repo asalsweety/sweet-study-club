@@ -1,5 +1,5 @@
 import {
-  chibiItems, defaultChibi, minutesPerCoin,
+  chibiCustomizationSchema, chibiItems, defaultChibi, minutesPerCoin,
   type ChibiAppearance, type ChibiItemId, type ChibiUpdate,
 } from '../../src/shared/api/chibi'
 import { conflict, forbidden } from '../http/errors'
@@ -10,20 +10,23 @@ const earned = `(SELECT COALESCE(SUM(duration_seconds), 0) / ${minutesPerCoin * 
 const spent = '(SELECT COALESCE(SUM(cost), 0) FROM chibi_purchases WHERE user_id = ?)'
 
 export async function getChibi(db: D1Database, me: string) {
-  type Row = Omit<ChibiAppearance, 'companion'> & {
+  type Row = Omit<ChibiAppearance, 'companion' | 'customization'> & {
     companion: ChibiAppearance['companion'] | null
     balance: number
     owned: string
+    customization: string | null
   }
   const row = await db.prepare(
-    `SELECT companion, skin, hair, outfit, decor, ${earned} - ${spent} AS balance,
+    `SELECT companion, skin, hair, outfit, decor, customization, ${earned} - ${spent} AS balance,
        (SELECT json_group_array(item) FROM chibi_purchases WHERE user_id = ?) AS owned
      FROM (SELECT ? AS id) AS owner LEFT JOIN chibi_appearance ON user_id = owner.id`,
   ).bind(me, me, me, me).first<Row>()
   if (!row) throw new Error('Chibi state query returned no row.')
   const { companion, skin, hair, outfit, decor, balance, owned } = row
+  const customization = row.customization === null ? null
+    : chibiCustomizationSchema.safeParse(JSON.parse(row.customization)).data ?? null
   return {
-    appearance: companion ? { companion, skin, hair, outfit, decor } : defaultChibi,
+    appearance: companion ? { companion, skin, hair, outfit, decor, customization } : defaultChibi,
     coins: Math.max(0, balance),
     owned: JSON.parse(owned) as ChibiItemId[],
   }
@@ -45,11 +48,12 @@ export async function buyChibiItem(db: D1Database, me: string, item: ChibiItemId
 
 export async function updateChibi(db: D1Database, me: string, input: ChibiUpdate) {
   if (input.action === 'look') {
-    const { companion, skin, hair } = input.look
+    const { companion, skin, hair, customization } = input.look
     await db.prepare(
-      `INSERT INTO chibi_appearance (user_id, companion, skin, hair) VALUES (?, ?, ?, ?)
-       ON CONFLICT (user_id) DO UPDATE SET companion = excluded.companion, skin = excluded.skin, hair = excluded.hair`,
-    ).bind(me, companion, skin, hair).run()
+      `INSERT INTO chibi_appearance (user_id, companion, skin, hair, customization) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT (user_id) DO UPDATE SET companion = excluded.companion, skin = excluded.skin, hair = excluded.hair,
+         customization = CASE WHEN ? THEN excluded.customization ELSE chibi_appearance.customization END`,
+    ).bind(me, companion, skin, hair, customization ? JSON.stringify(customization) : null, Number(customization !== undefined)).run()
   } else {
     const { slot } = chibiItems[input.item]
     const result = await db.prepare(

@@ -5,7 +5,9 @@ export const sheetKindSchema = z.enum(sheetKinds)
 export type SheetKind = z.infer<typeof sheetKindSchema>
 
 /** Field values: text, ticks and small numbers (stars, counts). */
-export const sheetValueSchema = z.union([z.string().max(2000), z.boolean(), z.number().finite()])
+export const maxSheetFieldLength = 6000
+export const maxSheetDataLength = 65_536
+export const sheetValueSchema = z.union([z.string().max(maxSheetFieldLength), z.boolean(), z.number().finite()])
 export type SheetValue = z.infer<typeof sheetValueSchema>
 export const sheetDataSchema = z.record(z.string().max(40), sheetValueSchema).refine((data) => Object.keys(data).length <= 800)
 export type SheetData = z.infer<typeof sheetDataSchema>
@@ -23,6 +25,11 @@ export type Sheet = z.infer<typeof sheetSchema>
 
 export const sheetsResponseSchema = z.object({ sheets: z.array(sheetSummarySchema) })
 export const sheetResponseSchema = z.object({ sheet: sheetSchema })
-export const createSheetInputSchema = z.object({ kind: sheetKindSchema, title: z.string().trim().min(1).max(80).optional() }).strict()
+export const createSheetInputSchema = z.object({
+  id: z.uuid().optional(),
+  kind: sheetKindSchema,
+  title: z.string().trim().min(1).max(80).optional(),
+}).strict()
+export type CreateSheetInput = z.infer<typeof createSheetInputSchema>
 export const updateSheetInputSchema = z.object({ title: z.string().trim().min(1).max(80).optional(), data: sheetDataSchema.optional() }).strict()
 export type UpdateSheetInput = z.infer<typeof updateSheetInputSchema>

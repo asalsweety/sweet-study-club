@@ -1,12 +1,12 @@
-import { z } from 'zod'
+import { z } from 'zod/mini'
 import { ApiClientError } from '../shared/api/api-client-error'
 import { http } from '../shared/api/http'
 
-const sessionSchema = z
-  .object({
+const sessionSchema = z.nullable(
+  z.object({
     user: z.object({ id: z.string(), email: z.string(), name: z.string() }),
-  })
-  .nullable()
+  }),
+)
 
 export type AuthSession = NonNullable<z.infer<typeof sessionSchema>>
 

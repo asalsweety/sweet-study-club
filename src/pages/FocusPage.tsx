@@ -169,7 +169,7 @@ export default function FocusPage() {
             <div className="flex max-w-full flex-wrap justify-center gap-2 sm:gap-3">
               <button type="button" disabled={timer.busy} onClick={toggleTimer} aria-keyshortcuts="Space" className="flex min-h-12 items-center gap-2 rounded-2xl bg-white px-4 py-2 text-base font-bold text-[#17392f] shadow-[0_18px_40px_-12px_rgba(0,0,0,0.5)] transition hover:scale-[1.03] active:scale-95 disabled:opacity-60 sm:px-6">
                 {running ? <Pause /> : <Play />}
-                {running ? (state.mode === 'pomodoro' ? 'استراحت' : 'توقف') : state.mode === 'pomodoro' ? 'دور بعدی' : 'ادامه'}
+                {running ? (pomodoro ? 'استراحت' : 'توقف') : pomodoro?.resumesCurrentRound ? 'ادامۀ همین دور' : pomodoro ? 'دور بعدی' : 'ادامه'}
               </button>
               <button type="button" disabled={timer.busy} onClick={() => setFinishing(true)} className="flex min-h-12 items-center gap-2 rounded-2xl border border-white/15 bg-white/15 px-4 py-2 text-base font-bold backdrop-blur-md transition hover:bg-white/25 active:scale-95 sm:px-6">
                 <Square /> پایان

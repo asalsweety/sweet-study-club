@@ -1,6 +1,6 @@
 import { Check as CheckIcon, Heart, Star } from 'lucide-react'
 import { createContext, useContext, useSyncExternalStore, type ComponentType, type ReactNode } from 'react'
-import type { SheetData, SheetValue } from '../../shared/api/sheets'
+import { maxSheetFieldLength, type SheetData, type SheetValue } from '../../shared/api/sheets'
 import { cn } from '../../shared/lib/utils'
 
 type SheetStore = { data: SheetData; set: (key: string, value: SheetValue | undefined) => void }
@@ -40,7 +40,7 @@ export function Line({ k, label, placeholder, fallback, className, multiline = f
   // Printed defaults (e.g. habit names) show until the member writes their own.
   const value = stored || (fallback ?? '')
   const field = multiline
-    ? <textarea aria-label={label ?? placeholder} value={value} onChange={(e) => setValue(e.target.value)} placeholder={placeholder} rows={rows} maxLength={maxLength * 4} className="sheet-line sheet-area" dir={dir} />
+    ? <textarea aria-label={label ?? placeholder} value={value} onChange={(e) => setValue(e.target.value)} placeholder={placeholder} rows={rows} maxLength={Math.min(maxLength * 4, maxSheetFieldLength)} className="sheet-line sheet-area" dir={dir} />
     : <input aria-label={label ?? placeholder} value={value} onChange={(e) => setValue(e.target.value)} placeholder={placeholder} maxLength={maxLength} inputMode={inputMode} className="sheet-line" dir={dir} />
   if (!label) return <span className={cn('sheet-field', className)}>{field}</span>
   return <label className={cn('sheet-field sheet-field-labelled', multiline && 'is-multiline', className)}><span className="sheet-label">{label}</span>{field}</label>

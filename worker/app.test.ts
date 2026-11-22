@@ -40,7 +40,7 @@ describe('system routes', () => {
     const response = await createWorkerApp().request(
       '/api/ready',
       undefined,
-      createBindings('19'),
+      createBindings('21'),
     )
     const payload = serviceStatusSchema.parse(await response.json())
 
@@ -158,6 +158,7 @@ describe('study timer routes', () => {
       logId: 'log-123',
       mode: 'free',
       subjectName: 'Physics',
+      title: null,
       sessionId: null,
       timerStatus: 'paused',
       startedAt: 1_787_743_800_000,
@@ -173,6 +174,7 @@ describe('study timer routes', () => {
       phase: null,
       round: null,
       phaseStartedAt: null,
+      interruptedFocusSeconds: null,
       version: 2,
     }))
     const bind = vi.fn(() => ({ first }))

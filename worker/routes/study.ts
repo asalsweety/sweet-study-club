@@ -11,6 +11,7 @@ import {
   upsertSubjectInputSchema,
 } from '../../src/shared/api/settings'
 import {
+  manualStudyLogInputSchema,
   startTimerInputSchema,
   stopTimerInputSchema,
   timerCommandInputSchema,
@@ -22,6 +23,7 @@ import * as planner from '../planner/service'
 import { getDaySchedule } from '../schedule/service'
 import * as settings from '../settings/service'
 import * as timer from '../study-timer/commands'
+import { recordManualStudyLog, removeCompletedStudyLog } from '../study-timer/logs'
 import { findActiveTimerByUserId, listCompletedLogs } from '../study-timer/repository'
 import type { WorkerEnvironment } from '../types'
 
@@ -51,6 +53,12 @@ export function studyRoutes(requireSession: MiddlewareHandler<WorkerEnvironment>
     const { from, to } = readQuery(c, rangeQuery)
     const logs = await listCompletedLogs(c.env.DB, userId(c), startOfTehranDay(from), startOfTehranDay(addDays(to, 1)))
     return c.json({ logs })
+  })
+  app.post('/study/logs', async (c) =>
+    c.json({ log: await recordManualStudyLog(c.env.DB, userId(c), await readBody(c, manualStudyLogInputSchema)) }, 201))
+  app.delete('/study/logs/:id', async (c) => {
+    await removeCompletedStudyLog(c.env.DB, userId(c), c.req.param('id'))
+    return c.body(null, 204)
   })
 
   app.get('/schedule/day', async (c) => {

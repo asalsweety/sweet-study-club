@@ -113,7 +113,7 @@ export default function StartStudySheet({ open, onOpenChange, openPart, timer, i
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent dir="rtl" className="max-h-[92dvh] overflow-y-auto rounded-2xl sm:max-w-lg">
         <DialogHeader className="text-right">
-          <DialogTitle className="text-xl font-bold">شروع مطالعه</DialogTitle>
+          <DialogTitle className="text-xl font-bold">{intent === 'pixel' ? 'شروع مطالعه در اتاق پیکسلی' : 'شروع مطالعه'}</DialogTitle>
           <DialogDescription>حالت، درس و سبک تمرکزت را انتخاب کن.</DialogDescription>
         </DialogHeader>
 

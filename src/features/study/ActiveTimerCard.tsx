@@ -22,6 +22,7 @@ export default function ActiveTimerCard({ timer, onStop }: ActiveTimerCardProps)
   const running = state.timerStatus === 'running'
   const sceneState = running ? 'studying' : pomodoro?.phase === 'break' ? 'break' : 'paused'
   const warmRoom = () => prepareFocus(sceneState)
+  const warmPixelRoom = () => prepareFocus(sceneState, true)
   const clock = formatClock(pomodoro ? Math.max(0, pomodoro.remaining) : elapsed)
   return <section className="today-session surface">
     <div className="today-session-info">
@@ -34,12 +35,12 @@ export default function ActiveTimerCard({ timer, onStop }: ActiveTimerCardProps)
       <div className="today-session-actions">
         <Button variant="outline" disabled={timer.busy} onClick={onStop}><Square />پایان و ثبت</Button>
         {running ? <Button variant="secondary" disabled={timer.busy} onClick={() => timer.pause.mutate()}><Pause />{state.mode === 'pomodoro' ? 'شروع استراحت' : 'توقف'}</Button>
-          : <Button variant="secondary" disabled={timer.busy} onClick={() => timer.resume.mutate()}><Play />{state.mode === 'pomodoro' ? 'دور بعدی' : 'ادامه'}</Button>}
+          : <Button variant="secondary" disabled={timer.busy} onClick={() => timer.resume.mutate()}><Play />{pomodoro?.resumesCurrentRound ? 'ادامۀ همین دور' : pomodoro ? 'دور بعدی' : 'ادامه'}</Button>}
         <Button asChild><Link to={appRoutes.focus} onPointerEnter={warmRoom} onFocus={warmRoom} onPointerDown={warmRoom}><Maximize2 />ورود به اتاق تمرکز</Link></Button>
       </div>
       {(timer.pause.isError || timer.resume.isError) && <QueryError error={timer.pause.error ?? timer.resume.error} />}
     </div>
-    <Link to={appRoutes.focus} viewTransition aria-label="باز کردن اتاق تمرکز" className="today-session-room" onPointerEnter={warmRoom} onFocus={warmRoom} onPointerDown={warmRoom}>
+    <Link to={`${appRoutes.focus}?room=pixel`} viewTransition aria-label="باز کردن اتاق پیکسلی" className="today-session-room" onPointerEnter={warmPixelRoom} onFocus={warmPixelRoom} onPointerDown={warmPixelRoom}>
       <TodayStudyRoom state={sceneState} className="today-session-art" />
     </Link>
   </section>

@@ -10,6 +10,7 @@ export const queryKeys = {
   settings: ['settings'] as const,
   subjects: ['subjects'] as const,
   timer: ['timer'] as const,
+  studyLogs: (date: string) => ['study-logs', date] as const,
   schedule: (date: string) => ['schedule', date] as const,
   planner: (from: string, to: string) => ['planner', from, to] as const,
   reminders: ['reminders'] as const,
@@ -91,7 +92,7 @@ export async function replaceSession(client: QueryClient, session: AuthSession |
 
 /** Refresh totals and rewards once the finished session has been saved. */
 export function invalidateStudyData(client: ReturnType<typeof useQueryClient>) {
-  for (const key of [['progress'], ['heatmap'], ['gamification'], ['dna'], ['leaderboard'], ['live'], ['friends'], queryKeys.chibi]) {
+  for (const key of [['study-logs'], ['progress'], ['heatmap'], ['gamification'], ['dna'], ['leaderboard'], ['live'], ['friends'], queryKeys.chibi]) {
     void client.invalidateQueries({ queryKey: key })
   }
 }

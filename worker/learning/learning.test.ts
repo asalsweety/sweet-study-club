@@ -5,21 +5,10 @@ import { URL as NodeURL } from 'node:url'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { adminPacksSchema, adminQuestionsSchema, attemptResponseSchema, catalogResponseSchema, importPackSchema, practiceFilterSchema, type Attempt, type ImportPack, type PrepPack, type ScoreInput } from '../../src/shared/api/learning'
 import { adminProductsResponseSchema, productsResponseSchema } from '../../src/shared/api/shop'
+import { offlinePackPageSchema } from '../../src/shared/api/offline-learning'
 import { createWorkerApp } from '../app'
+import { sqliteD1 } from '../testing/sqlite-d1'
 import type { WorkerBindings } from '../types'
-
-// Execute real migration and service SQL, with a small D1 adapter around SQLite.
-// This catches SQL errors and transaction/ownership bugs that mocked rows miss.
-class TestStatement {
-  values: (string | number | null)[] = []
-  readonly sqlite: DatabaseSync
-  readonly sql: string
-  constructor(database: DatabaseSync, sql: string) { this.sqlite = database; this.sql = sql }
-  bind(...values: (string | number | null)[]) { this.values = values; return this }
-  async first() { return this.sqlite.prepare(this.sql).get(...this.values) ?? null }
-  async all() { return { results: this.sqlite.prepare(this.sql).all(...this.values), success: true } }
-  async run() { return { meta: { changes: this.sqlite.prepare(this.sql).run(...this.values).changes }, success: true } }
-}
 let sqlite: DatabaseSync
 let bindings: WorkerBindings
 const now = Date.UTC(2026, 10, 2, 10)
@@ -58,19 +47,39 @@ beforeEach(() => {
   }
   bindings = {
     APP_ENVIRONMENT: 'test', ASSETS: { fetch: async () => new Response('asset') } as unknown as Fetcher,
-    DB: {
-      prepare: (sql: string) => new TestStatement(sqlite, sql),
-      batch: async (statements: TestStatement[]) => {
-        sqlite.exec('BEGIN')
-        try { const results = []; for (const statement of statements) results.push(await statement.run()); sqlite.exec('COMMIT'); return results }
-        catch (error) { sqlite.exec('ROLLBACK'); throw error }
-      },
-    } as unknown as D1Database,
+    DB: sqliteD1(sqlite),
   }
 })
 afterEach(() => { sqlite.close(); vi.restoreAllMocks() })
 
 describe('learning content and publication', () => {
+  it('downloads released questions and lessons without answer material or an online attempt', async () => {
+    const fixture = importFixture()
+    const question = fixture.questions[0]!
+    const pack = {
+      ...fixture,
+      key: 'offline-fixture',
+      availableAt: new Date(now - 1000).toISOString(),
+      questions: Array.from({ length: 26 }, (_, index) => ({ ...question, key: `offline-${index}` })),
+    }
+    await json('/admin/learning/import', { user: 'admin', method: 'POST', body: pack })
+    const route = `/learning/offline-packs/${pack.key}`
+    expect((await request(route, { user: null })).status).toBe(401)
+    const response = await request(route)
+    expect(response.headers.get('Cache-Control')).toBe('no-store')
+    const first = await response.json()
+    expect(JSON.stringify(first)).not.toMatch(/"correctIndex"|"feedback"|"explanation"/)
+    const page = offlinePackPageSchema.parse(first)
+    expect(page.questions).toHaveLength(24)
+    expect(page.questions[0]?.topic).toEqual(question.topic)
+    const rest = offlinePackPageSchema.parse(await json(`${route}?cursor=${page.next}`))
+    expect(rest.questions).toHaveLength(2)
+    expect(rest.next).toBeNull()
+    expect(new Set([...page.questions, ...rest.questions].map((item) => item.questionId)).size).toBe(26)
+    expect(sqlite.prepare('SELECT COUNT(*) AS count FROM learning_attempts').get()?.count).toBe(0)
+    sqlite.prepare('UPDATE learning_packs SET available_at = ? WHERE id = ?').run(now + 1, pack.key)
+    expect((await request(route)).status).toBe(404)
+  })
   it('manages a pack and revises questions without changing past answers', async () => {
     const { questions, ...pack } = importFixture()
     const draft = { ...pack, key: 'admin-crud', availableAt: new Date(now - 1000).toISOString(), isSample: false, isActive: true }

@@ -20,6 +20,7 @@ vi.mock('../features/auth/AuthScreen', () => ({ default: () => <h1>Account entry
 vi.mock('../features/presence/BackgroundServices', () => ({ default: () => null }))
 vi.mock('../pages/HomePage', () => ({ default: () => <h1>Today workspace</h1> }))
 vi.mock('../pages/LearningPage', () => ({ default: () => <h1>Learning destination</h1> }))
+vi.mock('../pages/OfflineLearningPage', () => ({ default: () => <h1>Offline library</h1> }))
 const member = { id: 'one', displayName: 'Test', role: 'member' }
 async function render(path = '/') {
   const stream = await renderToReadableStream(<MemoryRouter initialEntries={[path]}><App /></MemoryRouter>)
@@ -41,6 +42,10 @@ describe('session-first routing', () => {
     state.session = { isPending: false, data: null }
     expect(await render('/learn?tab=notebook')).toContain('Account entry')
   })
+  it('opens the offline library without waiting for a session', async () => {
+    state.session = { isPending: true }
+    expect(await render('/offline')).toContain('Offline library')
+  })
   it('starts settings and pixel-room data while the signed-in profile is loading', async () => {
     state.profile = { isPending: true, data: undefined }
     await render('/focus?room=pixel')
@@ -57,6 +62,7 @@ describe('session-first routing', () => {
     state.session = { isPending: false, isError: true, data: undefined }
     const html = await render()
     expect(html).toContain('اتصال برقرار نشد')
+    expect(html).toContain('href="/offline"')
     expect(html).not.toContain('Account entry')
   })
   it('offers retry instead of spinning forever on profile failure', async () => {

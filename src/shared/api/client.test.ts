@@ -168,7 +168,7 @@ describe('API client', () => {
     const client = createApiClient({ fetcher })
 
     await expect(client.getActiveStudyTimer()).resolves.toEqual(
-      validStudyTimer,
+      { ...validStudyTimer, title: null },
     )
     expect(fetcher).toHaveBeenCalledWith(
       '/api/study/timer',

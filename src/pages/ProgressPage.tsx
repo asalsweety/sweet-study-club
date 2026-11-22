@@ -11,8 +11,11 @@ import type { UserProfile } from '../shared/api/profile'
 import type { PeriodKind } from '../shared/api/progress'
 import { fa, formatDuration, jalaliDay } from '../shared/lib/format'
 import { cn } from '../shared/lib/utils'
+import { tehranClock } from '../shared/lib/tehran'
 import './club-reports.css'
 import { DayBars, Heatmap, SubjectBreakdown } from '../features/progress/charts'
+import DailyStudyLog from '../features/study/DailyStudyLog'
+import { useNow } from '../features/study/useStudyTimer'
 
 const periods: { id: PeriodKind; label: string; previous: string }[] = [
   { id: 'day', label: 'روزانه', previous: 'دیروز' },
@@ -45,6 +48,7 @@ function Metric({ icon, label, value, extra }: { icon: React.ReactNode; label: s
 }
 
 export default function ProgressPage({ profile }: { profile: UserProfile }) {
+  const today = tehranClock(useNow(60_000)).date
   const [period, setPeriod] = useState<PeriodKind>('week')
   const progress = useQuery({ queryKey: queryKeys.progress(period), queryFn: () => api.progress.period(period) })
   const heatmap = useQuery({ queryKey: queryKeys.heatmap, queryFn: () => api.progress.heatmap(140) })
@@ -64,6 +68,7 @@ export default function ProgressPage({ profile }: { profile: UserProfile }) {
           ))}
         </div>
       } />
+      <DailyStudyLog today={today} browse className="club-panel" />
 
       {progress.isError && <QueryError error={progress.error} retry={() => void progress.refetch()} />}
       {!data && !progress.isError ? (

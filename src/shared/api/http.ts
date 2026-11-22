@@ -1,4 +1,4 @@
-import type { ZodType } from 'zod'
+import { safeParse, type $ZodType } from 'zod/v4/core'
 import { ApiClientError } from './api-client-error'
 import { apiErrorEnvelopeSchema } from './error'
 
@@ -10,7 +10,7 @@ const baseUrl = (import.meta.env?.VITE_API_BASE_URL ?? '').trim().replace(/\/$/,
  * Same-origin JSON request with cookie credentials. Every response body is
  * validated against its contract so a server/client drift fails loudly.
  */
-export async function http<T>(method: Method, path: string, schema: ZodType<T> | null, body?: unknown): Promise<T> {
+export async function http<T>(method: Method, path: string, schema: $ZodType<T> | null, body?: unknown): Promise<T> {
   let response: Response
   // A Blob (e.g. a profile picture) is sent as-is with its own type.
   const raw = typeof Blob !== 'undefined' && body instanceof Blob
@@ -50,7 +50,7 @@ export async function http<T>(method: Method, path: string, schema: ZodType<T> |
   }
 
   if (schema === null) return undefined as T
-  const parsed = schema.safeParse(payload)
+  const parsed = safeParse(schema, payload)
   if (!parsed.success) {
     throw new ApiClientError('پاسخ سرور با قرارداد برنامه نمی‌خواند.', {
       code: 'INVALID_RESPONSE',
@@ -61,11 +61,11 @@ export async function http<T>(method: Method, path: string, schema: ZodType<T> |
   return parsed.data
 }
 
-export const get = <T>(path: string, schema: ZodType<T>) => http('GET', path, schema)
-export const post = <T>(path: string, schema: ZodType<T> | null, body?: unknown) => http('POST', path, schema, body ?? {})
-export const patch = <T>(path: string, schema: ZodType<T>, body: unknown) => http('PATCH', path, schema, body)
-export const put = <T>(path: string, schema: ZodType<T>, body: unknown) => http('PUT', path, schema, body)
-export const del = <T>(path: string, schema: ZodType<T> | null) => http('DELETE', path, schema)
+export const get = <T>(path: string, schema: $ZodType<T>) => http('GET', path, schema)
+export const post = <T>(path: string, schema: $ZodType<T> | null, body?: unknown) => http('POST', path, schema, body ?? {})
+export const patch = <T>(path: string, schema: $ZodType<T>, body: unknown) => http('PATCH', path, schema, body)
+export const put = <T>(path: string, schema: $ZodType<T>, body: unknown) => http('PUT', path, schema, body)
+export const del = <T>(path: string, schema: $ZodType<T> | null) => http('DELETE', path, schema)
 
 const persianMessages: Record<string, string> = {
   UNAUTHORIZED: 'لطفاً دوباره وارد حسابت شو.',

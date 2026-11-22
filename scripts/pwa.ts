@@ -28,6 +28,7 @@ export function pwaPlugins() {
         { name: 'شروع مطالعه', short_name: 'مطالعه', url: '/', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
         { name: 'پلنر', url: '/planner', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
         { name: 'دوستان و مطالعه‌ی زنده', short_name: 'دوستان', url: '/friends', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
+        { name: 'کتابخانۀ آفلاین', url: '/offline', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
       ],
     },
     workbox: {
@@ -41,7 +42,7 @@ export function pwaPlugins() {
         ...(process.env.VITE_TITLE_FONT_LICENSED === 'true' ? [] : ['**/fonts/licensed/**']),
       ],
       navigateFallback: '/index.html',
-      navigateFallbackDenylist: [/^\/api\//],
+      navigateFallbackDenylist: [/^\/api(?:\/|$)/],
       runtimeCaching: [{
         urlPattern: ({ sameOrigin, request, url }) =>
           sameOrigin && request.destination === 'image' && url.pathname.startsWith('/images/'),

@@ -80,6 +80,13 @@ export function createAuth(bindings: WorkerBindings) {
         '/sign-up/email': { window: 300, max: 5 },
       },
     },
+    account: {
+      additionalFields: {
+        // Retain the issuer written by Better Auth 1.7.2 so the existing
+        // NOT NULL column and credential lookup also support rollback.
+        issuer: { type: 'string', required: true, defaultValue: 'local:credential', input: false, returned: false },
+      },
+    },
     user: {
       additionalFields: {
         role: {

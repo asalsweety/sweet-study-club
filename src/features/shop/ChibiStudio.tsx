@@ -6,7 +6,8 @@ import { queryKeys, useChibi, useSettings } from '../../app/session'
 import QueryError from '../../components/QueryError'
 import { Button } from '../../components/ui/button'
 import {
-  chibiItems, chibiStyles, decorIds, defaultChibi, hairColors, minutesPerCoin, outfitIds, skinTones,
+  chibiAccessories, chibiItems, chibiStyles, decorIds, defaultChibi, defaultCustomization,
+  eyeColors, hairColors, hairStyles, minutesPerCoin, outfitIds, shirtColors, skinTones,
   type ChibiItemId, type ChibiLook, type ChibiUpdate,
 } from '../../shared/api/chibi'
 import { fa } from '../../shared/lib/format'
@@ -17,9 +18,28 @@ const companions = { asal: 'با عسل درس بخون', girl: 'چیبی دخت
 const companionPortraits = { girl: '/images/chibi-pack/girl.webp', boy: '/images/chibi-pack/boy.webp' }
 const skins = { light: 'روشن', warm: 'گندمی', deep: 'تیره' }
 const hair = { brown: 'قهوه‌ای', black: 'مشکی', auburn: 'مسی' }
+const hairstyles = { short: 'کوتاه', bob: 'تا شانه', buns: 'دو گوجه‌ای', ponytail: 'دم‌اسبی' }
+const eyes = { brown: 'قهوه‌ای', green: 'سبز', blue: 'آبی' }
+const shirts = { rose: 'صورتی', mint: 'نعنایی', sky: 'آبی آسمانی', honey: 'عسلی', lavender: 'یاسی' }
+const accessories = { none: 'بدون وسیله', glasses: 'عینک', 'star-clip': 'گیره ستاره‌ای', headphones: 'هدفون' }
 const selectClass = 'min-h-11 w-full min-w-0 rounded-xl border border-input bg-card px-3 text-base'
 
 type StudioAction = ChibiUpdate | { action: 'buy'; item: ChibiItemId }
+
+function AppearanceSelect<T extends string>({ label, options, names, value, change }: {
+  label: string
+  options: readonly T[]
+  names: Record<T, string>
+  value: T
+  change: (value: T) => void
+}) {
+  return <label className="grid gap-1 text-sm font-bold">
+    {label}
+    <select className={selectClass} value={value} onChange={(event) => change(event.target.value as T)}>
+      {options.map((id) => <option key={id} value={id}>{names[id]}</option>)}
+    </select>
+  </label>
+}
 
 export default function ChibiStudio() {
   const client = useQueryClient()
@@ -46,8 +66,10 @@ export default function ChibiStudio() {
   if (!chibi.data) return <QueryError error={chibi.error} retry={() => void chibi.refetch()} />
 
   const { appearance, coins, owned } = chibi.data
-  const look = draft ?? { companion: appearance.companion, skin: appearance.skin, hair: appearance.hair }
+  const look = draft ?? { companion: appearance.companion, skin: appearance.skin, hair: appearance.hair, customization: appearance.customization }
   const changed = look.companion !== appearance.companion || look.skin !== appearance.skin || look.hair !== appearance.hair
+    || JSON.stringify(look.customization ?? null) !== JSON.stringify(appearance.customization)
+  const custom = look.customization
   const showConfirmation = save.isSuccess && (save.variables.action !== 'look' || !changed)
 
   return (
@@ -63,7 +85,7 @@ export default function ChibiStudio() {
       </div>
 
       <div className="grid min-w-0 items-start gap-4 md:grid-cols-2">
-        <PixelStudyScene appearance={{ ...appearance, ...look }} scene={scene} isNight state="studying" className="h-auto w-full rounded-2xl" />
+        <PixelStudyScene appearance={{ ...appearance, ...look, customization: custom ?? null }} scene={scene} isNight state="studying" className="h-auto w-full rounded-2xl" />
         <form className="flex min-w-0 flex-col gap-3" onSubmit={(event) => {
           event.preventDefault()
           if (changed && !save.isPending) save.mutate({ action: 'look', look })
@@ -86,22 +108,24 @@ export default function ChibiStudio() {
               </label>
             </div>
           </fieldset>
-          {look.companion !== 'asal' && (
+          {look.companion !== 'asal' && <fieldset className="grid min-w-0 gap-3">
             <div className="grid grid-cols-2 gap-2">
-              <div className="grid gap-1 text-sm font-bold">
-                <label htmlFor="chibi-skin">رنگ پوست</label>
-                <select id="chibi-skin" className={selectClass} value={look.skin} onChange={(event) => setDraft({ ...look, skin: event.target.value as ChibiLook['skin'] })}>
-                  {skinTones.map((id) => <option key={id} value={id}>{skins[id]}</option>)}
-                </select>
-              </div>
-              <div className="grid gap-1 text-sm font-bold">
-                <label htmlFor="chibi-hair">رنگ مو</label>
-                <select id="chibi-hair" className={selectClass} value={look.hair} onChange={(event) => setDraft({ ...look, hair: event.target.value as ChibiLook['hair'] })}>
-                  {hairColors.map((id) => <option key={id} value={id}>{hair[id]}</option>)}
-                </select>
-              </div>
+              <AppearanceSelect label="رنگ پوست" options={skinTones} names={skins} value={look.skin} change={(skin) => setDraft({ ...look, skin })} />
+              <AppearanceSelect label="رنگ مو" options={hairColors} names={hair} value={look.hair} change={(hair) => setDraft({ ...look, hair })} />
             </div>
-          )}
+            <label className="flex min-h-11 items-center gap-2 rounded-xl border border-input bg-card px-3 text-sm font-bold">
+              <input type="checkbox" checked={Boolean(custom)} onChange={(event) => setDraft({
+                ...look, customization: event.target.checked ? { ...defaultCustomization, hairStyle: look.companion === 'boy' ? 'short' : 'bob' } : null,
+              })} />
+              شخصیت پیکسلی خودم را بسازم
+            </label>
+            {custom && <div className="grid grid-cols-2 gap-2">
+              <AppearanceSelect label="مدل مو" options={hairStyles} names={hairstyles} value={custom.hairStyle} change={(hairStyle) => setDraft({ ...look, customization: { ...custom, hairStyle } })} />
+              <AppearanceSelect label="رنگ چشم" options={eyeColors} names={eyes} value={custom.eyes} change={(eyes) => setDraft({ ...look, customization: { ...custom, eyes } })} />
+              <AppearanceSelect label="رنگ لباس پایه" options={shirtColors} names={shirts} value={custom.shirt} change={(shirt) => setDraft({ ...look, customization: { ...custom, shirt } })} />
+              <AppearanceSelect label="اکسسوری" options={chibiAccessories} names={accessories} value={custom.accessory} change={(accessory) => setDraft({ ...look, customization: { ...custom, accessory } })} />
+            </div>}
+          </fieldset>}
           <Button type="submit" disabled={!changed || save.isPending}>ذخیره‌ی همراه مطالعه</Button>
         </form>
       </div>

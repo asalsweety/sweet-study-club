@@ -73,6 +73,7 @@ export async function assertScheduledSessionOpen(db: D1Database, sessionId: stri
   if (now < Date.parse(session.startsAt) || now >= Date.parse(session.endsAt)) {
     throw conflict('PART_NOT_OPEN', 'This study part is not open right now.')
   }
+  return session
 }
 
 export async function createStudyPart(db: D1Database, input: UpsertStudyPartInput) {
