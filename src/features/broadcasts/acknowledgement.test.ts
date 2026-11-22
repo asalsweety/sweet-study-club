@@ -1,5 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest'
+import packageInfo from '../../../package.json'
 import { acknowledgeNotice, acknowledgeRelease, hasReadRelease, hasSeenNotice, noticeKey, pendingGuestRelease } from './acknowledgement'
+import { releaseNote } from './release-note'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -24,7 +26,10 @@ it('can close a notice when the browser blocks storage', () => {
 })
 
 it('carries a guest release acknowledgement into the first sign-in and still offers the update to another account', () => {
-  const id = 'release:current'
+  const id = releaseNote.id
+  expect(releaseNote.version).toBe(packageInfo.version)
+  expect(id).toBe(`release:v${packageInfo.version}`)
+  expect(releaseNote.name).toBe(`Sweet Study v${packageInfo.version}`)
   expect(hasReadRelease(null, id)).toBe(false)
   acknowledgeRelease(null, id)
   expect(hasReadRelease(null, id)).toBe(true)

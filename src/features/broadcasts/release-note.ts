@@ -1,7 +1,10 @@
-// Give each set of published notes its own ID so rebuilding a release keeps its acknowledgements.
+// Keep acknowledgements across rebuilds of the same public release.
+const version = '0.2.0'
 export const releaseNote = {
-  id: 'release:2026-11-study-tools',
-  title: 'چه چیزهایی در سوییت استادی تازه شده؟',
+  version,
+  id: `release:v${version}`,
+  name: `Sweet Study v${version}`,
+  title: 'مطالعهٔ آفلاین و گزارش روزانه',
   body: [
     '• مطالعه‌ات رو با ساعت، دقیقه و عنوان ثبت کن. توی گزارش روزانه هر جلسه رو جدا ببین و اگر اشتباهی بود، حذفش کن.',
     '• بسته‌های بخش «یادگیری» رو دانلود کن و بعداً بدون اینترنت بخون.',

@@ -61,7 +61,7 @@ export default function BroadcastPopups({ userId }: { userId: string | null }) {
       onOpenAutoFocus={() => { previousFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null }}
       onCloseAutoFocus={event => { event.preventDefault(); if (previousFocus.current?.isConnected) previousFocus.current.focus() }}>
       <DialogHeader className="text-right">
-        <span className="text-xs font-bold text-primary">{showRelease ? 'تازه‌های سوییت استادی' : broadcastTones[message.tone]}</span>
+        <span className="text-xs font-bold text-primary">{showRelease ? <bdi dir="ltr">{releaseNote.name}</bdi> : broadcastTones[message.tone]}</span>
         <DialogTitle className="break-words pe-6">{message.title}</DialogTitle>
         <DialogDescription className="whitespace-pre-wrap break-words text-start leading-7">{message.body}</DialogDescription>
       </DialogHeader>
