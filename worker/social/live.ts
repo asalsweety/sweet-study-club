@@ -93,23 +93,30 @@ export async function leaderboard(db: D1Database, me: string, period: PeriodKind
   const range = periodRanges(period, today).current
   const result = await db
     .prepare(
-      `SELECT u.id AS userId, u.name AS displayName, u.image AS avatarUrl, u.verified, s.bio,
-         (u.id IN (${friendIds})) AS isFriend, SUM(l.duration_seconds) AS seconds
-       FROM study_logs l
-       JOIN user u ON u.id = l.user_id
-       LEFT JOIN user_settings s ON s.user_id = u.id
-       WHERE l.ended_at IS NOT NULL AND l.started_at >= ?2 AND l.started_at < ?3
-         AND COALESCE(s.show_on_leaderboard, 1) = 1
-         AND u.id NOT IN (${blockedIds})
-         AND (?4 = 'everyone' OR u.id = ?1 OR u.id IN (${friendIds}))
-       GROUP BY u.id ORDER BY seconds DESC LIMIT 200`,
+      `WITH friends AS (${friendIds}), blocked AS (${blockedIds}),
+       totals AS (
+         SELECT l.user_id, SUM(l.duration_seconds) AS seconds
+         FROM study_logs l LEFT JOIN user_settings s ON s.user_id = l.user_id
+         WHERE l.ended_at IS NOT NULL AND l.duration_seconds > 0 AND l.started_at >= ?2 AND l.started_at < ?3
+           AND COALESCE(s.show_on_leaderboard, 1) = 1 AND l.user_id NOT IN blocked
+           AND (?4 = 'everyone' OR l.user_id = ?1 OR l.user_id IN friends)
+         GROUP BY l.user_id
+       ), ranked AS (
+         SELECT user_id, seconds, RANK() OVER (ORDER BY seconds DESC) AS rank,
+           ROW_NUMBER() OVER (ORDER BY seconds DESC, user_id) AS position
+         FROM totals
+       )
+       SELECT u.id AS userId, u.name AS displayName, u.image AS avatarUrl, u.verified, s.bio,
+         (u.id IN friends) AS isFriend, r.seconds, r.rank
+       FROM ranked r JOIN user u ON u.id = r.user_id LEFT JOIN user_settings s ON s.user_id = r.user_id
+       WHERE r.position <= 50 OR r.user_id = ?1
+       ORDER BY r.position`,
     )
     .bind(me, startOfTehranDay(range.from), startOfTehranDay(addDays(range.to, 1)), scope)
-    .all<Omit<LeaderboardEntry, 'rank' | 'isMe' | 'isFriend' | 'verified'> & { isFriend: number; verified: number }>()
+    .all<Omit<LeaderboardEntry, 'isMe' | 'isFriend' | 'verified'> & { isFriend: number; verified: number }>()
 
-  const ranked = result.results.map((row, index) => ({
+  const ranked = result.results.map((row) => ({
     ...row,
-    rank: index + 1,
     isMe: row.userId === me,
     isFriend: row.isFriend === 1,
     verified: row.verified === 1,
@@ -118,6 +125,7 @@ export async function leaderboard(db: D1Database, me: string, period: PeriodKind
   return {
     period,
     scope,
+    range,
     entries: ranked.slice(0, 50),
     me: ranked.find((entry) => entry.isMe) ?? null,
     optedIn: (settings?.shown ?? 1) === 1,

@@ -13,7 +13,10 @@ export default function InvitePage() {
   const client = useQueryClient()
   const accept = useMutation({
     mutationFn: () => api.social.acceptInvite(token),
-    onSuccess: (result) => client.setQueryData(queryKeys.friends, result),
+    onSuccess: (result) => {
+      client.setQueryData(queryKeys.friends, result)
+      void client.invalidateQueries({ queryKey: ['leaderboard'] })
+    },
   })
 
   useEffect(() => {

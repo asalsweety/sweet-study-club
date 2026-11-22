@@ -41,15 +41,22 @@ describe('periodStats', () => {
 })
 
 describe('periodRanges', () => {
-  it('starts weeks on Saturday and months on the first', () => {
+  it('starts weeks on Saturday', () => {
     // 2026-10-07 is a Wednesday; the Iranian week began Saturday 2026-10-03.
     expect(periodRanges('week', '2026-10-07')).toEqual({
       current: { from: '2026-10-03', to: '2026-10-09' },
       previous: { from: '2026-09-26', to: '2026-10-02' },
     })
+  })
+
+  it('uses full Persian months across Nowruz, including leap Esfand', () => {
     expect(periodRanges('month', '2026-03-15')).toEqual({
-      current: { from: '2026-03-01', to: '2026-03-31' },
-      previous: { from: '2026-02-01', to: '2026-02-28' },
+      current: { from: '2026-02-20', to: '2026-03-20' },
+      previous: { from: '2026-01-21', to: '2026-02-19' },
+    })
+    expect(periodRanges('month', '2025-03-21')).toEqual({
+      current: { from: '2025-03-21', to: '2025-04-20' },
+      previous: { from: '2025-02-19', to: '2025-03-20' },
     })
   })
 })

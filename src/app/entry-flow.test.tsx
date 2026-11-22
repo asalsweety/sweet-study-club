@@ -18,6 +18,7 @@ vi.mock('./session', () => ({
 vi.mock('../components/AppShell', () => ({ default: ({ children }: { children: React.ReactNode }) => <div data-testid="workspace">{children}</div> }))
 vi.mock('../features/auth/AuthScreen', () => ({ default: () => <h1>Account entry</h1> }))
 vi.mock('../features/presence/BackgroundServices', () => ({ default: () => null }))
+vi.mock('../features/broadcasts/BroadcastPopups', () => ({ default: ({ userId }: { userId: string }) => <div data-notice-user={userId} /> }))
 vi.mock('../pages/HomePage', () => ({ default: () => <h1>Today workspace</h1> }))
 vi.mock('../pages/LearningPage', () => ({ default: () => <h1>Learning destination</h1> }))
 vi.mock('../pages/OfflineLearningPage', () => ({ default: () => <h1>Offline library</h1> }))
@@ -36,11 +37,15 @@ describe('session-first routing', () => {
     expect(await render()).toContain('Today workspace')
   })
   it('keeps an authenticated deep-link destination', async () => {
-    expect(await render('/learn?tab=notebook')).toContain('Learning destination')
+    const html = await render('/learn?tab=notebook')
+    expect(html).toContain('Learning destination')
+    expect(html).toContain('data-notice-user="one"')
   })
   it('uses one account entry for signed-out deep links', async () => {
     state.session = { isPending: false, data: null }
-    expect(await render('/learn?tab=notebook')).toContain('Account entry')
+    const html = await render('/learn?tab=notebook')
+    expect(html).toContain('Account entry')
+    expect(html).not.toContain('data-notice-user')
   })
   it('opens the offline library without waiting for a session', async () => {
     state.session = { isPending: true }

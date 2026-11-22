@@ -114,7 +114,14 @@ export function percentChange(current: number, previous: number) {
 
 export type PeriodKind = 'day' | 'week' | 'month'
 
-/** Current and previous ranges; weeks start on Saturday as in Iran. */
+const persianDay = new Intl.DateTimeFormat('en-US-u-ca-persian', { day: 'numeric', timeZone: 'Asia/Tehran' })
+
+function startOfPersianMonth(date: string) {
+  const day = Number(persianDay.format(Date.parse(`${date}T12:00:00Z`)))
+  return addDays(date, 1 - day)
+}
+
+/** Tehran calendar ranges with Saturday weeks and Persian months. */
 export function periodRanges(kind: PeriodKind, today: string) {
   if (kind === 'day') {
     return { current: { from: today, to: today }, previous: { from: addDays(today, -1), to: addDays(today, -1) } }
@@ -124,11 +131,13 @@ export function periodRanges(kind: PeriodKind, today: string) {
     const from = addDays(today, -offset)
     return { current: { from, to: addDays(from, 6) }, previous: { from: addDays(from, -7), to: addDays(from, -1) } }
   }
-  const from = `${today.slice(0, 8)}01`
-  const previousFrom = `${addDays(from, -1).slice(0, 8)}01`
+  const from = startOfPersianMonth(today)
+  const previousEnd = addDays(from, -1)
+  // Every Persian month is 29–31 days long, so this lands in the following month.
+  const nextFrom = startOfPersianMonth(addDays(from, 31))
   return {
-    current: { from, to: addDays(`${addDays(from, 32).slice(0, 8)}01`, -1) },
-    previous: { from: previousFrom, to: addDays(from, -1) },
+    current: { from, to: addDays(nextFrom, -1) },
+    previous: { from: startOfPersianMonth(previousEnd), to: previousEnd },
   }
 }
 

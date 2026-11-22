@@ -3,6 +3,7 @@ import { buyChibiItemSchema, updateChibiSchema } from '../../src/shared/api/chib
 import { createOrderInputSchema, createPlanRequestInputSchema, productSchema } from '../../src/shared/api/shop'
 import { ApiError } from '../http/errors'
 import { readBody, userId } from '../http/validation'
+import { visibleBroadcasts } from '../shop/broadcasts'
 import * as chibi from '../shop/chibi'
 import * as shop from '../shop/service'
 import type { WorkerEnvironment } from '../types'
@@ -47,15 +48,8 @@ export function shopRoutes(requireSession: MiddlewareHandler<WorkerEnvironment>)
   })
 
   app.get('/broadcasts', async (c) => {
-    const result = await c.env.DB.prepare(
-      `SELECT id, title, body, created_at AS createdAt FROM broadcasts
-       WHERE expires_at IS NULL OR expires_at > ? ORDER BY created_at DESC LIMIT 5`,
-    )
-      .bind(Date.now())
-      .all<{ id: string; title: string; body: string; createdAt: number }>()
-    return c.json({
-      broadcasts: result.results.map((row) => ({ ...row, createdAt: new Date(row.createdAt).toISOString() })),
-    })
+    c.header('Cache-Control', 'private, no-store')
+    return c.json({ broadcasts: await visibleBroadcasts(c.env.DB) })
   })
 
   return app

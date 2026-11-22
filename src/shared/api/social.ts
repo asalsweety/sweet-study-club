@@ -77,6 +77,7 @@ export const leaderboardEntrySchema = personSchema.extend({
 export const leaderboardResponseSchema = z.object({
   period: leaderboardPeriodSchema,
   scope: liveScopeSchema,
+  range: z.object({ from: z.iso.date(), to: z.iso.date() }),
   entries: z.array(leaderboardEntrySchema),
   me: leaderboardEntrySchema.nullable(),
   optedIn: z.boolean(),

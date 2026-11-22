@@ -9,13 +9,19 @@ import { appRoutes } from '../app/navigation/routes'
 import { queryKeys } from '../app/session'
 import type { PeriodKind } from '../shared/api/progress'
 import type { LeaderboardEntry } from '../shared/api/social'
-import { fa, formatDuration } from '../shared/lib/format'
+import { fa, formatDuration, jalaliDay } from '../shared/lib/format'
 import { cn } from '../shared/lib/utils'
 import './club-reports.css'
 import Avatar from '../components/Avatar'
 import VerifiedBadge from '../components/VerifiedBadge'
 
 const rankColors = ['bg-primary text-primary-foreground', 'bg-[var(--warning-soft)] text-[var(--warning-text)]', 'bg-secondary text-secondary-foreground']
+
+function studyTime(seconds: number) {
+  const rest = seconds % 60
+  if (seconds < 60) return `${fa(seconds)} ثانیه`
+  return rest ? `${formatDuration(seconds)} و ${fa(rest)} ثانیه` : formatDuration(seconds)
+}
 
 function Podium({ entries }: { entries: LeaderboardEntry[] }) {
   return <div className="grid grid-cols-3 items-stretch gap-2 lg:gap-4">
@@ -27,7 +33,7 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
           <Avatar name={entry.displayName} url={entry.avatarUrl} size="sm" />
         </div>
         <p className="flex min-w-0 items-center gap-1 font-bold"><span className="truncate">{entry.displayName}{entry.isMe && ' (تو)'}</span><VerifiedBadge verified={entry.verified} size={14} /></p>
-        <p className="text-xs font-bold">{formatDuration(entry.seconds)}</p>
+        <p className="text-xs font-bold">{studyTime(entry.seconds)}</p>
       </div>
     ) : <div key={index} />)}
   </div>
@@ -36,13 +42,18 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
 export default function RankingPage() {
   const [period, setPeriod] = useState<PeriodKind>('week')
   const [scope, setScope] = useState<'friends' | 'everyone'>('everyone')
-  const board = useQuery({ queryKey: queryKeys.leaderboard(period, scope), queryFn: () => api.social.leaderboard(period, scope) })
+  const board = useQuery({
+    queryKey: queryKeys.leaderboard(period, scope),
+    queryFn: () => api.social.leaderboard(period, scope),
+    refetchInterval: 60_000,
+  })
   const data = board.data
+  const dates = data ? (period === 'day' ? jalaliDay(data.range.from) : `${jalaliDay(data.range.from)} تا ${jalaliDay(data.range.to)}`) : ''
 
   return (
     <div className="club-report relative flex flex-col gap-5">
       <img src="/images/figma/social-league-library.webp" alt="" width={69} height={69} className="league-title-art" />
-      <PageHeading eyebrow="انگیزۀ بیشتر، کنار هم" title="لیگ مطالعه" description="رقابتی دوستانه؛ فقط کسانی اینجا هستند که خودشان انتخاب کرده‌اند." action={
+      <PageHeading {...(dates && { eyebrow: dates })} title="لیگ مطالعه" description="زمان تایمر بعد از پایان و ذخیرهٔ جلسه، و زمان مطالعهٔ دستی بعد از ثبت، به روز شروع جلسه به وقت تهران اضافه می‌شود. زمان‌های برابر رتبهٔ مشترک دارند." action={
         <div className="club-tabs league-tabs">
           <div className="contents">
             {([['day', 'امروز'], ['week', 'هفته'], ['month', 'ماه']] as const).map(([value, label]) => (
@@ -75,12 +86,12 @@ export default function RankingPage() {
                 <span className="font-bold">{fa(entry.rank)} · </span>
                 <Avatar name={entry.displayName} url={entry.avatarUrl} size="sm" />
                 <span className="flex min-w-0 flex-1 items-center gap-1 font-bold"><span className="truncate">{entry.displayName}</span><VerifiedBadge verified={entry.verified} size={14} />{entry.isFriend && <span className="shrink-0"> · دوست</span>}</span>
-                <span className="text-xs font-bold tabular-nums text-primary">{formatDuration(entry.seconds)}</span>
+                <span className="text-xs font-bold tabular-nums text-primary">{studyTime(entry.seconds)}</span>
               </li>
             ))}
           </ol>}
-          {data.me && data.me.rank > 50 && (
-            <p className="glass rounded-2xl p-4 text-center text-sm font-bold">رتبه‌ی تو: {fa(data.me.rank)} · {formatDuration(data.me.seconds)}</p>
+          {data.me && !data.entries.some(entry => entry.isMe) && (
+            <p className="glass rounded-2xl p-4 text-center text-sm font-bold">رتبه‌ی تو: {fa(data.me.rank)} · {studyTime(data.me.seconds)}</p>
           )}
         </>
       ) : (

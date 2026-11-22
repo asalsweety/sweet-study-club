@@ -123,9 +123,32 @@ export const broadcastFieldsSchema = z.object({
   title: z.string().trim().min(1).max(120),
   body: z.string().trim().min(1).max(2000),
 })
-export const broadcastInputSchema = broadcastFieldsSchema.extend({ expiresAt: z.iso.datetime().nullable() })
+const broadcastTone = z.enum(['notice', 'maintenance', 'important'])
+const broadcastDestination = z.enum(['planner', 'learning', 'shop', 'feedback', 'ranking']).nullable()
+export const simpleBroadcastSchema = broadcastFieldsSchema.extend({ expiresAt: z.iso.datetime().nullable() }).strict()
+const broadcastEditorSchema = simpleBroadcastSchema.extend({
+  startsAt: z.iso.datetime().nullable(),
+  published: z.boolean(),
+  pinned: z.boolean(),
+  popup: z.boolean().optional(),
+  tone: broadcastTone,
+  destination: broadcastDestination,
+})
+export const broadcastInputSchema = broadcastEditorSchema.refine(
+  ({ startsAt, expiresAt }) => !startsAt || !expiresAt || Date.parse(startsAt) < Date.parse(expiresAt),
+  { path: ['expiresAt'], message: 'زمان پایان باید بعد از شروع باشد.' },
+)
 export const adminBroadcastsSchema = z.object({
-  broadcasts: z.array(broadcastInputSchema.extend({ id: z.string(), createdAt: z.iso.datetime() })),
+  broadcasts: z.array(broadcastEditorSchema.extend({
+    id: z.string(), createdAt: z.iso.datetime(), popup: z.boolean().default(false), revision: z.number().int().positive().default(1),
+  })),
+})
+export const broadcastsSchema = z.object({
+  broadcasts: z.array(broadcastFieldsSchema.extend({
+    id: z.string(), createdAt: z.iso.datetime(), expiresAt: z.iso.datetime().nullable().default(null),
+    tone: broadcastTone.default('notice'), pinned: z.boolean().default(false), destination: broadcastDestination.default(null),
+    popup: z.boolean().default(false), revision: z.number().int().positive().default(1),
+  })),
 })
 
 export type Delivery = z.infer<typeof deliverySchema>

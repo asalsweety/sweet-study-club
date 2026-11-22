@@ -27,6 +27,7 @@ import {
 import { settingsResponseSchema, subjectsResponseSchema, type UpdateSettingsInput, type UpsertSubjectInput } from '../shared/api/settings'
 import {
   adminBroadcastsSchema,
+  broadcastsSchema,
   adminProductsResponseSchema,
   entitlementsResponseSchema,
   orderResponseSchema,
@@ -58,9 +59,6 @@ import {
 
 const timer = z.object({ timer: studyTimerStateResponseSchema.shape.timer.unwrap() })
 const friendResult = friendsResponseSchema.extend({ status: z.enum(['pending', 'accepted']) })
-const broadcastsSchema = z.object({
-  broadcasts: z.array(z.object({ id: z.string(), title: z.string(), body: z.string(), createdAt: z.string() })),
-})
 const adminOverviewSchema = z.object({
   users: z.number(),
   activeToday: z.number(),
@@ -210,5 +208,6 @@ export const api = {
       ? http('PUT', `/api/admin/broadcasts/${encodeURIComponent(id)}`, null, input)
       : post('/api/admin/broadcasts', null, input),
     deleteBroadcast: (id: string) => del(`/api/admin/broadcasts/${encodeURIComponent(id)}`, null),
+    hideBroadcast: (id: string) => http('PATCH', `/api/admin/broadcasts/${encodeURIComponent(id)}`, null, { published: false }),
   },
 }

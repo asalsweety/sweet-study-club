@@ -17,6 +17,7 @@ export default function AddFriendPanel() {
     mutationFn: () => api.social.addByCode(code.trim().toUpperCase()),
     onSuccess: (result) => {
       client.setQueryData(queryKeys.friends, result)
+      if (result.status === 'accepted') void client.invalidateQueries({ queryKey: ['leaderboard'] })
       setCode('')
       setNotice(result.status === 'accepted' ? 'حالا با هم دوست هستید 💞' : 'درخواست دوستی فرستاده شد.')
     },

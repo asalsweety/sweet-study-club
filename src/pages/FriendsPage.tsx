@@ -21,6 +21,7 @@ export default function FriendsPage() {
   const apply = (next: FriendsResponse) => {
     client.setQueryData(queryKeys.friends, next)
     void client.invalidateQueries({ queryKey: ['live'] })
+    void client.invalidateQueries({ queryKey: ['leaderboard'] })
   }
   const respond = useMutation({ mutationFn: (v: { userId: string; accept: boolean }) => api.social.respond(v.userId, v.accept), onSuccess: apply })
   const remove = useMutation({ mutationFn: api.social.remove, onSuccess: apply })

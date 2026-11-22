@@ -18,6 +18,7 @@ const loadFocus = () => import('./pages/FocusPage')
 const AppShell = lazy(loadShell)
 const AuthScreen = lazy(() => import('./features/auth/AuthScreen'))
 const BackgroundServices = lazy(() => import('./features/presence/BackgroundServices'))
+const BroadcastPopups = lazy(() => import('./features/broadcasts/BroadcastPopups'))
 const SessionCelebration = lazy(() => import('./features/study/SessionCelebration'))
 // Confirmations are only requested after sign-in; keep the dialog code out of the entry bundle.
 const ConfirmHost = lazy(() => import('./components/ConfirmHost'))
@@ -135,9 +136,10 @@ function AccountContent({ online }: { online: boolean }) {
   if (profile.isError && !profile.data) return <ConnectionProblem profile retry={() => void profile.refetch()} pending={profile.isFetching} />
   if (!profile.data) return <FullScreenLoader label="در حال آماده‌کردن پروفایل..." />
   if (settings.isPending) return <FullScreenLoader label="در حال آماده‌کردن پروفایل..." />
+  const popups = <Suspense fallback={null}><BroadcastPopups key={profile.data.id} userId={profile.data.id} /></Suspense>
   // First run (or an account from before profiles existed): ask who the learner is.
   if (settings.data && !settings.data.educationGroup && pathname !== '/welcome') {
-    return <Suspense fallback={<FullScreenLoader label="در حال بارگذاری..." />}><OnboardingFlow settings={settings.data} /></Suspense>
+    return <Suspense fallback={<FullScreenLoader label="در حال بارگذاری..." />}><OnboardingFlow settings={settings.data} />{popups}</Suspense>
   }
 
   return (
@@ -170,6 +172,7 @@ function AccountContent({ online }: { online: boolean }) {
         />
       </Routes>
       <Suspense fallback={null}><BackgroundServices /></Suspense>
+      {popups}
       <SessionDialogs />
     </Suspense>
   )

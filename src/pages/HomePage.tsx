@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, BookOpen, CalendarDays, Clock3, Flame, GraduationCap, Megaphone, Target, UsersRound } from 'lucide-react'
+import { ArrowLeft, BookOpen, CalendarDays, Clock3, Flame, GraduationCap, Target, UsersRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '../app/api'
@@ -14,6 +14,7 @@ import GoalRing from '../components/GoalRing'
 import PageHeading from '../components/PageHeading'
 import QueryError from '../components/QueryError'
 import ActiveTimerCard from '../features/study/ActiveTimerCard'
+import BroadcastCard from '../features/broadcasts/BroadcastCard'
 import DailyStudyLog from '../features/study/DailyStudyLog'
 import FinishSessionSheet from '../features/study/FinishSessionSheet'
 import StartStudySheet from '../features/study/StartStudySheet'
@@ -60,7 +61,8 @@ export default function HomePage({ profile }: { profile: UserProfile }) {
   const schedule = useQuery({ queryKey: queryKeys.schedule(today), queryFn: () => api.schedule.day(today) })
   const progress = useQuery({ queryKey: queryKeys.progress('week'), queryFn: () => api.progress.period('week') })
   const gamification = useQuery({ queryKey: queryKeys.gamification, queryFn: api.progress.gamification })
-  const broadcasts = useQuery({ queryKey: queryKeys.broadcasts, queryFn: api.shop.broadcasts, staleTime: 5 * 60_000 })
+  const broadcasts = useQuery({ queryKey: queryKeys.broadcasts, queryFn: api.shop.broadcasts })
+  const visibleBroadcasts = broadcasts.data?.filter(item => !item.expiresAt || Date.parse(item.expiresAt) > now)
   const live = useQuery({ queryKey: queryKeys.live('friends'), queryFn: () => api.social.live('friends'), staleTime: 20_000 })
   const [params, setParams] = useSearchParams()
   const [starting, setStarting] = useState(false)
@@ -113,6 +115,9 @@ export default function HomePage({ profile }: { profile: UserProfile }) {
       description={active ? 'همراهت کنار میز پیکسلی‌اش با تو مشغول مطالعه است.' : 'امروز ' + fa(todayMinutes) + ' دقیقه مطالعه کردی · ' + fa(remaining) + ' دقیقه تا هدف'}
       action={openPart && !active && <button disabled={timer.isLoading || Boolean(timer.error)} onClick={() => startPart(openPart.id)} className="today-open-part">پارت باشگاه باز است · الان شروع کن</button>}
     />
+    {Boolean(visibleBroadcasts?.length) && <section className="grid min-w-0 gap-2" aria-label="اطلاعیه‌های باشگاه">
+      {visibleBroadcasts?.map(message => <BroadcastCard key={message.id} message={message} />)}
+    </section>}
     {timer.error && <QueryError error={timer.error} retry={() => void timer.refetch()} />}
     <div className="today-dashboard">
       <div className="today-top">
@@ -161,7 +166,6 @@ export default function HomePage({ profile }: { profile: UserProfile }) {
       <Link to={appRoutes.planner} className="quick-link"><CalendarDays size={19} />روزت را بچین<ArrowLeft size={16} /></Link>
       <Link to={appRoutes.learning} className="quick-link"><BookOpen size={19} />چیزی تازه یاد بگیر<ArrowLeft size={16} /></Link>
     </section>
-    {broadcasts.data?.slice(0, 1).map(item => <aside key={item.id} className="surface p-5"><h2 className="flex gap-2 font-bold"><Megaphone size={18} />{item.title}</h2><p>{item.body}</p></aside>)}
     <FinishSessionSheet open={finishing} onOpenChange={setFinishing} timer={timer} onFinished={() => setFinishing(false)} />
   </div>
 }
