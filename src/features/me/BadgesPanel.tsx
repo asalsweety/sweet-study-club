@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { Medal } from 'lucide-react'
 import { api } from '../../app/api'
+import QueryError from '../../components/QueryError'
+import { useOnlineStatus } from '../../app/pwa/online-status'
 import { queryKeys } from '../../app/session'
 import { fa, jalaliShort } from '../../shared/lib/format'
 import { cn } from '../../shared/lib/utils'
@@ -13,7 +15,11 @@ const tierRing = {
 }
 
 export default function BadgesPanel() {
-  const data = useQuery({ queryKey: queryKeys.gamification, queryFn: api.progress.gamification }).data
+  const online = useOnlineStatus()
+  const query = useQuery({ queryKey: queryKeys.gamification, queryFn: api.progress.gamification })
+  const data = query.data
+  if (!data && !online && (query.isError || query.fetchStatus === 'paused')) return <p className="surface p-5 text-sm text-muted-foreground">نشان‌ها هنوز روی این دستگاه ذخیره نشده‌اند.</p>
+  if (!data && query.isError) return <QueryError error={query.error} retry={() => void query.refetch()} />
   if (!data) return <div className="skeleton h-72 rounded-2xl" />
   const earned = data.badges.filter((badge) => badge.earned).length
 

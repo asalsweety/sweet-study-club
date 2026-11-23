@@ -2,8 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowRight, Check, CloudOff, LoaderCircle, Plus, Printer, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { api } from '../../app/api'
 import { useSession } from '../../app/session'
+import { useOnlineStatus } from '../../app/pwa/online-status'
+import { createOfflineSheet, deleteOfflineSheet, getOfflineSheet, listOfflineSheets, updateOfflineSheet } from '../planner/offline-planner'
+import { sheetDiff } from '../planner/planner-journal'
 import QueryError from '../../components/QueryError'
 import { Button } from '../../components/ui/button'
 import { errorMessage } from '../../shared/api/http'
@@ -15,8 +17,8 @@ import { clearSheetDraft, createSheetSaveQueue, keepSheetDraft, readSheetDraft, 
 import { SheetHeader, templates } from './templates'
 import './sheets.css'
 
-const sheetsKey = ['planner-sheets'] as const
-const sheetKey = (id: string) => ['planner-sheets', id] as const
+const sheetsKey = (member: string) => ['planner-sheets', member] as const
+const sheetKey = (member: string, id: string) => ['planner-sheets', member, id] as const
 const dateFormat = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 
 export default function SheetsView() {
@@ -30,20 +32,22 @@ export default function SheetsView() {
     next.set('view', 'sheets')
     return next
   }), [setParams])
-  return openId && memberId ? <SheetEditor id={openId} memberId={memberId} onClose={() => open(null)} /> : <SheetLibrary onOpen={open} />
+  if (!memberId) return null
+  return openId ? <SheetEditor id={openId} memberId={memberId} onClose={() => open(null)} /> : <SheetLibrary member={memberId} onOpen={open} />
 }
 
-function SheetLibrary({ onOpen }: { onOpen: (id: string) => void }) {
+function SheetLibrary({ member, onOpen }: { member: string; onOpen: (id: string) => void }) {
   const client = useQueryClient()
-  const sheets = useQuery({ queryKey: sheetsKey, queryFn: api.sheets.list })
+  const online = useOnlineStatus()
+  const sheets = useQuery({ queryKey: sheetsKey(member), queryFn: () => listOfflineSheets(member), networkMode: 'always' })
   const create = useMutation({
-    mutationFn: api.sheets.create,
+    mutationFn: (kind: SheetKind) => createOfflineSheet(member, kind, defaultTitle(kind)),
     networkMode: 'always',
     onSuccess: (sheet) => {
-      client.setQueryData(sheetKey(sheet.id), sheet)
-      client.setQueryData<SheetSummary[]>(sheetsKey, (current) =>
+      client.setQueryData(sheetKey(member, sheet.id), sheet)
+      client.setQueryData<SheetSummary[]>(sheetsKey(member), (current) =>
         current && [sheetSummarySchema.parse(sheet), ...current.filter((item) => item.id !== sheet.id)])
-      void client.invalidateQueries({ queryKey: sheetsKey, exact: true })
+      void client.invalidateQueries({ queryKey: sheetsKey(member), exact: true })
       onOpen(sheet.id)
     },
   })
@@ -57,13 +61,13 @@ function SheetLibrary({ onOpen }: { onOpen: (id: string) => void }) {
             const template = templates[kind]
             const Icon = template.icon
             return (
-              <button key={kind} type="button" className="sheet-template" disabled={create.isPending} onClick={() => create.mutate({ kind, id: crypto.randomUUID() })}>
+              <button key={kind} type="button" className="sheet-template" disabled={create.isPending} onClick={() => create.mutate(kind)}>
                 <span className="sheet-template-icon"><Icon size={20} /></span>
                 <span className="min-w-0 flex-1 text-right">
                   <span className="block text-sm font-bold">{defaultTitle(kind)}</span>
                   <span className="block text-xs leading-6 text-muted-foreground">{template.description}</span>
                 </span>
-                {create.isPending && create.variables?.kind === kind ? <LoaderCircle size={18} className="animate-spin" /> : <Plus size={18} className="text-[var(--primary-ink)]" />}
+                {create.isPending && create.variables === kind ? <LoaderCircle size={18} className="animate-spin" /> : <Plus size={18} className="text-[var(--primary-ink)]" />}
               </button>
             )
           })}
@@ -76,7 +80,7 @@ function SheetLibrary({ onOpen }: { onOpen: (id: string) => void }) {
         {sheets.isError && <div className="mt-3"><QueryError error={sheets.error} retry={() => void sheets.refetch()} /></div>}
         <ul className="mt-3 grid gap-2">
           {sheets.isPending && Array.from({ length: 3 }, (_, i) => <li key={i} className="skeleton h-16 rounded-2xl" />)}
-          {sheets.data?.length === 0 && <li className="rounded-2xl bg-muted/40 p-6 text-center text-sm text-muted-foreground">هنوز صفحه‌ای نساختی. از بالا یک برگه انتخاب کن.</li>}
+          {sheets.data?.length === 0 && <li className="rounded-2xl bg-muted/40 p-6 text-center text-sm text-muted-foreground">{online ? 'هنوز صفحه‌ای نساختی.' : 'روی این دستگاه برگه‌ای برای نمایش نیست.'} از بالا یک برگه انتخاب کن.</li>}
           {sheets.data?.map((sheet) => {
             const Icon = templates[sheet.kind].icon
             return (
@@ -109,33 +113,38 @@ const defaultTitles: Record<SheetKind, string> = {
 const defaultTitle = (kind: SheetKind) => defaultTitles[kind]
 
 function SheetEditor({ id, memberId, onClose }: { id: string; memberId: string; onClose: () => void }) {
-  const sheet = useQuery({ queryKey: sheetKey(id), queryFn: () => api.sheets.get(id), staleTime: Infinity })
+  const sheet = useQuery({ queryKey: sheetKey(memberId, id), queryFn: () => getOfflineSheet(memberId, id), networkMode: 'always' })
   if (sheet.isError) return <div className="grid gap-4"><BackButton onClose={onClose} /><QueryError error={sheet.error} retry={() => void sheet.refetch()} /></div>
   if (!sheet.data) return <div className="skeleton h-[70vh] rounded-3xl" aria-label="در حال بارگذاری" />
   const draftKey = `planner-sheet-draft:${memberId}:${id}`
-  return <LoadedEditor key={draftKey} sheet={sheet.data} draftKey={draftKey} onClose={onClose} />
+  return <LoadedEditor key={draftKey} member={memberId} sheet={sheet.data} draftKey={draftKey} onClose={onClose} />
 }
 
 function BackButton({ onClose }: { onClose: () => void }) {
   return <Button variant="ghost" onClick={onClose} className="sheet-back w-fit" aria-label="همۀ صفحه‌ها"><ArrowRight /><span className="sheet-back-text">همۀ صفحه‌ها</span></Button>
 }
 
-function LoadedEditor({ sheet, draftKey, onClose }: { sheet: Sheet; draftKey: string; onClose: () => void }) {
+function LoadedEditor({ sheet, member, draftKey, onClose }: { sheet: Sheet; member: string; draftKey: string; onClose: () => void }) {
   const client = useQueryClient()
+  const online = useOnlineStatus()
   const [initial] = useState(() => readSheetDraft(draftKey))
   const [draft, setDraft] = useState<SheetDraft>(initial ?? { data: sheet.data, title: sheet.title })
   const [status, setStatus] = useState<SheetSaveStatus>({ kind: initial ? 'dirty' : 'saved' })
   const latest = useRef(draft)
+  const lastSaved = useRef<SheetDraft>({ title: sheet.title, data: sheet.data })
   const deleted = useRef(false)
   const kept = useRef(Boolean(initial))
   const timer = useRef<number | undefined>(undefined)
 
   const [saves] = useState(() => createSheetSaveQueue(initial, async (next) => {
     const title = next.title.trim() || defaultTitle(sheet.kind)
-    const { updatedAt } = await api.sheets.update(sheet.id, { data: next.data, title })
+    const updatedAt = Date.now()
+    const value = { ...sheet, data: next.data, title, updatedAt }
+    await updateOfflineSheet(member, value, sheetDiff(lastSaved.current, value))
+    lastSaved.current = { data: next.data, title }
     if (deleted.current) return
-    client.setQueryData(sheetKey(sheet.id), { ...sheet, data: next.data, title, updatedAt })
-    client.setQueryData<SheetSummary[]>(sheetsKey, (current) => {
+    client.setQueryData(sheetKey(member, sheet.id), value)
+    client.setQueryData<SheetSummary[]>(sheetsKey(member), (current) => {
       const updated = current?.find((item) => item.id === sheet.id)
       return updated && current ? [{ ...updated, title, updatedAt }, ...current.filter((item) => item.id !== sheet.id)] : current
     })
@@ -184,13 +193,18 @@ function LoadedEditor({ sheet, draftKey, onClose }: { sheet: Sheet; draftKey: st
   }
 
   const remove = useMutation({
-    mutationFn: () => api.sheets.remove(sheet.id),
+    networkMode: 'always',
+    mutationFn: async () => {
+      window.clearTimeout(timer.current)
+      await saves.flush()
+      await deleteOfflineSheet(member, sheet.id)
+    },
     onSuccess: () => {
       deleted.current = true
       saves.discard()
       clearSheetDraft(draftKey)
-      client.removeQueries({ queryKey: sheetKey(sheet.id) })
-      void client.invalidateQueries({ queryKey: sheetsKey, exact: true })
+      client.removeQueries({ queryKey: sheetKey(member, sheet.id) })
+      void client.invalidateQueries({ queryKey: sheetsKey(member), exact: true })
       toast('صفحه حذف شد.')
       onClose()
     },
@@ -208,7 +222,7 @@ function LoadedEditor({ sheet, draftKey, onClose }: { sheet: Sheet; draftKey: st
         <BackButton onClose={() => void close()} />
         <input className="sheet-title-input" value={draft.title} maxLength={80} aria-label="نام صفحه" onChange={(event) => schedule({ data: latest.current.data, title: event.target.value })} />
         <span className="sheet-save" role="status" data-state={status.kind}>
-          {status.kind === 'saved' && <><Check size={14} />ذخیره شد</>}
+          {status.kind === 'saved' && <><Check size={14} />{online ? 'ذخیره شد' : 'روی این دستگاه ذخیره شد'}</>}
           {(status.kind === 'saving' || status.kind === 'dirty') && <><LoaderCircle size={14} className="animate-spin" />در حال ذخیره…</>}
           {status.kind === 'error' && <button type="button" onClick={() => void saves.flush()} aria-label="تلاش دوباره برای ذخیره"><CloudOff size={14} />تلاش دوباره</button>}
         </span>

@@ -1,5 +1,6 @@
 import { createMiddleware } from 'hono/factory'
 import { getAuthSession } from '../auth'
+import { conflict } from '../http/errors'
 import type { WorkerBindings, WorkerEnvironment } from '../types'
 
 export type SessionIdentity = {
@@ -36,6 +37,10 @@ export function createRequireSession(
         )
       }
 
+      const expectedAccount = context.req.header('X-SweetStudy-Account')
+      if (expectedAccount !== undefined && expectedAccount !== session.user.id) {
+        throw conflict('ACCOUNT_CHANGED', 'حساب کاربری تغییر کرده است. دوباره حساب را بررسی کن.')
+      }
       context.set('authenticatedUserId', session.user.id)
       await next()
     },

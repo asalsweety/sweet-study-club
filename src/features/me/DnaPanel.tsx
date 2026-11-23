@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import QueryError from '../../components/QueryError'
 import { Dna } from 'lucide-react'
 import { api } from '../../app/api'
+import { useOnlineStatus } from '../../app/pwa/online-status'
 import { queryKeys } from '../../app/session'
 import { fa } from '../../shared/lib/format'
 
@@ -21,8 +22,10 @@ const styles = {
 } as const
 
 export default function DnaPanel({ compact = false }: { compact?: boolean }) {
+  const online = useOnlineStatus()
   const query = useQuery({ queryKey: queryKeys.dna, queryFn: api.progress.dna })
   const dna = query.data
+  if (!dna && !online && (query.isError || query.fetchStatus === 'paused')) return <p className="surface p-5 text-sm text-muted-foreground">الگوی مطالعه هنوز روی این دستگاه ذخیره نشده است.</p>
   if (query.isError && !dna) return <QueryError error={query.error} retry={() => void query.refetch()} />
   if (!dna) return <div className="skeleton h-72 rounded-2xl" />
   const type = chronotypes[dna.chronotype]

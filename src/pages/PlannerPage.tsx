@@ -4,9 +4,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Bell, ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from 'lucide-react'
 import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { api } from '../app/api'
+import { useOnlineStatus } from '../app/pwa/online-status'
 import { plannerTitle } from '../app/navigation/items'
-import { queryKeys } from '../app/session'
+import { queryKeys, useSession } from '../app/session'
 import type { PlannerItem } from '../shared/api/planner'
 import { errorMessage } from '../shared/api/http'
 import { clockTime, fa, jalaliDay, jalaliShort, weekdayName } from '../shared/lib/format'
@@ -15,6 +15,7 @@ import { cn } from '../shared/lib/utils'
 import { confirmAction } from '../shared/lib/confirm'
 import { Button } from '../components/ui/button'
 import PlannerItemEditor, { type PlannerDraft } from '../features/planner/PlannerItemEditor'
+import { createOfflineTask, deleteOfflineTask, listOfflineTasks, onPlannerChange, plannerPending, retryPlanner, syncOfflinePlanner, updateOfflineTask } from '../features/planner/offline-planner'
 
 const weekdays = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج']
 const SheetsView = lazy(() => import('../features/sheets/SheetsView'))
@@ -22,6 +23,7 @@ const SheetsView = lazy(() => import('../features/sheets/SheetsView'))
 /** Two views: day-to-day tasks, and the fillable Sweet Study planner sheets. */
 export default function PlannerPage({ displayName }: { displayName: string }) {
   const [params] = useSearchParams()
+  const member = useSession().data?.user.id
   const sheets = params.get('view') === 'sheets' || params.has('sheet')
   const tabs = (
     <nav className="section-tabs" aria-label="بخش‌های برنامه">
@@ -29,16 +31,42 @@ export default function PlannerPage({ displayName }: { displayName: string }) {
       <Link to="?view=sheets" aria-current={sheets ? 'page' : undefined}>دفتر پلنر</Link>
     </nav>
   )
-  if (!sheets) return <PlannerTasks displayName={displayName} tabs={tabs} />
+  if (!member) return null
+  if (!sheets) return <><PlannerSyncStatus member={member} /><PlannerTasks key={member} member={member} displayName={displayName} tabs={tabs} /></>
   return (
     <div className="grid gap-6">
+      <PlannerSyncStatus member={member} />
       {!params.has('sheet') && <PageHeading eyebrow="دفتر برنامه‌ریزی Sweet Study" title="دفتر پلنر" description="برگه‌های پلنر را همین‌جا پر کن؛ هر صفحه خودکار ذخیره می‌شود." action={tabs} />}
       <Suspense fallback={<div className="skeleton h-96 rounded-2xl" aria-label="در حال بارگذاری" />}><SheetsView /></Suspense>
     </div>
   )
 }
 
-function PlannerTasks({ displayName, tabs }: { displayName: string; tabs: ReactNode }) {
+function PlannerSyncStatus({ member }: { member: string }) {
+  const online = useOnlineStatus()
+  const client = useQueryClient()
+  const key = ['planner-pending', member]
+  const { data } = useQuery({ queryKey: key, queryFn: () => plannerPending(member), networkMode: 'always', retry: false })
+  useEffect(() => {
+    void syncOfflinePlanner(member)
+    return onPlannerChange(member, () => {
+      for (const prefix of ['planner-pending', 'planner', 'planner-sheets']) void client.invalidateQueries({ queryKey: [prefix, member] })
+      void client.invalidateQueries({ queryKey: queryKeys.reminders })
+    })
+  }, [client, member, online])
+  const failed = data?.failed
+  if (online && !data?.count) return null
+  return <aside role="status" className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-muted p-3 text-sm">
+    <span>{!online && 'آفلاین هستی. '}{data?.count ? `${fa(data.count)} تغییر روی این دستگاه در انتظار همگام‌سازی است.` : 'تغییرات این دستگاه پس از اتصال فرستاده می‌شوند.'}</span>
+    {failed && <span>{failed.error}</span>}
+    {online && <Button variant="outline" size="sm" onClick={() => void retryPlanner(member)}>تلاش دوباره</Button>}
+    {failed && <Button variant="ghost" size="sm" onClick={async () => {
+      if (await confirmAction({ title: 'کنار گذاشتن تغییرات ارسال‌نشده', description: 'تغییرات محلی این مورد کنار گذاشته شوند؟', confirmLabel: 'کنار گذاشتن' })) await retryPlanner(member, failed.id)
+    }}>کنار گذاشتن تغییرات این مورد</Button>}
+  </aside>
+}
+
+function PlannerTasks({ member, displayName, tabs }: { member: string; displayName: string; tabs: ReactNode }) {
   const client = useQueryClient()
   const today = tehranClock(Date.now()).date
   const [selected, setSelected] = useState(today)
@@ -54,8 +82,9 @@ function PlannerTasks({ displayName, tabs }: { displayName: string; tabs: ReactN
   }, [params, setParams, today])
   const from = anchor
   const to = addDays(anchor, 34)
-  const key = queryKeys.planner(from, to)
-  const items = useQuery({ queryKey: key, queryFn: () => api.planner.list(from, to) })
+  const key = ['planner', member, from, to]
+  const online = useOnlineStatus()
+  const items = useQuery({ queryKey: key, queryFn: () => listOfflineTasks(member, from, to), networkMode: 'always' })
   const refresh = async () => {
     await Promise.all([
       client.invalidateQueries({ queryKey: ['planner'] }),
@@ -64,20 +93,24 @@ function PlannerTasks({ displayName, tabs }: { displayName: string; tabs: ReactN
   }
 
   const save = useMutation({
-    mutationFn: (draft: PlannerDraft) =>
-      editing && editing !== 'new' ? api.planner.update(editing.id, draft) : api.planner.create({ ...draft, date: selected }),
+    networkMode: 'always',
+    mutationFn: async (draft: PlannerDraft) => {
+      if (!editing || editing === 'new') return createOfflineTask(member, { ...draft, date: selected })
+      const changed = Object.fromEntries(Object.entries(draft).filter(([key, value]) => editing[key as keyof PlannerDraft] !== value))
+      if (Object.keys(changed).length) await updateOfflineTask(member, editing.id, changed)
+    },
     onSuccess: () => {
       setEditing(null)
       void refresh()
     },
   })
-  const toggle = useMutation({ mutationFn: (item: PlannerItem) => api.planner.update(item.id, { isDone: !item.isDone }), onSuccess: refresh })
-  const remove = useMutation({ mutationFn: (id: string) => api.planner.remove(id), onSuccess: refresh })
+  const toggle = useMutation({ networkMode: 'always', mutationFn: (item: PlannerItem) => updateOfflineTask(member, item.id, { isDone: !item.isDone }), onSuccess: refresh })
+  const remove = useMutation({ networkMode: 'always', mutationFn: (id: string) => deleteOfflineTask(member, id), onSuccess: refresh })
 
   const days = useMemo(() => Array.from({ length: 35 }, (_, index) => addDays(anchor, index)), [anchor])
   const byDate = useMemo(() => {
     const dates = new Map<string, PlannerItem[]>()
-    for (const item of items.data ?? []) {
+    for (const item of items.data?.items ?? []) {
       const group = dates.get(item.date)
       if (group) group.push(item)
       else dates.set(item.date, [item])
@@ -159,7 +192,8 @@ function PlannerTasks({ displayName, tabs }: { displayName: string; tabs: ReactN
           </div>
         )}
         {(save.isError || remove.isError || toggle.isError) && <p className="mb-3 text-sm text-destructive">{errorMessage(save.error ?? remove.error ?? toggle.error)}</p>}
-        {!items.isPending && !items.isError && dayItems.length === 0 && <div className="rounded-xl border border-dashed border-border p-8 text-center"><p className="text-sm font-bold">یک روز خالی، کلی امکان.</p><p className="my-3 text-sm leading-7 text-muted-foreground">اولین کار امروز را اضافه کن؛ لازم نیست برنامه‌ات شلوغ باشد.</p><Button variant="outline" onClick={() => setEditing('new')}><Plus />افزودن اولین کار</Button></div>}
+        {!online && items.data?.dates && !items.data.dates.includes(selected) && <p className="mb-3 text-sm text-muted-foreground">برنامۀ قبلی این روز روی این دستگاه دریافت نشده است. می‌توانی کار تازه‌ای اضافه کنی.</p>}
+        {!items.isPending && !items.isError && dayItems.length === 0 && (online || items.data?.dates?.includes(selected)) && <div className="rounded-xl border border-dashed border-border p-8 text-center"><p className="text-sm font-bold">یک روز خالی، کلی امکان.</p><p className="my-3 text-sm leading-7 text-muted-foreground">اولین کار امروز را اضافه کن؛ لازم نیست برنامه‌ات شلوغ باشد.</p><Button variant="outline" onClick={() => setEditing('new')}><Plus />افزودن اولین کار</Button></div>}
         <ul className="flex flex-col gap-2">
           {items.isPending && <li className="skeleton h-16 rounded-2xl" />}
           {dayItems.map((item) => (

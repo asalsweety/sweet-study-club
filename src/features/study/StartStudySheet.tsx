@@ -41,7 +41,8 @@ export default function StartStudySheet({ open, onOpenChange, openPart, timer, i
   const subjects = useSubjects()
   const settings = useSettings()
   const [pickedMode, setMode] = useState<TimerMode | null>(null)
-  const mode = pickedMode === 'scheduled' && !openPart ? 'free' : pickedMode ?? (intent === 'pomodoro' ? 'pomodoro' : openPart ? 'scheduled' : 'free')
+  const availablePart = !timer.offline && openPart
+  const mode = pickedMode === 'scheduled' && !availablePart ? 'free' : pickedMode ?? (intent === 'pomodoro' ? 'pomodoro' : availablePart ? 'scheduled' : 'free')
   const [subject, setSubject] = useState('')
   const [custom, setCustom] = useState('')
   const [plan, setPlan] = useState<PomodoroPlan | null>(intent === 'pomodoro' ? presets[0]! : null)
@@ -90,8 +91,8 @@ export default function StartStudySheet({ open, onOpenChange, openPart, timer, i
       <fieldset disabled={timer.busy || !!timer.error} className="today-setup-form">
         <legend className="sr-only">تنظیمات جلسه</legend>
         <div className="today-modes" role="group" aria-label="حالت مطالعه">{modes.map(({ id, title }) =>
-          <button type="button" key={id} aria-pressed={id === mode} disabled={id === 'scheduled' && !openPart} onClick={() => setMode(id)}>
-            {title}{id === 'scheduled' && !openPart && <span className="block text-[10px]">اکنون بسته است</span>}
+          <button type="button" key={id} aria-pressed={id === mode} disabled={id === 'scheduled' && !availablePart} onClick={() => setMode(id)}>
+            {title}{id === 'scheduled' && !availablePart && <span className="block text-[10px]">{timer.offline ? 'نیاز به اینترنت' : 'اکنون بسته است'}</span>}
           </button>
         )}</div>
         <div className="today-subjects">
@@ -121,7 +122,7 @@ export default function StartStudySheet({ open, onOpenChange, openPart, timer, i
         <legend className="sr-only">تنظیمات جلسه</legend>
         <div className="grid grid-cols-3 gap-2">
           {modes.map(({ id, title, hint, icon: Icon }) => {
-            const disabled = id === 'scheduled' && !openPart
+            const disabled = id === 'scheduled' && !availablePart
             return (
               <button
                 key={id}
@@ -136,7 +137,7 @@ export default function StartStudySheet({ open, onOpenChange, openPart, timer, i
               >
                 <Icon size={20} className={mode === id ? 'text-primary' : 'text-muted-foreground'} />
                 <span className="text-sm font-bold">{title}</span>
-                <span className="text-[11px] text-muted-foreground">{disabled ? 'پارتی باز نیست' : id === 'scheduled' && openPart ? openPart.title : hint}</span>
+                <span className="text-[11px] text-muted-foreground">{disabled ? timer.offline ? 'نیاز به اینترنت' : 'پارتی باز نیست' : id === 'scheduled' && openPart ? openPart.title : hint}</span>
               </button>
             )
           })}

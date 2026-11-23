@@ -90,6 +90,7 @@ export default function FinishSessionSheet({ open, onOpenChange, timer, onFinish
         <DialogHeader className="finish-heading">
           <DialogTitle>پایان جلسه و ثبت گزارش</DialogTitle>
           <DialogDescription>{timer.timer?.subjectName} · {formatDuration(elapsed)} مطالعه{timer.timer?.mode === 'pomodoro' && ' · پومودورو'}</DialogDescription>
+          {(timer.offline || timer.local) && <p className="text-xs text-muted-foreground">گزارش روی این دستگاه ذخیره می‌شود و با دسترسی به اینترنت به حسابت می‌رسد.</p>}
         </DialogHeader>
         <img className="finish-bee" src="/images/figma/modal-tea-bee.webp" width="54" height="54" alt="" />
 

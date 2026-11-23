@@ -8,23 +8,32 @@ export type SheetSaveStatus =
   | { kind: 'error'; error: unknown }
 
 export function readSheetDraft(key: string): SheetDraft | undefined {
-  try {
-    const stored = sessionStorage.getItem(key)
-    if (stored !== null) return draftSchema.parse(JSON.parse(stored))
-  } catch { /* The editor can still save directly to the server. */ }
+  for (const area of ['sessionStorage', 'localStorage'] as const) {
+    try {
+      const stored = globalThis[area]?.getItem(key)
+      if (stored) return draftSchema.parse(JSON.parse(stored))
+    } catch { /* Try the other copy. */ }
+  }
 }
 
 export function keepSheetDraft(key: string, draft: SheetDraft): boolean {
-  try {
-    sessionStorage.setItem(key, JSON.stringify(draft))
-    return true
-  } catch { return false }
+  let kept = false
+  for (const area of ['sessionStorage', 'localStorage'] as const) {
+    try {
+      const storage = globalThis[area]
+      if (storage) { storage.setItem(key, JSON.stringify(draft)); kept = true }
+    } catch { /* IndexedDB autosave can still succeed. */ }
+  }
+  return kept
 }
 
 export function clearSheetDraft(key: string, saved?: SheetDraft) {
-  try {
-    if (!saved || sessionStorage.getItem(key) === JSON.stringify(saved)) sessionStorage.removeItem(key)
-  } catch { /* Browser storage is unavailable. */ }
+  for (const area of ['sessionStorage', 'localStorage'] as const) {
+    try {
+      const storage = globalThis[area]
+      if (storage && (!saved || storage.getItem(key) === JSON.stringify(saved))) storage.removeItem(key)
+    } catch { /* Browser storage is unavailable. */ }
+  }
 }
 
 /** Drain full-page snapshots serially, keeping the latest one when saving fails. */

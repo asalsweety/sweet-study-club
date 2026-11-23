@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../app/api'
 import { appRoutes } from '../app/navigation/routes'
+import { useOnlineStatus } from '../app/pwa/online-status'
 import { queryKeys } from '../app/session'
 import type { PeriodKind } from '../shared/api/progress'
 import type { LeaderboardEntry } from '../shared/api/social'
@@ -40,12 +41,13 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
 }
 
 export default function RankingPage() {
+  const online = useOnlineStatus()
   const [period, setPeriod] = useState<PeriodKind>('week')
   const [scope, setScope] = useState<'friends' | 'everyone'>('everyone')
   const board = useQuery({
     queryKey: queryKeys.leaderboard(period, scope),
     queryFn: () => api.social.leaderboard(period, scope),
-    refetchInterval: 60_000,
+    refetchInterval: online ? 60_000 : false,
   })
   const data = board.data
   const dates = data ? (period === 'day' ? jalaliDay(data.range.from) : `${jalaliDay(data.range.from)} تا ${jalaliDay(data.range.to)}`) : ''
@@ -75,7 +77,10 @@ export default function RankingPage() {
         </aside>
       )}
 
-      {board.isError ? <QueryError error={board.error} retry={() => void board.refetch()} /> : board.isPending ? (
+      {!online && data && <p role="status" className="text-sm text-muted-foreground">آخرین جدول ذخیره‌شده را می‌بینی. رتبه‌ها بعد از اتصال به‌روز می‌شوند.</p>}
+      {!online && !data && (board.isError || board.fetchStatus === 'paused') ? (
+        <p role="status" className="club-panel text-sm text-muted-foreground">جدول این بازه و گروه هنوز روی این دستگاه ذخیره نشده است. یک بازه یا گروه دیگر را انتخاب کن یا آنلاین برگرد.</p>
+      ) : board.isError && !data ? <QueryError error={board.error} retry={() => void board.refetch()} /> : board.isPending ? (
         <div className="skeleton h-56 rounded-2xl" />
       ) : data && data.entries.length > 0 ? (
         <>

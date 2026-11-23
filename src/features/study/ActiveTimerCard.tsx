@@ -31,6 +31,7 @@ export default function ActiveTimerCard({ timer, onStop }: ActiveTimerCardProps)
         <span>{modeLabels[state.mode]}{pomodoro && ` · دور ${fa(pomodoro.round)} از ${fa(pomodoro.rounds)}`}</span>
       </div>
       <ClockText value={clock} ticking={running} />
+      {(timer.offline || timer.local) && <p className="text-xs text-muted-foreground">زمان این جلسه روی همین دستگاه نگه داشته می‌شود. پس از پایان جلسه و اتصال به اینترنت، گزارش آن همگام می‌شود.</p>}
       <p>زمان مطالعۀ این جلسه: <bdi>{formatClock(elapsed)}</bdi>{pomodoro && pomodoro.remaining <= 0 && (sceneState === 'break' ? ' · وقت برگشت به درس است' : ' · وقت استراحت است')}</p>
       <div className="today-session-actions">
         <Button variant="outline" disabled={timer.busy} onClick={onStop}><Square />پایان و ثبت</Button>

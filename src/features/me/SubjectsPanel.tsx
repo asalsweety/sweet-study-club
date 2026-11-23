@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { BookOpen, Check, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { api } from '../../app/api'
+import { useOnlineStatus } from '../../app/pwa/online-status'
 import { confirmAction } from '../../shared/lib/confirm'
 import { queryKeys, useSettings, useSubjects } from '../../app/session'
 import { profileLabel } from '../../shared/lib/education'
@@ -15,6 +16,7 @@ const palette = ['#22c55e', '#f97316', '#3b82f6', '#a855f7', '#ec4899', '#14b8a6
 const emojis = ['📘', '🧬', '⚗️', '🧲', '📐', '📚', '🕌', '🌙', '🌍', '🧠', '✍️', '🎯']
 
 export default function SubjectsPanel() {
+  const online = useOnlineStatus()
   const client = useQueryClient()
   const subjects = useSubjects()
   const [name, setName] = useState('')
@@ -40,7 +42,7 @@ export default function SubjectsPanel() {
   const error = create.error ?? recolor.error ?? remove.error ?? reset.error
 
   return (
-    <section className="glass rise flex flex-col gap-4 rounded-2xl p-5 sm:p-6">
+    <fieldset disabled={!online} aria-label="درس‌های من" className="glass rise flex min-w-0 flex-col gap-4 rounded-2xl p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-bold"><BookOpen size={19} className="text-primary" /> درس‌های من</h2>
@@ -49,7 +51,7 @@ export default function SubjectsPanel() {
         {field && <Button variant="outline" size="sm" className="rounded-xl" disabled={reset.isPending} onClick={async () => { if (await confirmAction({ title: 'درس‌های رشتۀ من', description: `فهرست درس‌ها با درس‌های پیشنهادی «${field}» جایگزین شود؟ سابقۀ مطالعه‌ات حفظ می‌شود.`, confirmLabel: 'جایگزین کن' })) reset.mutate() }}>درس‌های رشته‌ام</Button>}
       </div>
 
-      {subjects.isError && <QueryError error={subjects.error} retry={() => void subjects.refetch()} />}
+      {subjects.isError && !subjects.data && (online ? <QueryError error={subjects.error} retry={() => void subjects.refetch()} /> : <p className="text-sm text-muted-foreground">فهرست درس‌ها هنوز روی این دستگاه ذخیره نشده است.</p>)}
       {subjects.isPending && <div className="skeleton h-14 rounded-xl" />}
       {subjects.data?.length === 0 && <p className="text-sm text-muted-foreground">اولین درس را اضافه کن تا هنگام شروع مطالعه سریع‌تر پیدایش کنی.</p>}
       <ul className="flex flex-wrap gap-2">
@@ -98,6 +100,6 @@ export default function SubjectsPanel() {
         </div>
       </form>
       {error && <p role="alert" className="text-sm text-destructive">{errorMessage(error)}</p>}
-    </section>
+    </fieldset>
   )
 }

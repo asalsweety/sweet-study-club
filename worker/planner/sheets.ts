@@ -87,13 +87,17 @@ export function sheetRoutes(requireSession: MiddlewareHandler<WorkerEnvironment>
     if (data !== null && data.length > maxSheetDataLength && [...data].length > maxSheetDataLength) {
       throw new ApiError(413, 'SHEET_TOO_LARGE', 'ظرفیت برگه پر شده است. بخشی از نوشته‌ها را به برگهٔ دیگری منتقل کن.')
     }
-    const now = Date.now()
-    const result = await c.env.DB.prepare(
-      `UPDATE planner_sheets SET title = COALESCE(?, title), data = COALESCE(?, data), updated_at = ?
-       WHERE id = ? AND user_id = ?`,
-    ).bind(input.title ?? null, data, now, c.req.param('id'), userId(c)).run()
-    if (!result.meta.changes) throw notFound('This planner page does not exist.')
-    return c.json({ updatedAt: now })
+    const row = await c.env.DB.prepare(
+      `UPDATE planner_sheets SET title = COALESCE(?, title), data = COALESCE(?, data), updated_at = MAX(updated_at + 1, ?)
+       WHERE id = ? AND user_id = ? AND (? IS NULL OR updated_at = ?) RETURNING updated_at AS updatedAt`,
+    ).bind(input.title ?? null, data, Date.now(), c.req.param('id'), userId(c), input.expectedUpdatedAt ?? null, input.expectedUpdatedAt ?? null).first<{ updatedAt: number }>()
+    if (!row) {
+      if (input.expectedUpdatedAt !== undefined && await c.env.DB.prepare('SELECT 1 FROM planner_sheets WHERE id = ? AND user_id = ?').bind(c.req.param('id'), userId(c)).first()) {
+        throw conflict('SHEET_VERSION_CONFLICT', 'این برگه در دستگاه دیگری ویرایش شد.')
+      }
+      throw notFound('This planner page does not exist.')
+    }
+    return c.json(row)
   })
 
   app.delete('/planner-sheets/:id', async (c) => {

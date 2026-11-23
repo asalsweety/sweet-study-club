@@ -4,6 +4,7 @@ import { useRef, type ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../../app/api'
 import { appRoutes } from '../../app/navigation/routes'
+import { useOnlineStatus } from '../../app/pwa/online-status'
 import { queryKeys, useEntitlements } from '../../app/session'
 import Avatar from '../../components/Avatar'
 import VerifiedBadge from '../../components/VerifiedBadge'
@@ -36,6 +37,7 @@ async function squarePicture(file: File): Promise<Blob> {
 }
 
 export default function ProfileCard({ profile }: { profile: UserProfile }) {
+  const online = useOnlineStatus()
   const client = useQueryClient()
   const entitlements = useEntitlements()
   const input = useRef<HTMLInputElement>(null)
@@ -58,7 +60,7 @@ export default function ProfileCard({ profile }: { profile: UserProfile }) {
     if (file.size > 15 * 1024 * 1024) { toast('این عکس خیلی بزرگ است (بیشتر از ۱۵ مگابایت).', { icon: '⚠️' }); return }
     upload.mutate(file)
   }
-  const busy = upload.isPending || remove.isPending
+  const busy = !online || upload.isPending || remove.isPending
   const pick = () => input.current?.click()
 
   return (
@@ -77,7 +79,7 @@ export default function ProfileCard({ profile }: { profile: UserProfile }) {
         </div>
       </div>
       {entitlements.data?.plus && <span className="rounded-full bg-secondary px-3 py-1 text-xs text-primary">Sweet Plus</span>}
-      {profile.role === 'admin' && <Button asChild variant="outline"><Link to={appRoutes.admin}><ShieldCheck />مدیریت باشگاه</Link></Button>}
+      {online && profile.role === 'admin' && <Button asChild variant="outline"><Link to={appRoutes.admin}><ShieldCheck />مدیریت باشگاه</Link></Button>}
     </section>
   )
 }

@@ -5,7 +5,8 @@ import { queryKeys, useSettings } from '../../app/session'
 import { celebrate } from '../../shared/lib/confetti'
 import { fa } from '../../shared/lib/format'
 import { toast } from '../../shared/lib/toast'
-import { pomodoroRemaining } from '../study/useStudyTimer'
+import { pomodoroRemaining, useTimerView } from '../study/useStudyTimer'
+import { useOfflineTimerSync } from '../study/offline-timer-sync'
 
 function notify(title: string, body: string, enabled: boolean) {
   if (!enabled || !('Notification' in window) || Notification.permission !== 'granted') return false
@@ -20,6 +21,23 @@ function notify(title: string, body: string, enabled: boolean) {
 /** Invisible app-wide services; their messages go to the global toaster. */
 export default function BackgroundServices() {
   const client = useQueryClient()
+  const { current: timer, userId, offline } = useTimerView(true)
+  useOfflineTimerSync(userId)
+  useEffect(() => {
+    if (!userId || offline) return
+    const sync = () => {
+      if (navigator.onLine) void import('../planner/offline-planner').then(({ syncOfflinePlanner }) => syncOfflinePlanner(userId)).catch(() => {})
+    }
+    sync()
+    const interval = window.setInterval(sync, 60_000)
+    window.addEventListener('online', sync)
+    window.addEventListener('focus', sync)
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('online', sync)
+      window.removeEventListener('focus', sync)
+    }
+  }, [userId, offline])
   const settings = useSettings()
   const notificationsOn = settings.data?.notificationsEnabled ?? false
   const fired = useRef(new Set<string>())
@@ -32,6 +50,7 @@ export default function BackgroundServices() {
 
   // Presence heartbeat while the tab is visible.
   useEffect(() => {
+    if (offline) return
     let first: number | undefined
     let interval: number | undefined
     const beat = () => void api.social.presence().catch(() => undefined)
@@ -53,7 +72,7 @@ export default function BackgroundServices() {
       window.clearTimeout(first)
       document.removeEventListener('visibilitychange', sync)
     }
-  }, [])
+  }, [offline])
 
   const cheers = useQuery({ queryKey: queryKeys.cheers, queryFn: api.social.cheers, refetchInterval: 45_000 })
   useEffect(() => {
@@ -91,7 +110,6 @@ export default function BackgroundServices() {
     return () => window.clearTimeout(timeout)
   }, [reminders.data, notificationsOn, push])
 
-  const timer = useQuery({ queryKey: queryKeys.timer, queryFn: api.timer.get, refetchInterval: 60_000 }).data
   useEffect(() => {
     const pomodoro = pomodoroRemaining(timer)
     if (!pomodoro) return

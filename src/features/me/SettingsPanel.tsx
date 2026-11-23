@@ -5,6 +5,7 @@ import { Settings2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../../app/api'
+import { useOnlineStatus } from '../../app/pwa/online-status'
 import { queryKeys, useSettings } from '../../app/session'
 import { errorMessage } from '../../shared/api/http'
 import type { UserProfile } from '../../shared/api/profile'
@@ -31,6 +32,7 @@ function Row({ title, hint, children }: { title: string; hint?: string; children
 }
 
 export default function SettingsPanel({ profile, compact = false }: { profile: UserProfile; compact?: boolean }) {
+  const online = useOnlineStatus()
   const client = useQueryClient()
   const settings = useSettings()
   const [name, setName] = useState(profile.displayName)
@@ -70,7 +72,7 @@ export default function SettingsPanel({ profile, compact = false }: { profile: U
   }
 
   return (
-    <section className="glass rise flex flex-col gap-3 rounded-2xl p-5 sm:p-6">
+    <fieldset disabled={!online} aria-label="تنظیمات شخصی" className="glass rise flex min-w-0 flex-col gap-3 rounded-2xl p-5 sm:p-6">
       <h2 className="mb-1 flex items-center gap-2 text-lg font-bold"><Settings2 size={19} className="text-primary" /> تنظیمات شخصی</h2>
 
       {!compact && <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/15 bg-secondary/50 p-4">
@@ -78,7 +80,7 @@ export default function SettingsPanel({ profile, compact = false }: { profile: U
           <p className="text-xs text-muted-foreground">مسیر تحصیلی</p>
           <p className="mt-1 text-sm font-bold">{profileLabel(s.educationGroup, s.educationStage) ?? 'هنوز انتخاب نشده'}</p>
         </div>
-        <Button asChild variant="outline" size="sm" className="rounded-xl"><Link to="/welcome">تغییر مسیر</Link></Button>
+        {online && <Button asChild variant="outline" size="sm" className="rounded-xl"><Link to="/welcome">تغییر مسیر</Link></Button>}
       </div>}
 
       <form onSubmit={(event) => {
@@ -145,6 +147,6 @@ export default function SettingsPanel({ profile, compact = false }: { profile: U
 
       </>}
       {(update.isError || rename.isError || theme.isError) && <p role="alert" className="text-sm text-destructive">{errorMessage(update.error ?? rename.error ?? theme.error)}</p>}
-    </section>
+    </fieldset>
   )
 }

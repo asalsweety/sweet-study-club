@@ -1,9 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { QueryClient, QueryObserver } from '@tanstack/react-query'
+import { z } from 'zod'
 import { auth } from './auth'
 import { endSession, queryKeys, replaceSession } from './session'
+import { get } from '../shared/api/http'
+import { canReachApi, reportApiReachability } from '../shared/api/reachability'
 
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => { vi.unstubAllGlobals(); reportApiReachability(true) })
 describe('account entry', () => {
   it('notifies the mounted session observer on login and logout', async () => {
     const client = new QueryClient()
@@ -62,6 +65,45 @@ describe('account entry', () => {
     await endSession(client)
     expect(client.getQueryData(queryKeys.session)).toBeNull()
     expect(client.getQueryData(queryKeys.timer)).toBeUndefined()
+    client.clear()
+  })
+  it('reopens saved reads only for the remembered account and rechecks access online', async () => {
+    const storage = new Map<string, string>()
+    const connection = { onLine: true }
+    vi.stubGlobal('localStorage', { getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => storage.set(key, value), removeItem: (key: string) => storage.delete(key) })
+    vi.stubGlobal('navigator', connection)
+    const fetcher = vi.fn(async () => Response.json({ value: 12 }))
+    vi.stubGlobal('fetch', fetcher)
+    const client = new QueryClient()
+    const member = { user: { id: 'one', name: 'Member', email: 'member@example.test' } }
+    const stats = z.object({ value: z.number() })
+    const read = () => get('/api/progress?period=week', stats)
+    await replaceSession(client, member)
+    await expect(read()).resolves.toEqual({ value: 12 })
+    expect(fetcher).toHaveBeenCalledWith('/api/progress?period=week', expect.objectContaining({
+      headers: expect.objectContaining({ 'X-SweetStudy-Account': 'one' }),
+    }))
+
+    connection.onLine = false
+    await expect(auth.session()).resolves.toEqual(member)
+    await expect(read()).resolves.toEqual({ value: 12 })
+    await expect(get('/api/progress?period=month', stats)).rejects.toMatchObject({ code: 'OFFLINE_NOT_CACHED' })
+    expect(fetcher).toHaveBeenCalledTimes(1)
+
+    connection.onLine = true
+    fetcher.mockImplementation(async () => Response.json({}, { status: 503 }))
+    await expect(read()).resolves.toEqual({ value: 12 })
+    expect(canReachApi()).toBe(false)
+    fetcher.mockImplementation(async () => Response.json(member))
+    await expect(auth.verifySession()).resolves.toEqual(member)
+    expect(canReachApi()).toBe(true)
+    fetcher.mockImplementation(async () => Response.json({}, { status: 401 }))
+    await expect(read()).rejects.toMatchObject({ status: 401 })
+    await expect(auth.verifySession()).resolves.toBeNull()
+    await replaceSession(client, { user: { ...member.user, id: 'two' } })
+    connection.onLine = false
+    await expect(read()).rejects.toMatchObject({ code: 'OFFLINE_NOT_CACHED' })
     client.clear()
   })
 })

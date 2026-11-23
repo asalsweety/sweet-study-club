@@ -1,16 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { api } from '../../app/api'
-import { invalidateStudyData, queryKeys } from '../../app/session'
+import { auth } from '../../app/auth'
+import { invalidateStudyData, queryKeys, useSession } from '../../app/session'
+import { useOnlineStatus } from '../../app/pwa/online-status'
 import { ApiClientError } from '../../shared/api/api-client-error'
 import { subscribeVisibleClock } from '../../shared/lib/visible-clock'
 import type { PomodoroPlan, StartTimerInput, StopTimerInput, StudyTimerState } from '../../shared/api/study-timer'
+import { beginLocal, changeLocal, emptyJournal, finishLocal, visibleTimer, type LocalCommand } from './offline-timer'
+import { journalKey, useTimerJournal, writeJournal } from './timer-journal'
 
-export function elapsedSecondsOf(timer: StudyTimerState | null | undefined, now = Date.now()) {
-  if (!timer) return 0
-  if (timer.timerStatus === 'paused' || !timer.currentSegmentStartedAt) return timer.accumulatedSeconds
-  return timer.accumulatedSeconds + Math.max(0, Math.floor((now - Date.parse(timer.currentSegmentStartedAt)) / 1000))
-}
+export { elapsedSecondsOf } from './offline-timer'
 
 /** Seconds left in the current pomodoro phase (negative once it has overrun). */
 export function pomodoroRemaining(timer: StudyTimerState | null | undefined, now = Date.now()) {
@@ -31,55 +31,129 @@ export function useNow(intervalMs: number | null = 1000) {
   return now
 }
 
+export function useTimerView(poll = false) {
+  const userId = useSession().data?.user.id
+  const online = useOnlineStatus()
+  const stored = useTimerJournal(userId)
+  const remote = useQuery({ queryKey: queryKeys.timer, queryFn: api.timer.get, enabled: Boolean(userId), refetchInterval: poll && online ? 60_000 : false })
+  const offline = !online || (remote.isError && remote.error instanceof ApiClientError && ['NETWORK_ERROR', 'OFFLINE_NOT_CACHED'].includes(remote.error.code))
+  const journal = stored.data ?? emptyJournal()
+  const source = offline && journal.observedAt ? undefined : remote.data
+  const current = visibleTimer(journal, source)
+
+  // Only the background polling subscriber records server observations.
+  useEffect(() => {
+    if (!poll || !online || !userId || remote.data === undefined || remote.isError) return
+    const snapshot = remote.data
+    const observedAt = remote.dataUpdatedAt
+    void writeJournal(userId, journal => {
+      if (observedAt <= journal.observedAt) return
+      journal.snapshot = snapshot
+      journal.observedAt = observedAt
+      if (journal.uncertainStart && observedAt > journal.uncertainStart) delete journal.uncertainStart
+    }).catch(() => { /* Online controls still work if browser storage is unavailable. */ })
+  }, [poll, online, userId, remote.data, remote.isError, remote.dataUpdatedAt])
+  return { current, userId, journal, offline, stored, remote }
+}
+
 export function useStudyTimer() {
   const client = useQueryClient()
-  // BackgroundServices owns the single app-wide polling interval.
-  const timer = useQuery({ queryKey: queryKeys.timer, queryFn: api.timer.get })
-  const current = timer.data ?? null
+  const { current, userId, journal, offline, stored, remote } = useTimerView()
 
   const settle = async (next: StudyTimerState | null) => {
-    // An older poll must not overwrite the timer returned by the command.
     await client.cancelQueries({ queryKey: queryKeys.timer, exact: true })
+    if (client.getQueryData<{ user: { id: string } }>(queryKeys.session)?.user.id !== userId) return
     client.setQueryData(queryKeys.timer, next)
+    if (userId) await writeJournal(userId, entry => {
+      entry.snapshot = next
+      entry.observedAt = Date.now()
+      delete entry.uncertainStart
+    }).catch(() => {})
   }
   const onConflict = (error: unknown) => {
     // Another tab/device changed the timer: adopt the server's truth.
     if (error instanceof ApiClientError && error.status === 409) void client.invalidateQueries({ queryKey: queryKeys.timer })
   }
   const command = () => ({ commandId: crypto.randomUUID(), expectedVersion: current?.version ?? 1 })
+  const shouldUseDevice = () => !navigator.onLine || offline || Boolean(journal.local)
+  function owner() {
+    if (!userId || userId !== auth.getOfflineAccountId()) throw new ApiClientError('برای ذخیرۀ جلسه یک بار وارد حسابت شو.', { code: 'OFFLINE_OWNER_MISSING' })
+    return userId
+  }
+  function active() { if (!current) throw Error('جلسۀ فعالی پیدا نشد.'); return current }
+  async function refreshLocal() { await client.invalidateQueries({ queryKey: journalKey(userId), exact: true }) }
 
   const start = useMutation({
-    mutationFn: (input: Omit<StartTimerInput, 'commandId'>) => api.timer.start({ ...input, commandId: crypto.randomUUID() }),
-    onSuccess: async (next) => {
-      await settle(next)
+    networkMode: 'always',
+    mutationFn: async (input: Omit<StartTimerInput, 'commandId'>) => {
+      const unsettledServerTimer = remote.data && journal.finished.some(entry => !entry.problem && entry.log.id === remote.data?.logId)
+      if (shouldUseDevice() || unsettledServerTimer) {
+        if (current) throw Error('یک جلسۀ مطالعه در حال اجراست.')
+        const next = await writeJournal(owner(), entry => beginLocal(entry, input, crypto.randomUUID(), Date.now()))
+        await refreshLocal()
+        return next
+      }
+      const started = Date.now()
+      try {
+        const next = await api.timer.start({ ...input, commandId: crypto.randomUUID() })
+        await settle(next)
+        return next
+      } catch (error) {
+        if (userId && error instanceof ApiClientError && error.code === 'NETWORK_ERROR') {
+          await writeJournal(userId, entry => { entry.uncertainStart = started }).catch(() => {})
+        }
+        throw error
+      }
+    },
+    onSuccess: () => {
       // Study totals, awards and coins are calculated from completed sessions.
       void client.invalidateQueries({ queryKey: ['live'] })
       void client.invalidateQueries({ queryKey: queryKeys.friends })
     },
     onError: onConflict,
   })
-  const pause = useMutation({ mutationFn: () => api.timer.pause(command()), onSuccess: settle, onError: onConflict })
-  const resume = useMutation({ mutationFn: () => api.timer.resume(command()), onSuccess: settle, onError: onConflict })
+  async function change(action: LocalCommand, send: () => Promise<StudyTimerState>) {
+    if (shouldUseDevice()) {
+      const next = await writeJournal(owner(), entry => changeLocal(entry, active(), action, Date.now()))
+      await refreshLocal()
+      return next
+    }
+    const next = await send()
+    await settle(next)
+    return next
+  }
+  const pause = useMutation({ networkMode: 'always', mutationFn: () => change({ type: 'pause' }, () => api.timer.pause(command())), onError: onConflict })
+  const resume = useMutation({ networkMode: 'always', mutationFn: () => change({ type: 'resume' }, () => api.timer.resume(command())), onError: onConflict })
   const update = useMutation({
-    mutationFn: (input: { testCount?: number; focusLockEnabled?: boolean }) => api.timer.update({ ...command(), ...input }),
-    onSuccess: settle,
+    networkMode: 'always',
+    mutationFn: (fields: { testCount?: number; focusLockEnabled?: boolean }) =>
+      change({ type: 'update', fields }, () => api.timer.update({ ...command(), ...fields })),
     onError: onConflict,
   })
   const stop = useMutation({
-    mutationFn: (input: Omit<StopTimerInput, 'commandId' | 'expectedVersion'>) =>
-      api.timer.stop({ ...command(), ...input }),
-    onSuccess: async () => {
+    networkMode: 'always',
+    mutationFn: async (input: Omit<StopTimerInput, 'commandId' | 'expectedVersion'>) => {
+      if (shouldUseDevice()) {
+        const result = await writeJournal(owner(), entry => finishLocal(entry, active(), input, Date.now()))
+        await refreshLocal()
+        return result
+      }
+      const result = await api.timer.stop({ ...command(), ...input })
       await settle(null)
-      invalidateStudyData(client)
+      return result
     },
+    onSuccess: () => invalidateStudyData(client),
     onError: onConflict,
   })
 
   return {
     timer: current,
-    isLoading: timer.isPending,
-    error: timer.error,
-    refetch: timer.refetch,
+    offline,
+    local: Boolean(journal.local),
+    pending: journal.finished,
+    isLoading: stored.isPending || (!offline && !journal.local && remote.isPending),
+    error: offline ? stored.error : journal.local ? null : remote.error,
+    refetch: offline && stored.isError ? stored.refetch : remote.refetch,
     start,
     pause,
     resume,

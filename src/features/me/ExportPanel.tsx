@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Download, FileText, ImageDown, LoaderCircle } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { api } from '../../app/api'
+import { useOnlineStatus } from '../../app/pwa/online-status'
 import { queryKeys } from '../../app/session'
 import type { UserProfile } from '../../shared/api/profile'
 import { escapeCsvValue } from '../../shared/lib/csv'
@@ -17,14 +18,16 @@ function download(name: string, blob: Blob) {
 }
 
 export default function ExportPanel({ profile, compact = false }: { profile: UserProfile; compact?: boolean }) {
+  const online = useOnlineStatus()
   const card = useRef<HTMLDivElement>(null)
-  const [exportFailed, setExportFailed] = useState(false)
+  const [exportFailed, setExportFailed] = useState<'csv' | 'png' | null>(null)
   const [busy, setBusy] = useState<'csv' | 'png' | null>(null)
   const week = useQuery({ queryKey: queryKeys.progress('week'), queryFn: () => api.progress.period('week') }).data
   const rewards = useQuery({ queryKey: queryKeys.gamification, queryFn: api.progress.gamification }).data
   const level = rewards?.level
 
   const exportCsv = async () => {
+    setExportFailed(null)
     setBusy('csv')
     try {
       const today = tehranClock(Date.now()).date
@@ -46,6 +49,8 @@ export default function ExportPanel({ profile, compact = false }: { profile: Use
       ])
       const csv = [header, ...rows].map((row) => row.map((cell) => escapeCsvValue(cell ?? null)).join(',')).join('\r\n')
       download('sweet-study-sessions.csv', new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' }))
+    } catch {
+      setExportFailed('csv')
     } finally {
       setBusy(null)
     }
@@ -53,7 +58,7 @@ export default function ExportPanel({ profile, compact = false }: { profile: Use
 
   const exportPng = async () => {
     if (!card.current) return
-    setExportFailed(false)
+    setExportFailed(null)
     setBusy('png')
     try {
       const { default: html2canvas } = await import('html2canvas')
@@ -89,7 +94,7 @@ export default function ExportPanel({ profile, compact = false }: { profile: Use
       if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: 'Sweet Study Club' })
       else download(file.name, blob)
     } catch (error) {
-      if (!(error instanceof DOMException && error.name === 'AbortError')) setExportFailed(true)
+      if (!(error instanceof DOMException && error.name === 'AbortError')) setExportFailed('png')
     } finally {
       setBusy(null)
     }
@@ -105,8 +110,8 @@ export default function ExportPanel({ profile, compact = false }: { profile: Use
         <p className="mt-1 break-words text-2xl font-bold">{profile.displayName}</p>
         <div className="mt-4 grid grid-cols-3 gap-2 text-center">
           <div data-export-tile className="rounded-2xl bg-white/15 p-2"><p className="text-lg font-bold">{week ? formatHours(week.current.totalSeconds) : '—'}</p><p className="text-[10px] opacity-80">ساعت</p></div>
-          <div data-export-tile className="rounded-2xl bg-white/15 p-2"><p className="text-lg font-bold">{fa(week?.streak.current ?? 0)}</p><p className="text-[10px] opacity-80">روز پیاپی</p></div>
-          <div data-export-tile className="rounded-2xl bg-white/15 p-2"><p className="text-lg font-bold">{fa(level?.level ?? 1)}</p><p className="text-[10px] opacity-80">سطح</p></div>
+          <div data-export-tile className="rounded-2xl bg-white/15 p-2"><p className="text-lg font-bold">{week ? fa(week.streak.current) : '—'}</p><p className="text-[10px] opacity-80">روز پیاپی</p></div>
+          <div data-export-tile className="rounded-2xl bg-white/15 p-2"><p className="text-lg font-bold">{level ? fa(level.level) : '—'}</p><p className="text-[10px] opacity-80">سطح</p></div>
         </div>
         <p className="mt-3 text-xs opacity-80">
           {week ? `${jalaliDay(week.current.from)} تا ${jalaliDay(week.current.to)} · درس محبوب: ${week.current.favoriteSubject ?? '—'}` : ''}
@@ -124,7 +129,9 @@ export default function ExportPanel({ profile, compact = false }: { profile: Use
           <FileText /> گزارش PDF
         </Button>
       </div>
-      {exportFailed && <p role="alert" className="text-xs text-destructive">ساخت کارت انجام نشد. دوباره تلاش کن.</p>}
+      {exportFailed && <p role="alert" className="text-xs text-destructive">{exportFailed === 'csv'
+        ? online ? 'دریافت گزارش کامل انجام نشد. دوباره تلاش کن.' : 'برای خروجی CSV، گزارش کامل سال باید روی دستگاه باشد. پس از اتصال دوباره تلاش کن.'
+        : online ? 'ساخت کارت انجام نشد. دوباره تلاش کن.' : 'ابزار ساخت کارت در دسترس نیست. بعد از اتصال دوباره تلاش کن.'}</p>}
       {compact && rewards && <div><p className="mb-2 text-xs font-bold">نشان‌ها ({fa(badges.length)} از {fa(rewards.badges.length)})</p><div className="flex flex-wrap gap-2">{badges.slice(0, 3).map((item) => <span key={item.id} className="rounded-full bg-secondary px-3 py-1 text-xs">{item.title}</span>)}</div></div>}
       <p className={compact ? "sr-only" : "text-xs text-muted-foreground"}>
         گزارش PDF از چاپ مرورگر ساخته می‌شود («ذخیره به‌صورت PDF»). {week && `این هفته: ${formatDuration(week.current.totalSeconds)}.`}

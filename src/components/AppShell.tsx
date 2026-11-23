@@ -1,10 +1,9 @@
-import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Flower2, Lock, Menu, Search } from 'lucide-react'
-import { api } from '../app/api'
-import { queryKeys } from '../app/session'
+import { useTimerView } from '../features/study/useStudyTimer'
 import { useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { appRoutes } from '../app/navigation/routes'
+import { useOnlineStatus } from '../app/pwa/online-status'
 import type { UserProfile } from '../shared/api/profile'
 import BottomNavigation from './BottomNavigation'
 import Avatar from './Avatar'
@@ -27,7 +26,8 @@ const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigat
 
 export default function AppShell({ profile, children }: { profile: UserProfile; children: ReactNode }) {
   const location = useLocation()
-  const timer = useQuery({ queryKey: queryKeys.timer, queryFn: api.timer.get }).data
+  const online = useOnlineStatus()
+  const timer = useTimerView().current
   const [menuOpen, setMenuOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [guideOpen, setGuideOpen] = useState(false)
@@ -53,6 +53,10 @@ export default function AppShell({ profile, children }: { profile: UserProfile; 
         </div>
       </header>
       <main id="main-content" tabIndex={-1} className="workspace-content">
+        {!online && <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-muted px-4 py-2 text-sm" role="status">
+          <span>آفلاین هستی. مطالعه و برنامه‌ریزی در این دستگاه ذخیره می‌شوند.</span>
+          <Link className="font-bold text-primary underline" to={appRoutes.offline}>کتابخانۀ آفلاین</Link>
+        </div>}
         {/* Keyed by route so each page enters with its own cascade. */}
         {timer?.focusLockEnabled && timer.timerStatus === 'running' && <FocusLockBanner />}
         <div key={location.pathname} className="page-transition">{children}</div>

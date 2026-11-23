@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '../app/api'
 import { appRoutes } from '../app/navigation/routes'
+import { useOnlineStatus } from '../app/pwa/online-status'
 import { queryKeys, useSettings } from '../app/session'
 import type { UserProfile } from '../shared/api/profile'
 import type { ProgressResponse } from '../shared/api/progress'
@@ -24,7 +25,7 @@ import { LiveNowStrip } from '../features/social/LiveNow'
 import { useNow, useStudyTimer } from '../features/study/useStudyTimer'
 import './HomePage.css'
 
-function WeekChart({ today, week }: { today: string; week: ProgressResponse | undefined }) {
+function WeekChart({ today, week, online }: { today: string; week: ProgressResponse | undefined; online: boolean }) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const days = week?.current.byDay ?? []
   const max = Math.max(1, ...days.map(day => day.seconds))
@@ -32,7 +33,7 @@ function WeekChart({ today, week }: { today: string; week: ProgressResponse | un
   const selected = days.find(day => day.date === selectedDate)
   return <section className="surface today-week" aria-label="مطالعۀ این هفته">
     <img className="today-chart-bee" alt="" src="/images/figma/today-bee.webp" width={74} height={74} />
-    <div><h2>مطالعۀ این هفته</h2><p className="text-xs text-muted-foreground">
+    <div><h2>{online || !week ? 'مطالعۀ این هفته' : 'هفتهٔ ذخیره‌شده · ' + jalaliDay(week.current.from) + ' تا ' + jalaliDay(week.current.to)}</h2><p className="text-xs text-muted-foreground">
       {week ? formatDuration(week.current.totalSeconds) : '—'}
       {change != null && ' · ' + (change === 0 ? 'برابر با هفتۀ قبل' : fa(Math.abs(Math.round(change))) + '٪ ' + (change > 0 ? 'بیشتر' : 'کمتر') + ' از هفتۀ قبل')}
     </p></div>
@@ -54,16 +55,18 @@ function Metric({ title, value, hint, progress, icon: Icon }: { title: string; v
 }
 
 export default function HomePage({ profile }: { profile: UserProfile }) {
+  const online = useOnlineStatus()
   const now = useNow(30_000)
   const today = tehranClock(now).date
   const timer = useStudyTimer()
   const settings = useSettings()
   const schedule = useQuery({ queryKey: queryKeys.schedule(today), queryFn: () => api.schedule.day(today) })
   const progress = useQuery({ queryKey: queryKeys.progress('week'), queryFn: () => api.progress.period('week') })
+  const dailyLogs = useQuery({ queryKey: queryKeys.studyLogs(today), queryFn: () => api.timer.logs(today, today), enabled: !online })
   const gamification = useQuery({ queryKey: queryKeys.gamification, queryFn: api.progress.gamification })
   const broadcasts = useQuery({ queryKey: queryKeys.broadcasts, queryFn: api.shop.broadcasts })
   const visibleBroadcasts = broadcasts.data?.filter(item => !item.expiresAt || Date.parse(item.expiresAt) > now)
-  const live = useQuery({ queryKey: queryKeys.live('friends'), queryFn: () => api.social.live('friends'), staleTime: 20_000 })
+  const live = useQuery({ queryKey: queryKeys.live('friends'), queryFn: () => api.social.live('friends'), staleTime: 20_000, enabled: online })
   const [params, setParams] = useSearchParams()
   const [starting, setStarting] = useState(false)
   const [startIntent, setStartIntent] = useState<'pomodoro' | 'pixel' | 'scheduled' | null>(null)
@@ -72,19 +75,22 @@ export default function HomePage({ profile }: { profile: UserProfile }) {
   const openParts = schedule.data?.sessions.filter(s => !s.isCancelled && now >= Date.parse(s.startsAt) && now < Date.parse(s.endsAt)) ?? []
   const openPart = openParts[0] ?? null
   const sheetPart = selectedPartId ? openParts.find(s => s.id === selectedPartId) ?? null : openPart
-  const todayMinutes = Math.floor((progress.data?.today.seconds ?? 0) / 60)
+  // The weekly response's "today" refers to its fetch date. Offline a report can span midnight.
+  const todaySeconds = online ? progress.data?.today.seconds : dailyLogs.data?.reduce((sum, log) => sum + log.durationSeconds, 0)
+  const todayMinutes = todaySeconds === undefined ? null : Math.floor(todaySeconds / 60)
+  const minutesLabel = todayMinutes === null ? '—' : fa(todayMinutes)
   const goalMinutes = progress.data?.today.goalMinutes ?? settings.data?.dailyGoalMinutes ?? 240
-  const remaining = Math.max(0, goalMinutes - todayMinutes)
-  const share = goalMinutes > 0 ? todayMinutes / goalMinutes : 0
-  const goalValue = progress.data && goalMinutes > 0 ? fa(Math.round(share * 100)) + '٪' : '—'
-  const goalHint = goalMinutes <= 0 ? 'تعیین هدف روزانه' : remaining ? fa(remaining) + ' دقیقه تا تکمیل هدف امروز' : 'هدف امروزت کامل شد'
+  const remaining = todayMinutes === null ? null : Math.max(0, goalMinutes - todayMinutes)
+  const share = todayMinutes !== null && goalMinutes > 0 ? todayMinutes / goalMinutes : 0
+  const goalValue = todayMinutes !== null && goalMinutes > 0 ? fa(Math.round(share * 100)) + '٪' : '—'
+  const goalHint = goalMinutes <= 0 ? 'تعیین هدف روزانه' : remaining === null ? 'هدف روزانه · ' + fa(goalMinutes) + ' دقیقه' : remaining ? fa(remaining) + ' دقیقه تا تکمیل هدف امروز' : 'هدف امروزت کامل شد'
   const streak = progress.data?.streak
   const level = gamification.data?.level
   const levelMetric = <Metric icon={GraduationCap} title="سطح مطالعه" value={level ? 'سطح ' + fa(level.level) : '—'}
     hint={level && fa(level.experience) + ' امتیاز تجربه'} progress={level?.progress} />
   const exam = examForProfile(settings.data?.educationGroup, settings.data?.educationStage)
   const examDays = settings.data?.konkurDate ? daysUntil(settings.data.konkurDate, now) : null
-  const studying = live.data?.counts.studying
+  const studying = online ? live.data?.counts.studying : undefined
   const active = timer.timer
   useEffect(() => {
     const intent = params.get('start')
@@ -112,7 +118,7 @@ export default function HomePage({ profile }: { profile: UserProfile }) {
     <PageHeading
       eyebrow={active ? 'در حال مطالعه · جلسۀ فعال' : 'امروز · ' + weekdayName(today) + ' ' + jalaliDay(today)}
       title={active ? 'خسته نباشی ' + profile.displayName + '!' : greeting() + '، ' + profile.displayName}
-      description={active ? 'همراهت کنار میز پیکسلی‌اش با تو مشغول مطالعه است.' : 'امروز ' + fa(todayMinutes) + ' دقیقه مطالعه کردی · ' + fa(remaining) + ' دقیقه تا هدف'}
+      description={active ? 'همراهت کنار میز پیکسلی‌اش با تو مشغول مطالعه است.' : remaining === null ? 'جلسه‌های امروزت را همین‌جا ثبت کن.' : 'امروز ' + minutesLabel + ' دقیقه مطالعه کردی · ' + fa(remaining) + ' دقیقه تا هدف'}
       action={openPart && !active && <button disabled={timer.isLoading || Boolean(timer.error)} onClick={() => startPart(openPart.id)} className="today-open-part">پارت باشگاه باز است · الان شروع کن</button>}
     />
     {Boolean(visibleBroadcasts?.length) && <section className="grid min-w-0 gap-2" aria-label="اطلاعیه‌های باشگاه">
@@ -131,8 +137,8 @@ export default function HomePage({ profile }: { profile: UserProfile }) {
           </div>
           <section className="surface today-goal">
             <h2>هدف روزانه<Target size={17} /></h2>
-            {progress.isError ? <QueryError error={progress.error} retry={() => void progress.refetch()} /> : <GoalRing value={share} size={136} stroke={8} label="پیشرفت هدف امروز">
-              <strong>{goalValue}</strong><span>{fa(todayMinutes)} / {fa(goalMinutes)} دقیقه</span>
+            {online && progress.isError && !progress.data ? <QueryError error={progress.error} retry={() => void progress.refetch()} /> : <GoalRing value={share} size={136} stroke={8} label="پیشرفت هدف امروز">
+              <strong>{goalValue}</strong><span>{minutesLabel} / {fa(goalMinutes)} دقیقه</span>
             </GoalRing>}
             <Link to={appRoutes.profile + '?section=settings'} title="تغییر هدف">{goalHint}</Link>
           </section>
@@ -143,24 +149,26 @@ export default function HomePage({ profile }: { profile: UserProfile }) {
         <Metric icon={BookOpen} title="تست‌های ثبت‌شده" value={fa(active.testCount) + ' تست'} hint="ثبت سریع در پایان جلسه" />
         <Metric icon={Target} title="تمرکز این جلسه" value={active.focusLockEnabled ? 'تمرکز کامل' : 'مطالعه'} hint={active.subjectName} />
       </section> : <section className="today-metrics today-idle-metrics" aria-label="نگاهی به مسیر تو">
-        <Metric icon={UsersRound} title="پارت باشگاه" value={openPart ? 'الان باز است' : 'پارت باز نیست'} hint={openPart?.title} />
+        <Metric icon={UsersRound} title="پارت باشگاه" value={openPart ? 'الان باز است' : schedule.data ? 'پارت باز نیست' : '—'} hint={openPart?.title} />
         {levelMetric}
         <Metric icon={Flame} title="روزهای پیوسته" value={streak ? fa(streak.current) + ' روز' : '—'} hint={streak && 'رکورد: ' + fa(streak.best) + ' روز'} />
-        <Metric icon={Clock3} title="امروز" value={progress.data ? fa(todayMinutes) + ' دقیقه' : '—'} hint={goalValue + ' هدف'} />
+        <Metric icon={Clock3} title="امروز" value={todayMinutes === null ? '—' : minutesLabel + ' دقیقه'} hint={goalValue + ' هدف'} />
         <Link className="surface today-mobile-goal" to={appRoutes.profile + '?section=settings'}><small>هدف امروز</small><strong>{goalValue}</strong></Link>
       </section>}
     </div>
     <div className="today-review">
-      {progress.isError ? <QueryError error={progress.error} retry={() => void progress.refetch()} /> : <WeekChart today={today} week={progress.data} />}
-      {schedule.isError ? <QueryError error={schedule.error} retry={() => void schedule.refetch()} /> : <TodayParts schedule={schedule.data} now={now} activeSessionId={active?.sessionId ?? null} onStart={active || timer.isLoading || timer.error ? undefined : startPart} />}
+      {!online && !progress.data && (progress.isError || progress.fetchStatus === 'paused') ? <p className="surface p-4 text-sm text-muted-foreground">گزارش هفتگی هنوز روی این دستگاه ذخیره نشده است.</p>
+        : progress.isError && !progress.data ? <QueryError error={progress.error} retry={() => void progress.refetch()} /> : <WeekChart today={today} week={progress.data} online={online} />}
+      {!online && !schedule.data && (schedule.isError || schedule.fetchStatus === 'paused') ? <p className="surface p-4 text-sm text-muted-foreground">برنامهٔ امروز باشگاه هنوز روی این دستگاه ذخیره نشده است.</p>
+        : schedule.isError && !schedule.data ? <QueryError error={schedule.error} retry={() => void schedule.refetch()} /> : <TodayParts schedule={schedule.data} now={now} activeSessionId={active?.sessionId ?? null} onStart={active || timer.isLoading || timer.error ? undefined : startPart} />}
     </div>
     <DailyStudyLog today={today} className="surface p-4 sm:p-5" />
     <section aria-label="پیشرفت مطالعۀ امروز" className={'grid gap-3 sm:grid-cols-3 ' + (active ? '' : 'md:hidden')}>
       {levelMetric}
       <Metric icon={Flame} title="بیشترین روزهای پیوسته" value={streak ? fa(streak.best) + ' روز' : '—'} hint={streak && 'رشتۀ فعلی: ' + fa(streak.current) + ' روز'} />
-      <Link className="surface today-metric" to={appRoutes.profile + '?section=settings'}><p><Target size={15} />هدف امروز</p><strong>{fa(todayMinutes)} / {fa(goalMinutes)} دقیقه</strong><span className="text-xs">{goalHint}</span></Link>
+      <Link className="surface today-metric" to={appRoutes.profile + '?section=settings'}><p><Target size={15} />هدف امروز</p><strong>{minutesLabel} / {fa(goalMinutes)} دقیقه</strong><span className="text-xs">{goalHint}</span></Link>
     </section>
-    <LiveNowStrip />
+    {online && <LiveNowStrip />}
     <section className="surface today-links"><h2>قدم بعدی تو</h2>
       {exam && <Link to={appRoutes.profile + '?section=settings'} className="quick-link"><GraduationCap size={19} />{examDays === null ? 'تعیین تاریخ ' + exam : fa(Math.max(0, examDays)) + ' روز تا ' + exam}<ArrowLeft size={16} /></Link>}
       <Link to={appRoutes.planner} className="quick-link"><CalendarDays size={19} />روزت را بچین<ArrowLeft size={16} /></Link>

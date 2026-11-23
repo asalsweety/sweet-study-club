@@ -48,6 +48,14 @@ function request(member: string | null, path = '', method = 'GET', input?: unkno
 }
 
 describe('planner pages', () => {
+  it('rejects stale notebook writes so replay can merge with the newest page', async () => {
+    const created = await request('one', '', 'POST', { kind: 'weekly' })
+    const { sheet } = sheetResponseSchema.parse(await created.json())
+    const updated = await request('one', '/' + sheet.id, 'PUT', { data: { notes: 'اول' }, expectedUpdatedAt: sheet.updatedAt })
+    expect(updated.status).toBe(200)
+    expect((await request('one', '/' + sheet.id, 'PUT', { data: { notes: 'دوم' }, expectedUpdatedAt: sheet.updatedAt })).status).toBe(409)
+    expect(sheetResponseSchema.parse(await (await request('one', '/' + sheet.id)).json()).sheet.data).toEqual({ notes: 'اول' })
+  })
   it('creates and reopens pages for both current and legacy clients', async () => {
     expect((await request(null, '', 'POST', { kind: 'chapter' })).status).toBe(401)
     const legacy = await request('one', '', 'POST', { kind: 'weekly' })

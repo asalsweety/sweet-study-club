@@ -53,6 +53,7 @@ import {
   type ManualStudyLogInput,
   type StartTimerInput,
   type StopTimerInput,
+  type SyncOfflineTimerInput,
   type TimerCommandInput,
   type UpdateTimerInput,
 } from '../shared/api/study-timer'
@@ -90,11 +91,11 @@ const query = (values: Record<string, string>) => `?${new URLSearchParams(values
 
 export const api = {
   sheets: {
-    list: () => get('/api/planner-sheets', sheetsResponseSchema).then((r) => r.sheets),
-    get: (id: string) => get(`/api/planner-sheets/${encodeURIComponent(id)}`, sheetResponseSchema).then((r) => r.sheet),
-    create: (input: CreateSheetInput) => post('/api/planner-sheets', sheetResponseSchema, input).then((r) => r.sheet),
-    update: (id: string, input: UpdateSheetInput) => put(`/api/planner-sheets/${encodeURIComponent(id)}`, z.object({ updatedAt: z.number() }), input),
-    remove: (id: string) => del(`/api/planner-sheets/${encodeURIComponent(id)}`, null),
+    list: (owner?: string) => get('/api/planner-sheets', sheetsResponseSchema, owner).then((r) => r.sheets),
+    get: (id: string, owner?: string) => get(`/api/planner-sheets/${encodeURIComponent(id)}`, sheetResponseSchema, owner).then((r) => r.sheet),
+    create: (input: CreateSheetInput, owner?: string) => post('/api/planner-sheets', sheetResponseSchema, input, owner).then((r) => r.sheet),
+    update: (id: string, input: UpdateSheetInput, owner?: string) => put(`/api/planner-sheets/${encodeURIComponent(id)}`, z.object({ updatedAt: z.number() }), input, owner),
+    remove: (id: string, owner?: string) => del(`/api/planner-sheets/${encodeURIComponent(id)}`, null, owner),
   },
   profile: {
     get: () => get('/api/profile', profileResponseSchema).then((r) => r.profile),
@@ -110,9 +111,10 @@ export const api = {
     resume: (input: TimerCommandInput) => post('/api/study/timer/resume', timer, input).then((r) => r.timer),
     update: (input: UpdateTimerInput) => patch('/api/study/timer', timer, input).then((r) => r.timer),
     stop: (input: StopTimerInput) => post('/api/study/timer/stop', stopTimerResponseSchema, input).then((r) => r.log),
+    syncOffline: (input: SyncOfflineTimerInput) => post('/api/study/timer/offline', stopTimerResponseSchema, input, input.accountId).then((r) => r.log),
     logs: (from: string, to: string) => get(`/api/study/logs${query({ from, to })}`, studyLogListResponseSchema).then((r) => r.logs),
-    recordLog: (input: ManualStudyLogInput) => post('/api/study/logs', stopTimerResponseSchema, input).then((r) => r.log),
-    removeLog: (id: string) => del(`/api/study/logs/${encodeURIComponent(id)}`, null),
+    recordLog: (input: ManualStudyLogInput, accountId?: string) => post('/api/study/logs', stopTimerResponseSchema, input, accountId).then((r) => r.log),
+    removeLog: (id: string, accountId?: string) => del(`/api/study/logs/${encodeURIComponent(id)}`, null, accountId),
   },
   schedule: {
     day: (date?: string) => get(`/api/schedule/day${date ? query({ date }) : ''}`, dayScheduleResponseSchema).then((r) => r.schedule),
@@ -129,12 +131,12 @@ export const api = {
     resetForProfile: () => post('/api/subjects/reset', subjectsResponseSchema, {}).then((r) => r.subjects),
   },
   planner: {
-    list: (from: string, to: string) => get(`/api/planner${query({ from, to })}`, plannerItemsResponseSchema).then((r) => r.items),
-    create: (input: CreatePlannerItemInput) =>
-      post('/api/planner', plannerItemResponseSchema, createPlannerItemInputSchema.parse(input)).then((r) => r.item),
-    update: (id: string, input: UpdatePlannerItemInput) =>
-      patch(`/api/planner/${encodeURIComponent(id)}`, plannerItemResponseSchema, input).then((r) => r.item),
-    remove: (id: string) => del(`/api/planner/${encodeURIComponent(id)}`, null),
+    list: (from: string, to: string, owner?: string) => get(`/api/planner${query({ from, to })}`, plannerItemsResponseSchema, owner).then((r) => r.items),
+    create: (input: CreatePlannerItemInput, owner?: string) =>
+      post('/api/planner', plannerItemResponseSchema, createPlannerItemInputSchema.parse(input), owner).then((r) => r.item),
+    update: (id: string, input: UpdatePlannerItemInput, owner?: string) =>
+      patch(`/api/planner/${encodeURIComponent(id)}`, plannerItemResponseSchema, input, owner).then((r) => r.item),
+    remove: (id: string, owner?: string) => del(`/api/planner/${encodeURIComponent(id)}`, null, owner),
     reminders: () => get('/api/planner/reminders', plannerItemsResponseSchema).then((r) => r.items),
   },
   progress: {

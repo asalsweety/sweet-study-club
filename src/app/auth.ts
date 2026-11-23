@@ -1,6 +1,7 @@
 import { z } from 'zod/mini'
 import { ApiClientError } from '../shared/api/api-client-error'
 import { http } from '../shared/api/http'
+import { offlineAccountId, offlineAccountKey, readOfflineStorage } from '../shared/api/offline-cache'
 
 const sessionSchema = z.nullable(
   z.object({
@@ -9,6 +10,20 @@ const sessionSchema = z.nullable(
 )
 
 export type AuthSession = NonNullable<z.infer<typeof sessionSchema>>
+
+function readRememberedSession() {
+  const result = sessionSchema.safeParse(readOfflineStorage(offlineAccountKey))
+  return result.success ? result.data : null
+}
+
+async function verifySession(): Promise<AuthSession | null> {
+  try {
+    return await http('GET', '/api/auth/get-session', sessionSchema)
+  } catch (error) {
+    if (error instanceof ApiClientError && error.status === 401) return null
+    throw error
+  }
+}
 
 const authErrors: Record<string, string> = {
   INVALID_EMAIL_OR_PASSWORD: 'ایمیل یا رمز عبور درست نیست.',
@@ -38,11 +53,17 @@ async function authRequest(path: string, body?: unknown) {
 }
 
 export const auth = {
+  verifySession,
+  getOfflineAccountId: offlineAccountId,
   session: async (): Promise<AuthSession | null> => {
+    if (globalThis.navigator?.onLine === false) return readRememberedSession()
     try {
-      return await http('GET', '/api/auth/get-session', sessionSchema)
+      return await verifySession()
     } catch (error) {
-      if (error instanceof ApiClientError && error.status === 401) return null
+      const remembered = readRememberedSession()
+      if (remembered && error instanceof ApiClientError && (error.code === 'NETWORK_ERROR' || [502, 503, 504].includes(error.status ?? 0))) {
+        return remembered
+      }
       throw error
     }
   },

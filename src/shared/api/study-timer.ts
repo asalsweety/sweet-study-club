@@ -114,6 +114,20 @@ export const stopTimerResponseSchema = z.object({
   log: completedStudyLogSchema,
 })
 
+export const syncOfflineTimerInputSchema = z.object({
+  accountId: z.string().min(1).max(128),
+  baseVersion: z.number().int().positive().nullable(),
+  log: completedStudyLogSchema.extend({
+    id: z.uuid(),
+    sessionId: z.string().min(1).max(80).nullable(),
+    testCount: z.number().int().min(0).max(10000),
+    note: z.string().trim().max(500).nullable(),
+  }).refine((log) => !log.recordedManually &&
+    (log.mode === 'scheduled') === (log.sessionId !== null) &&
+    log.testsCorrect + log.testsWrong <= log.testCount &&
+    Date.parse(log.endedAt) - Date.parse(log.startedAt) >= log.durationSeconds * 1000),
+})
+
 export const studyLogListResponseSchema = z.object({
   logs: z.array(completedStudyLogSchema),
 })
@@ -135,4 +149,5 @@ export type TimerCommandInput = z.infer<typeof timerCommandInputSchema>
 export type UpdateTimerInput = z.infer<typeof updateTimerInputSchema>
 export type StopTimerInput = z.infer<typeof stopTimerInputSchema>
 export type CompletedStudyLog = z.infer<typeof completedStudyLogSchema>
+export type SyncOfflineTimerInput = z.infer<typeof syncOfflineTimerInputSchema>
 export type ManualStudyLogInput = z.infer<typeof manualStudyLogInputSchema>

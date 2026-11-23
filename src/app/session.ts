@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { auth, type AuthSession } from './auth'
+import { saveOfflineAccount } from '../shared/api/offline-cache'
 
 const loadApi = () => import('./api').then((module) => module.api)
 
@@ -31,7 +32,21 @@ export const queryKeys = {
 }
 
 export function useSession() {
-  return useQuery({ queryKey: queryKeys.session, queryFn: auth.session, staleTime: 5 * 60_000 })
+  const client = useQueryClient()
+  return useQuery({
+    queryKey: queryKeys.session,
+    queryFn: async ({ signal }) => {
+      const session = await auth.session()
+      if (!signal.aborted) {
+        const previous = client.getQueryData<AuthSession | null>(queryKeys.session)
+        if (previous && previous.user.id !== session?.user.id) client.removeQueries({ predicate: isAccountQuery })
+        saveOfflineAccount(session)
+      }
+      return session
+    },
+    refetchOnReconnect: 'always',
+    staleTime: 5 * 60_000,
+  })
 }
 
 // Both Today and Focus need the active timer before showing their controls.
@@ -86,8 +101,13 @@ export async function replaceSession(client: QueryClient, session: AuthSession |
   await client.cancelQueries()
   // Keep the observed session query alive. Removing it detaches App's observer,
   // so writing a new query with the same key would not update the visible UI.
-  client.removeQueries({ predicate: (query) => query.queryKey[0] !== queryKeys.session[0] })
+  client.removeQueries({ predicate: isAccountQuery })
+  saveOfflineAccount(session)
   client.setQueryData(queryKeys.session, session)
+}
+
+function isAccountQuery(query: { queryKey: readonly unknown[] }) {
+  return query.queryKey[0] !== queryKeys.session[0]
 }
 
 /** Refresh totals and rewards once the finished session has been saved. */

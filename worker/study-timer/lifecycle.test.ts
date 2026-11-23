@@ -99,3 +99,47 @@ describe('pomodoro focus time', () => {
     expect(log).toMatchObject({ id: started.logId, title: 'Chapters 1–2', durationSeconds: 1800, recordedManually: false })
   })
 })
+
+describe('offline timer sync', () => {
+  function finished(overrides: Record<string, unknown> = {}) {
+    return {
+      id: crypto.randomUUID(), mode: 'free', subjectName: 'Physics', title: 'Chapter 2', recordedManually: false,
+      sessionId: null, startedAt: new Date(now - 30 * minute).toISOString(),
+      endedAt: new Date(now - 5 * minute).toISOString(), durationSeconds: 900, testCount: 3,
+      testsCorrect: 2, testsWrong: 1, focusRating: 4, note: 'Read and reviewed', ...overrides,
+    }
+  }
+
+  function upload(accountId: string, log: ReturnType<typeof finished>, baseVersion: number | null = null, cookieUser = 'member', expectedAccount?: string) {
+    const headers = new Headers({ 'content-type': 'application/json', 'x-test-user': cookieUser })
+    if (expectedAccount) headers.set('X-SweetStudy-Account', expectedAccount)
+    return app.request('/api/study/timer/offline', { method: 'POST', headers, body: JSON.stringify({ accountId, log, baseVersion }) }, bindings)
+  }
+
+  it('preserves exact timestamps and focused seconds, scopes to the account, and saves a single log across retries', async () => {
+    const log = finished()
+    expect((await upload('other', log)).status).toBe(409)
+    expect((await upload('other', log, null, 'other', 'member')).status).toBe(409)
+    expect(stopTimerResponseSchema.parse(await (await upload('member', log)).json()).log).toEqual(log)
+    expect(stopTimerResponseSchema.parse(await (await upload('member', log)).json()).log).toEqual(log)
+    expect((await upload('member', { ...log, durationSeconds: 901 })).status).toBe(409)
+    expect((await upload('member', finished())).status).toBe(409)
+    expect((await upload('member', finished({ durationSeconds: 1600 }))).status).toBe(400)
+    expect(studyLogListResponseSchema.parse(await (await request('?from=2026-11-23&to=2026-11-23')).json()).logs).toEqual([log])
+    expect((await request(`/${log.id}`, 'DELETE')).status).toBe(204)
+    expect((await upload('member', log)).status).toBe(200)
+    expect(studyLogListResponseSchema.parse(await (await request('?from=2026-11-23&to=2026-11-23')).json()).logs).toEqual([])
+  })
+
+  it('requires the version of the same ongoing timer before closing it from offline', async () => {
+    const started = await startTimer(bindings.DB, 'member', {
+      commandId: crypto.randomUUID(), mode: 'free', subjectName: 'Physics', sessionId: null, focusLockEnabled: false, pomodoro: null,
+    }, now - 30 * minute)
+    const paused = await pauseTimer(bindings.DB, 'member', { commandId: crypto.randomUUID(), expectedVersion: started.version }, now - 20 * minute)
+    const log = finished({ id: started.logId, startedAt: started.startedAt })
+    expect((await upload('member', log, started.version)).status).toBe(409)
+    expect(stopTimerResponseSchema.parse(await (await upload('member', log, paused!.version)).json()).log).toEqual(log)
+    expect((await upload('member', log, paused!.version)).status).toBe(200)
+    expect(sqlite.prepare('SELECT COUNT(*) AS count FROM active_study_timers').get()).toMatchObject({ count: 0 })
+  })
+})

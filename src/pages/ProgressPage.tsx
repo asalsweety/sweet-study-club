@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../app/api'
 import { appRoutes } from '../app/navigation/routes'
+import { useOnlineStatus } from '../app/pwa/online-status'
 import { queryKeys, useSubjects } from '../app/session'
 import type { UserProfile } from '../shared/api/profile'
 import type { PeriodKind } from '../shared/api/progress'
@@ -48,6 +49,7 @@ function Metric({ icon, label, value, extra }: { icon: React.ReactNode; label: s
 }
 
 export default function ProgressPage({ profile }: { profile: UserProfile }) {
+  const online = useOnlineStatus()
   const today = tehranClock(useNow(60_000)).date
   const [period, setPeriod] = useState<PeriodKind>('week')
   const progress = useQuery({ queryKey: queryKeys.progress(period), queryFn: () => api.progress.period(period) })
@@ -70,8 +72,10 @@ export default function ProgressPage({ profile }: { profile: UserProfile }) {
       } />
       <DailyStudyLog today={today} browse className="club-panel" />
 
-      {progress.isError && <QueryError error={progress.error} retry={() => void progress.refetch()} />}
-      {!data && !progress.isError ? (
+      {!online && data && <p role="status" className="text-sm text-muted-foreground">آمار این بازه مربوط به آخرین گزارش ذخیره‌شده است.</p>}
+      {!online && !data && (progress.isError || progress.fetchStatus === 'paused') ? (
+        <p role="status" className="club-panel text-sm text-muted-foreground">گزارش این بازه هنوز روی دستگاه ذخیره نشده است. یک بازهٔ دیگر را انتخاب کن یا آنلاین برگرد.</p>
+      ) : progress.isError && !data ? <QueryError error={progress.error} retry={() => void progress.refetch()} /> : !data ? (
         <div className="grid gap-4 sm:grid-cols-4">{Array.from({ length: 4 }, (_, i) => <div key={i} className="skeleton h-28 rounded-3xl" />)}</div>
       ) : data ? (
         <>
@@ -106,7 +110,9 @@ export default function ProgressPage({ profile }: { profile: UserProfile }) {
               <h2 className="text-base font-bold">نقشه‌ی حرارتی مطالعه · ۲۰ هفته‌ی اخیر</h2>
               <span className="text-xs font-bold text-primary">زنجیره: {fa(data.streak.current)} روز · رکورد {fa(data.streak.best)} روز</span>
             </div>
-            {heatmap.isError ? <QueryError error={heatmap.error} retry={() => void heatmap.refetch()} /> : heatmap.data ? <Heatmap days={heatmap.data} /> : <div className="skeleton h-28 rounded-2xl" />}
+            {heatmap.data ? <Heatmap days={heatmap.data} /> : !online && (heatmap.isError || heatmap.fetchStatus === 'paused')
+              ? <p className="text-sm text-muted-foreground">نقشۀ مطالعه هنوز روی این دستگاه ذخیره نشده است.</p>
+              : heatmap.isError ? <QueryError error={heatmap.error} retry={() => void heatmap.refetch()} /> : <div className="skeleton h-28 rounded-2xl" />}
           </section>
           <section className="club-panel grid gap-3">
             <h2 className="text-base font-bold">مطالعه به تفکیک درس</h2>

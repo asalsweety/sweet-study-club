@@ -4,6 +4,7 @@ import { fa } from '../shared/lib/format'
 import { LogOut } from 'lucide-react'
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { appRoutes } from '../app/navigation/routes'
+import { useOnlineStatus } from '../app/pwa/online-status'
 import { queryKeys, useSignOut } from '../app/session'
 import type { UserProfile } from '../shared/api/profile'
 import PageHeading from '../components/PageHeading'
@@ -20,6 +21,7 @@ import ScoresPanel from '../features/learning/ScoresPanel'
 
 const sections = [['overview', 'پروفایل'], ['settings', 'تنظیمات'], ['subjects', 'درس‌های من'], ['achievements', 'دستاوردها'], ['export', 'گزارش‌ها']] as const
 export default function MePage({ profile }: { profile: UserProfile }) {
+  const online = useOnlineStatus()
   const signOut = useSignOut()
   const navigate = useNavigate()
   const location = useLocation()
@@ -34,12 +36,12 @@ export default function MePage({ profile }: { profile: UserProfile }) {
   )
   return <div className={section === 'overview' ? 'profile-overview grid min-w-0 grid-cols-1 gap-5' : 'grid min-w-0 grid-cols-1 gap-6'}>
     {section === 'overview' ? <>
-      <PageHeading action={sectionNav} eyebrow="پروفایل و تنظیمات" title={profile.displayName + (level ? ` · سطح ${fa(level.level)}` : '')} description={level ? `${fa(Math.max(0, level.nextLevelAt - level.experience))} XP تا سطح بعد · هر دقیقه ۱ XP، هر تست درست ۲ XP` : 'مسیر مطالعه و تنظیمات تو'} />
+      <PageHeading action={sectionNav} eyebrow="پروفایل و تنظیمات" title={profile.displayName + (level ? ` · سطح ${fa(level.level)}` : '')} description={!online ? 'آخرین پروفایل ذخیره‌شده روی این دستگاه را می‌بینی. برای تغییر اطلاعات پروفایل به اینترنت وصل شو.' : level ? `${fa(Math.max(0, level.nextLevelAt - level.experience))} XP تا سطح بعد · هر دقیقه ۱ XP، هر تست درست ۲ XP` : 'مسیر مطالعه و تنظیمات تو'} />
       <ProfileCard profile={profile} />
       <div className="grid items-start gap-5 md:grid-cols-2"><ExportPanel compact profile={profile} /><DnaPanel compact /></div>
       <SettingsPanel profile={profile} compact />
     </> : <>
-    <PageHeading action={sectionNav} eyebrow="فضای شخصی" title="حساب و تنظیمات" description="این فضا را با ریتم، هدف‌ها و سلیقۀ خودت هماهنگ کن." />
+    <PageHeading action={sectionNav} eyebrow="فضای شخصی" title="حساب و تنظیمات" description={online ? 'این فضا را با ریتم، هدف‌ها و سلیقۀ خودت هماهنگ کن.' : 'اطلاعات ذخیره‌شدۀ این حساب را می‌بینی. ویرایش اطلاعات پروفایل بعد از اتصال در دسترس است.'} />
     <ProfileCard profile={profile} />
     </>}
     {section === 'settings' && <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
@@ -49,7 +51,7 @@ export default function MePage({ profile }: { profile: UserProfile }) {
         <p className="my-3 text-sm leading-7 text-muted-foreground">اطلاعات مطالعه به حسابت متصل است و با ورود دوباره در دسترس خواهد بود.</p>
         <Button variant="outline" disabled={signOut.isPending} onClick={() => signOut.mutate()} className="text-destructive"><LogOut />{signOut.isPending ? 'در حال خروج…' : 'خروج از حساب'}</Button>
         {signOut.isError && <div className="mt-3"><QueryError error={signOut.error} /></div>}
-        <ChangePasswordForm />
+        {online && <ChangePasswordForm />}
       </section>
     </div>}
     {section === 'subjects' && <SubjectsPanel />}

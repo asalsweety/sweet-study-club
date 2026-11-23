@@ -52,7 +52,7 @@ export default function AuthScreen() {
         setMode('sign-in')
         await auth.signIn(email.trim(), password)
       }
-      const session = await auth.session()
+      const session = await auth.verifySession()
       if (!session) throw new ApiClientError('ورود تأیید نشد. اجازۀ ذخیرۀ کوکی را بررسی کن و دوباره وارد شو.', { code: 'SESSION_MISSING' })
       return session
     },

@@ -1,9 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { api } from '../app/api'
 import { appRoutes } from '../app/navigation/routes'
-import { queryKeys } from '../app/session'
-import { elapsedSecondsOf, useNow } from '../features/study/useStudyTimer'
+import { elapsedSecondsOf, useNow, useTimerView } from '../features/study/useStudyTimer'
 import { formatClock } from '../shared/lib/format'
 import { cn } from '../shared/lib/utils'
 import ClockText from './ClockText'
@@ -13,7 +10,7 @@ import ClockText from './ClockText'
  * header on desktop and floating above the tab bar on phones.
  */
 export default function LiveSessionCapsule({ className }: { className?: string }) {
-  const timer = useQuery({ queryKey: queryKeys.timer, queryFn: api.timer.get }).data
+  const timer = useTimerView().current
   const running = timer?.timerStatus === 'running'
   const now = useNow(timer ? (running ? 1000 : null) : null)
   if (!timer) return null

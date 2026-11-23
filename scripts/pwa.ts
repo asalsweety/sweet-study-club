@@ -1,4 +1,5 @@
 import { VitePWA } from 'vite-plugin-pwa'
+import { existsSync } from 'node:fs'
 
 export function pwaPlugins() {
   const pwaPlugins = VitePWA({
@@ -33,16 +34,23 @@ export function pwaPlugins() {
     },
     workbox: {
       cleanupOutdatedCaches: true,
-      globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+      globPatterns: [
+        'index.html', 'favicon.svg', 'assets/**/*.{js,css,svg,png,woff2}', 'icons/*.{png,svg}',
+        ...(process.env.VITE_TITLE_FONT_LICENSED === 'true' && existsSync('public/fonts/licensed/mahboubeh-mehravar.woff2')
+          ? ['fonts/licensed/mahboubeh-mehravar.woff2'] : []),
+        'images/figma/{club-logo,helper-asal,today-*,modal-*,social-league-library}.webp',
+        'images/pixel/study-rooms/*.webp', 'images/chibi-pack/*.webp',
+        'images/study-stickers/{bee,books,honey,library,cottage}.webp',
+      ],
       globIgnores: [
         '**/html2canvas-*.js',
         '**/purify*.js',
-        '**/images/**',
-        // The title font is precached only in builds that ship it.
-        ...(process.env.VITE_TITLE_FONT_LICENSED === 'true' ? [] : ['**/fonts/licensed/**']),
       ],
       navigateFallback: '/index.html',
-      navigateFallbackDenylist: [/^\/api(?:\/|$)/],
+      navigateFallbackDenylist: [
+        /^\/(?:api|assets|icons|images|fonts|question-media|\.well-known)(?:[/?]|$)/,
+        /^\/(?:revision\.txt|sw\.js|manifest\.webmanifest)(?:\?|$)/,
+      ],
       runtimeCaching: [{
         urlPattern: ({ sameOrigin, request, url }) =>
           sameOrigin && request.destination === 'image' && url.pathname.startsWith('/images/'),
@@ -50,6 +58,15 @@ export function pwaPlugins() {
         options: {
           cacheName: 'study-artwork',
           expiration: { maxEntries: 80 },
+          cacheableResponse: { statuses: [200] },
+        },
+      }, {
+        urlPattern: ({ sameOrigin, request, url }) =>
+          sameOrigin && request.destination === 'script' && /^\/assets\/html2canvas-[\w-]+\.js$/.test(url.pathname),
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'study-export-tools',
+          expiration: { maxEntries: 3 },
           cacheableResponse: { statuses: [200] },
         },
       }],

@@ -34,6 +34,7 @@ const editablePlannerFields = {
 }
 
 export const createPlannerItemInputSchema = z.object({
+  id: z.uuid().optional(),
   date: isoDateSchema,
   ...editablePlannerFields,
 })

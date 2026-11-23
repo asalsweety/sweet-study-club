@@ -14,6 +14,7 @@ import {
   manualStudyLogInputSchema,
   startTimerInputSchema,
   stopTimerInputSchema,
+  syncOfflineTimerInputSchema,
   timerCommandInputSchema,
   updateTimerInputSchema,
 } from '../../src/shared/api/study-timer'
@@ -23,6 +24,7 @@ import * as planner from '../planner/service'
 import { getDaySchedule } from '../schedule/service'
 import * as settings from '../settings/service'
 import * as timer from '../study-timer/commands'
+import { syncOfflineTimer } from '../study-timer/offline'
 import { recordManualStudyLog, removeCompletedStudyLog } from '../study-timer/logs'
 import { findActiveTimerByUserId, listCompletedLogs } from '../study-timer/repository'
 import type { WorkerEnvironment } from '../types'
@@ -48,6 +50,8 @@ export function studyRoutes(requireSession: MiddlewareHandler<WorkerEnvironment>
     c.json({ timer: await timer.updateTimer(c.env.DB, userId(c), await readBody(c, updateTimerInputSchema)) }))
   app.post('/study/timer/stop', async (c) =>
     c.json({ log: await timer.stopTimer(c.env.DB, userId(c), await readBody(c, stopTimerInputSchema)) }))
+  app.post('/study/timer/offline', async (c) =>
+    c.json({ log: await syncOfflineTimer(c.env.DB, userId(c), await readBody(c, syncOfflineTimerInputSchema)) }))
 
   app.get('/study/logs', async (c) => {
     const { from, to } = readQuery(c, rangeQuery)

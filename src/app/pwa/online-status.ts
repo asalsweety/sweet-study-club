@@ -1,14 +1,17 @@
 import { useSyncExternalStore } from 'react'
+import { canReachApi, subscribeToApiReachability } from '../../shared/api/reachability'
 
-function subscribe(onChange: () => void) {
+export function subscribeToConnection(onChange: () => void) {
+  const unsubscribe = subscribeToApiReachability(onChange)
   window.addEventListener('online', onChange)
   window.addEventListener('offline', onChange)
   return () => {
+    unsubscribe()
     window.removeEventListener('online', onChange)
     window.removeEventListener('offline', onChange)
   }
 }
 
 export function useOnlineStatus() {
-  return useSyncExternalStore(subscribe, () => navigator.onLine, () => true)
+  return useSyncExternalStore(subscribeToConnection, canReachApi, () => true)
 }

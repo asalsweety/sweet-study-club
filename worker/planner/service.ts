@@ -60,23 +60,23 @@ async function findItem(db: D1Database, userId: string, id: string) {
 }
 
 export async function createPlannerItem(db: D1Database, userId: string, input: CreatePlannerItemInput) {
-  const id = crypto.randomUUID()
+  const id = input.id ?? crypto.randomUUID()
   const now = Date.now()
-  const count = await db
-    .prepare('SELECT COUNT(*) AS total FROM planner_items WHERE user_id = ? AND plan_date = ?')
-    .bind(userId, input.date)
-    .first<{ total: number }>()
-  if ((count?.total ?? 0) >= 100) throw invalidInput('A day can hold at most 100 planner items.')
-
-  await db
+  const result = await db
     .prepare(
       `INSERT INTO planner_items (id, user_id, plan_date, kind, title, details, subject_name,
          planned_minutes, planned_tests, is_done, remind_at, position, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, total, ?, ?
+       FROM (SELECT COUNT(*) AS total FROM planner_items WHERE user_id = ? AND plan_date = ?)
+       WHERE total < 100 ON CONFLICT(id) DO NOTHING`,
     )
     .bind(id, userId, input.date, input.kind, input.title, input.details || null, input.subjectName,
-      input.plannedMinutes, input.plannedTests, toEpoch(input.remindAt) ?? null, count?.total ?? 0, now, now)
+      input.plannedMinutes, input.plannedTests, toEpoch(input.remindAt) ?? null, now, now, userId, input.date)
     .run()
+  if (!result.meta.changes) {
+    const existing = await db.prepare('SELECT 1 FROM planner_items WHERE user_id = ? AND id = ?').bind(userId, id).first()
+    if (!existing) throw invalidInput('این کار ثبت نشد. هر روز می‌تواند حداکثر ۱۰۰ کار داشته باشد.')
+  }
   return findItem(db, userId, id)
 }
 

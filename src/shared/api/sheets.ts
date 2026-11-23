@@ -31,5 +31,9 @@ export const createSheetInputSchema = z.object({
   title: z.string().trim().min(1).max(80).optional(),
 }).strict()
 export type CreateSheetInput = z.infer<typeof createSheetInputSchema>
-export const updateSheetInputSchema = z.object({ title: z.string().trim().min(1).max(80).optional(), data: sheetDataSchema.optional() }).strict()
+export const updateSheetInputSchema = z.object({
+  title: z.string().trim().min(1).max(80).optional(),
+  data: sheetDataSchema.optional(),
+  expectedUpdatedAt: z.number().int().nonnegative().optional(),
+}).strict()
 export type UpdateSheetInput = z.infer<typeof updateSheetInputSchema>

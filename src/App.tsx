@@ -65,6 +65,17 @@ function PageFallback() {
   )
 }
 
+function NeedsConnection() {
+  return <section className="surface grid max-w-lg gap-3 p-6" role="status">
+    <h1 className="text-lg font-bold">این بخش به اینترنت نیاز دارد</h1>
+    <p className="text-sm text-muted-foreground">در این فاصله می‌توانی از تایمر، پلنر یا سؤال‌های دانلودشده استفاده کنی.</p>
+    <div className="flex flex-wrap gap-2">
+      <Button asChild><Link to={appRoutes.home}>اتاق مطالعه</Link></Button>
+      <Button asChild variant="outline"><Link to={appRoutes.offline}>کتابخانۀ آفلاین</Link></Button>
+    </div>
+  </section>
+}
+
 function ConnectionProblem({ profile = false, retry, pending }: { profile?: boolean; retry: () => void; pending: boolean }) {
   return <main dir="rtl" className="grid min-h-dvh place-items-center p-6">
     <section className="surface max-w-md p-8 text-center [animation:rise-in_520ms_var(--ease-spring)_backwards]">
@@ -126,19 +137,19 @@ function AccountContent({ online }: { online: boolean }) {
   }, [signedIn, pathname])
   // Privacy and terms are public: readable before signing in.
   if (pathname === '/privacy' || pathname === '/terms') return <Suspense fallback={<FullScreenLoader label="در حال بارگذاری..." />}><LegalPage kind={pathname === '/privacy' ? 'privacy' : 'terms'} /></Suspense>
-  if (!online && (!signedIn || !profile.data || settings.isPending || pathname === appRoutes.learning)) {
+  if (session.isPending) return <FullScreenLoader label="در حال آماده‌سازی اتاق مطالعه..." />
+  if (!online && (!signedIn || (profile.isError && !profile.data) || pathname === appRoutes.learning)) {
     return <Navigate to={appRoutes.offline} replace />
   }
-  if (session.isPending) return <FullScreenLoader label="در حال آماده‌سازی اتاق مطالعه..." />
   if (session.isError && !signedIn) return <ConnectionProblem retry={() => void session.refetch()} pending={session.isFetching} />
   const expired = profile.error instanceof ApiClientError && profile.error.status === 401
   if (!signedIn || expired) return <><AuthScreen /><Suspense fallback={null}><BroadcastPopups userId={null} /></Suspense></>
   if (profile.isError && !profile.data) return <ConnectionProblem profile retry={() => void profile.refetch()} pending={profile.isFetching} />
-  if (!profile.data) return <FullScreenLoader label="در حال آماده‌کردن پروفایل..." />
+  if (!profile.data || (session.data?.user.id && profile.data.id !== session.data.user.id)) return <FullScreenLoader label="در حال آماده‌کردن پروفایل..." />
   if (settings.isPending) return <FullScreenLoader label="در حال آماده‌کردن پروفایل..." />
   const popups = <Suspense fallback={null}><BroadcastPopups key={profile.data.id} userId={profile.data.id} /></Suspense>
   // First run (or an account from before profiles existed): ask who the learner is.
-  if (settings.data && !settings.data.educationGroup && pathname !== '/welcome') {
+  if (online && settings.data && !settings.data.educationGroup && pathname !== '/welcome') {
     return <Suspense fallback={<FullScreenLoader label="در حال بارگذاری..." />}><OnboardingFlow settings={settings.data} />{popups}</Suspense>
   }
 
@@ -146,7 +157,7 @@ function AccountContent({ online }: { online: boolean }) {
     <Suspense fallback={<FullScreenLoader label="در حال بارگذاری..." />}>
       <Routes>
         <Route path={appRoutes.focus} element={<FocusPage />} />
-        {settings.data && <Route path="/welcome" element={<OnboardingFlow settings={settings.data} editing={Boolean(settings.data.educationGroup)} />} />}
+        {online && settings.data && <Route path="/welcome" element={<OnboardingFlow settings={settings.data} editing={Boolean(settings.data.educationGroup)} />} />}
         <Route
           path="*"
           element={
@@ -157,13 +168,13 @@ function AccountContent({ online }: { online: boolean }) {
                   <Route path={appRoutes.planner} element={<PlannerPage displayName={profile.data.displayName} />} />
                   <Route path={appRoutes.progress} element={<ProgressPage profile={profile.data} />} />
                   <Route path={appRoutes.learning} element={<LearningPage />} />
-                  <Route path={appRoutes.friends} element={<FriendsPage />} />
+                  <Route path={appRoutes.friends} element={online ? <FriendsPage /> : <NeedsConnection />} />
                   <Route path={appRoutes.ranking} element={<RankingPage />} />
-                  <Route path={appRoutes.shop} element={<ShopPage />} />
-                  <Route path={appRoutes.feedback} element={<FeedbackPage />} />
+                  <Route path={appRoutes.shop} element={online ? <ShopPage /> : <NeedsConnection />} />
+                  <Route path={appRoutes.feedback} element={online ? <FeedbackPage /> : <NeedsConnection />} />
                   <Route path={appRoutes.profile} element={<MePage profile={profile.data} />} />
-                  <Route path={appRoutes.invite} element={<InvitePage />} />
-                  {profile.data.role === 'admin' && <Route path={appRoutes.admin} element={<AdminPage />} />}
+                  <Route path={appRoutes.invite} element={online ? <InvitePage /> : <NeedsConnection />} />
+                  {profile.data.role === 'admin' && <Route path={appRoutes.admin} element={online ? <AdminPage /> : <NeedsConnection />} />}
                   <Route path="*" element={<Navigate to={appRoutes.home} replace />} />
                 </Routes>
               </Suspense>

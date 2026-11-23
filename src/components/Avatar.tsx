@@ -35,17 +35,15 @@ export default function Avatar({ name, url, size = 'md', status = null, classNam
 
   return (
     <span className={cn('relative inline-flex shrink-0', className)}>
-      {url ? (
-        <img src={url} alt="" className={cn('rounded-2xl object-cover', sizes[size])} />
-      ) : (
-        <span
-          aria-hidden
-          className={cn('grid place-items-center rounded-2xl font-bold text-white shadow-inner', sizes[size])}
-          style={{ background: `linear-gradient(135deg, oklch(0.72 0.14 ${hue}), oklch(0.58 0.17 ${(hue + 40) % 360}))` }}
-        >
-          {initial}
-        </span>
-      )}
+      <span
+        aria-hidden
+        className={cn('grid place-items-center rounded-2xl font-bold text-white shadow-inner', sizes[size])}
+        style={{ background: `linear-gradient(135deg, oklch(0.72 0.14 ${hue}), oklch(0.58 0.17 ${(hue + 40) % 360}))` }}
+      >
+        {initial}
+      </span>
+      {url && <img key={url} src={url} alt="" className={cn('absolute inset-0 rounded-2xl object-cover', sizes[size])}
+        onError={(event) => { event.currentTarget.hidden = true }} />}
       {status && (
         <span
           className={cn('absolute -bottom-0.5 -left-0.5 size-3.5 rounded-full border-2 border-card', statusColors[status])}
