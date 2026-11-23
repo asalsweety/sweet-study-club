@@ -16,10 +16,12 @@ beforeAll(() => {
 afterAll(() => db.close())
 describe('published Persian content', () => {
   it('runs the complete migration chain and publishes only valid Persian questions', () => {
-    expect(db.prepare("SELECT value FROM system_metadata WHERE key='schema_version'").get()?.value).toBe('24')
+    expect(db.prepare("SELECT value FROM system_metadata WHERE key='schema_version'").get()?.value).toBe('25')
     const rows = db.prepare('SELECT p.id AS packId,p.track,q.content FROM learning_questions q JOIN learning_packs p ON p.id=q.pack_id WHERE p.is_active=1 AND p.is_sample=0').all()
     const manifest = JSON.parse(readFileSync(new NodeURL('content/learning/manifest.json', root), 'utf8'))
-    expect(rows.filter((row) => !String(row.packId).startsWith('authored-statistics-'))).toHaveLength(manifest.questionPlacements)
+    const konkur1405 = JSON.parse(readFileSync(new NodeURL('content/learning/konkur-1405.json', root), 'utf8')) as unknown[]
+    expect(rows.filter((row) => String(row.packId).startsWith('konkur-1405-'))).toHaveLength(konkur1405.length)
+    expect(rows.filter((row) => !String(row.packId).startsWith('authored-statistics-') && !String(row.packId).startsWith('konkur-1405-'))).toHaveLength(manifest.questionPlacements)
     for (const row of rows) {
       const question = questionInputSchema.parse(JSON.parse(String(row.content)))
       expect(question.language).toBe('fa')
@@ -40,7 +42,10 @@ describe('published Persian content', () => {
     expect(db.prepare("SELECT COUNT(*) AS count FROM learning_packs WHERE provider = 'konkur' AND grade IS NULL").get()?.count).toBe(0)
   })
   it('preserves every native answer key and the original paper images', () => {
-    const source = JSON.parse(readFileSync(new NodeURL('content/learning/persian-exams.json', root), 'utf8')) as { key: string; correctIndex: number; images: string[] }[]
+    const source = [
+      ...JSON.parse(readFileSync(new NodeURL('content/learning/persian-exams.json', root), 'utf8')),
+      ...JSON.parse(readFileSync(new NodeURL('content/learning/konkur-1405.json', root), 'utf8')),
+    ] as { key: string; correctIndex: number; images: string[] }[]
     const rows = db.prepare("SELECT q.content FROM learning_questions q JOIN learning_packs p ON p.id=q.pack_id WHERE p.is_active=1 AND p.bank='national'").all()
     const imported = new Map(rows.map((row) => { const q = questionInputSchema.parse(JSON.parse(String(row.content))); return [q.key, q] }))
     expect(imported.size).toBe(source.length)

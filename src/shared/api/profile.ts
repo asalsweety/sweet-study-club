@@ -3,7 +3,8 @@ import { z } from 'zod'
 export const profileSchema = z.object({
   id: z.string().min(1),
   email: z.string().min(1),
-  displayName: z.string().min(2).max(40),
+  // Stored names are shown as they are; the 2–40 rule applies when names are written.
+  displayName: z.string(),
   avatarUrl: z.string().nullable(),
   verified: z.boolean().default(false),
   role: z.enum(['member', 'admin']),

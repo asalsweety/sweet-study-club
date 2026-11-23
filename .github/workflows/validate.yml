@@ -82,6 +82,7 @@ jobs:
           VPS_RELEASE_KEY: ${{ secrets.SWEETSTUDY_VPS_RELEASE_KEY }}
           VPS_HOST: ${{ vars.SWEETSTUDY_VPS_HOST }}
           VPS_KNOWN_HOSTS: ${{ vars.SWEETSTUDY_VPS_KNOWN_HOSTS }}
+          VPS_SSH_PORT: ${{ vars.SWEETSTUDY_VPS_SSH_PORT || '49222' }}
           HEALTH_ORIGIN: ${{ vars.SWEETSTUDY_VPS_HEALTH_ORIGIN || 'https://sweetstudy.site' }}
         run: |
           test -n "$VPS_RELEASE_KEY" && test -n "$VPS_HOST" && test -n "$VPS_KNOWN_HOSTS"
@@ -95,8 +96,9 @@ jobs:
           trap 'rm -f -- "$key" "$hosts"' EXIT
           printf '%s\n' "$VPS_RELEASE_KEY" > "$key"
           printf '%s\n' "$VPS_KNOWN_HOSTS" > "$hosts"
-          ssh -T -i "$key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$hosts" \
-            "root@$VPS_HOST" "$GITHUB_SHA" < "$RUNNER_TEMP/sweetstudy-release.tar.gz"
+          # SSH listens on 49222. HostKeyAlias keeps the saved known_hosts entry for the host valid on that port.
+          ssh -T -p "$VPS_SSH_PORT" -i "$key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$hosts" \
+            -o HostKeyAlias="$VPS_HOST" "root@$VPS_HOST" "$GITHUB_SHA" < "$RUNNER_TEMP/sweetstudy-release.tar.gz"
           published=$(curl --fail --silent --show-error --max-time 15 --connect-to "$target" "${HEALTH_ORIGIN%/}/revision.txt")
           test "$published" = "$GITHUB_SHA"
           curl --fail --silent --show-error --max-time 15 --connect-to "$target" "${HEALTH_ORIGIN%/}/api/ready"

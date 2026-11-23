@@ -28,3 +28,15 @@ describe('deployment authentication policy', () => {
     expect(result && result.data).toMatchObject({ role: 'member' })
   })
 })
+
+describe('display names', () => {
+  it('accepts 2–40 characters after trimming and tidies spaces', async () => {
+    const { normalizeDisplayName } = await import('./auth')
+    expect(normalizeDisplayName('  عسل  ')).toBe('عسل')
+    expect(normalizeDisplayName('Ada   Lovelace')).toBe('Ada Lovelace')
+    expect(() => normalizeDisplayName('ع')).toThrow()
+    expect(() => normalizeDisplayName('   ')).toThrow()
+    expect(() => normalizeDisplayName('x'.repeat(41))).toThrow()
+    expect(() => normalizeDisplayName(undefined)).toThrow()
+  })
+})

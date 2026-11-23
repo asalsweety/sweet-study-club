@@ -17,6 +17,7 @@ const authErrors: Record<string, string> = {
   PASSWORD_TOO_SHORT: 'رمز عبور باید حداقل ۱۰ کاراکتر باشد.',
   PASSWORD_TOO_LONG: 'رمز عبور خیلی طولانی است.',
   INVALID_EMAIL: 'ایمیل معتبر نیست.',
+  INVALID_NAME: 'نام نمایشی باید بین ۲ تا ۴۰ حرف باشد.',
   INVALID_PASSWORD: 'رمز فعلی درست نیست.',
   CREDENTIAL_ACCOUNT_NOT_FOUND: 'این حساب رمز عبور ندارد.',
   TOO_MANY_REQUESTS: 'تعداد تلاش‌ها زیاد است. کمی صبر کن و دوباره امتحان کن.',

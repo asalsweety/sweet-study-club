@@ -81,3 +81,11 @@ describe('profile repository', () => {
     ).resolves.toBeNull()
   })
 })
+
+describe('older profiles', () => {
+  it('still loads a one-letter display name saved before the rule existed', async () => {
+    const first = vi.fn(async () => ({ ...profileRow, displayName: 'ع' }))
+    const database = { prepare: vi.fn(() => ({ bind: vi.fn(() => ({ first })) })) } as unknown as D1Database
+    await expect(findProfileByUserId(database, 'user-123')).resolves.toMatchObject({ displayName: 'ع' })
+  })
+})

@@ -22,6 +22,7 @@
     "preview": "node scripts/run-vite.mjs preview",
     "cf:dry-run": "node scripts/run-wrangler.mjs deploy --dry-run --config dist/sweet_study_club/wrangler.json",
     "content:build:persian": "node scripts/build-persian-learning-content.mjs",
+    "content:build:konkur-1405": "node scripts/build-konkur-1405.mjs",
     "cf:login": "node scripts/run-wrangler.mjs login",
     "cf:build:production": "tsc -b && node scripts/build-production.mjs && npm run check:artifacts && npm run check:performance",
     "cf:migrate:production": "node scripts/run-production-wrangler.mjs d1 migrations apply DB --remote --env production --config wrangler.jsonc",

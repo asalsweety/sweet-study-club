@@ -1,4 +1,5 @@
 import { betterAuth } from 'better-auth'
+import { APIError } from 'better-auth/api'
 import type { WorkerBindings } from './types'
 
 const minimumSecretLength = 32
@@ -44,6 +45,15 @@ function readAuthSecret(value: string | undefined) {
   }
 
   return secret
+}
+
+/** Display names are 2–40 characters after trimming, like the profile editor. */
+export function normalizeDisplayName(name: unknown) {
+  const trimmed = typeof name === 'string' ? name.trim().replace(/\s+/g, ' ') : ''
+  if (trimmed.length < 2 || trimmed.length > 40) {
+    throw new APIError('BAD_REQUEST', { code: 'INVALID_NAME', message: 'Display name must be 2 to 40 characters.' })
+  }
+  return trimmed
 }
 
 export function createAuth(bindings: WorkerBindings) {
@@ -126,8 +136,11 @@ export function createAuth(bindings: WorkerBindings) {
               const existing = await bindings.DB.prepare('SELECT COUNT(*) AS total FROM user').first<{ total: number }>()
               if ((existing?.total ?? 0) === 0) role = 'admin'
             }
-            return { data: { ...user, role } }
+            return { data: { ...user, name: normalizeDisplayName(user.name), role } }
           },
+        },
+        update: {
+          before: async (user) => (user.name === undefined ? { data: user } : { data: { ...user, name: normalizeDisplayName(user.name) } }),
         },
       },
     },
